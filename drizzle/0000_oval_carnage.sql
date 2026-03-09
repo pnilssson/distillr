@@ -13,3 +13,16 @@ CREATE POLICY "libraries_select_own" ON "libraries" AS PERMISSIVE FOR SELECT TO 
 CREATE POLICY "libraries_insert_own" ON "libraries" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK (auth.uid() = user_id);--> statement-breakpoint
 CREATE POLICY "libraries_update_own" ON "libraries" AS PERMISSIVE FOR UPDATE TO "authenticated" USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);--> statement-breakpoint
 CREATE POLICY "libraries_delete_own" ON "libraries" AS PERMISSIVE FOR DELETE TO "authenticated" USING (auth.uid() = user_id);
+--> statement-breakpoint
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+--> statement-breakpoint
+CREATE TRIGGER libraries_set_updated_at
+  BEFORE UPDATE ON "libraries"
+  FOR EACH ROW
+  EXECUTE FUNCTION set_updated_at();

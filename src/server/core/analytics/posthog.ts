@@ -9,12 +9,12 @@ export async function captureServerEvent(
   event: string,
   properties?: Record<string, unknown>,
 ) {
-  if (!env.NEXT_PUBLIC_POSTHOG_KEY) {
+  if (!env.NEXT_PUBLIC_POSTHOG_KEY || !env.NEXT_PUBLIC_POSTHOG_HOST) {
     return;
   }
 
   const client = new PostHog(env.NEXT_PUBLIC_POSTHOG_KEY, {
-    host: env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
+    host: env.NEXT_PUBLIC_POSTHOG_HOST,
     flushAt: 1,
     flushInterval: 0,
   });

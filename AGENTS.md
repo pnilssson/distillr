@@ -44,6 +44,8 @@ This file is the source of truth for agent behavior in this repository.
 - Define RLS policies in Drizzle schema (`src/db/schema.ts` pattern) and generate SQL via Drizzle migrations.
 - All writes must go through server-side boundaries (Route Handlers / server code), never direct client-to-database writes.
 - Keep sensitive keys server-only.
+- Never directly modify files in `src/components/ui/`.
+- If a UI primitive in `src/components/ui/` needs to be added, updated, or replaced, use the shadcn CLI and official docs (`https://ui.shadcn.com/docs/installation/next`) to regenerate it.
 
 ## Documentation Hygiene
 
@@ -62,6 +64,17 @@ This file is the source of truth for agent behavior in this repository.
 - Use PostHog's native `$ai_generation` event for every Claude API call: tokens in, tokens out, latency, cost.
 - Track these custom PostHog events: `library_created`, `source_added`, `video_ready`, `video_failed`, `chat_message_sent` (token count as property), `export_triggered`, `upgrade_prompt_shown`, `upgrade_clicked`, `plan_upgraded`.
 - Log ingestion failures with reason per video - surfaced in UI, not hidden.
+
+## Accessibility
+
+- Target WCAG 2.1 AA. Don't over-engineer it, but follow the basics.
+- Every `<input>` needs an associated `<label>` (visible or `sr-only`). Placeholder alone is not a label.
+- Link field error messages to their input with `aria-describedby`.
+- Icon-only buttons need `aria-label`.
+- Use semantic landmarks (`<nav>`, `<main>`, `<section>`, `<header>`).
+- Radix UI (via shadcn) handles ARIA for dialogs, dropdowns, etc. - use those primitives rather than rolling custom implementations.
+
+---
 
 ## Writing Rule
 

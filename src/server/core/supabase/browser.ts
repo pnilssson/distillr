@@ -2,19 +2,16 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
+import { env } from "@/server/core/env";
+
 let browserClient: ReturnType<typeof createBrowserClient> | undefined;
 
 export function createSupabaseBrowserClient() {
   if (!browserClient) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabasePublishableKey =
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-    if (!supabaseUrl || !supabasePublishableKey) {
-      throw new Error("Missing Supabase browser environment variables.");
-    }
-
-    browserClient = createBrowserClient(supabaseUrl, supabasePublishableKey);
+    browserClient = createBrowserClient(
+      env.NEXT_PUBLIC_SUPABASE_URL,
+      env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    );
   }
 
   return browserClient;

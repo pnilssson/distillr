@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { LibrariesDashboard } from "@/features/libraries/LibrariesDashboard";
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
 
-export default async function AppPage() {
+export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

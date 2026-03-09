@@ -11,6 +11,7 @@ Hosted on Vercel.
 
 - Language/runtime: `react`, `react-dom`, `typescript`
 - Code quality: `eslint`, `eslint-config-next`
+- Type packages: `@types/node`, `@types/react`, `@types/react-dom`
 
 ---
 
@@ -103,7 +104,7 @@ Hosted on Vercel.
 **shadcn/ui + Tailwind CSS**
 
 - Installed styling packages: `tailwindcss`, `@tailwindcss/postcss`
-- Installed UI support packages: `class-variance-authority`, `clsx`, `tailwind-merge`, `tw-animate-css`, `sonner`, `lucide-react`, `geist`
+- Installed UI support packages: `shadcn`, `radix-ui`, `next-themes`, `class-variance-authority`, `clsx`, `tailwind-merge`, `tw-animate-css`, `sonner`, `lucide-react`, `geist`
 
 ---
 

@@ -13,9 +13,10 @@ import {
 
 type CreateLibraryFormProps = {
   onCreated: (library: { id: string; name: string; createdAt: string }) => void;
+  submitLabel?: string;
 };
 
-export function CreateLibraryForm({ onCreated }: CreateLibraryFormProps) {
+export function CreateLibraryForm({ onCreated, submitLabel = "Create library" }: CreateLibraryFormProps) {
   const form = useForm<CreateLibraryInput>({
     resolver: zodResolver(createLibrarySchema),
     defaultValues: {
@@ -51,28 +52,41 @@ export function CreateLibraryForm({ onCreated }: CreateLibraryFormProps) {
   }
 
   return (
-    <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Input
-          {...form.register("name")}
-          placeholder="Research Library"
-          maxLength={80}
-          aria-invalid={Boolean(form.formState.errors.name)}
-        />
-        <Button
-          className="sm:min-w-40"
-          disabled={form.formState.isSubmitting}
-          type="submit"
-        >
-          {form.formState.isSubmitting ? "Creating..." : "Create your first library"}
-        </Button>
+    <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <div className="space-y-1.5">
+        <label htmlFor="library-name" className="sr-only">
+          Library name
+        </label>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Input
+            id="library-name"
+            {...form.register("name")}
+            placeholder="Research Library"
+            maxLength={80}
+            aria-invalid={Boolean(form.formState.errors.name)}
+            aria-describedby={
+              form.formState.errors.name ? "library-name-error" : undefined
+            }
+          />
+          <Button
+            className="sm:min-w-40"
+            disabled={form.formState.isSubmitting}
+            type="submit"
+          >
+            {form.formState.isSubmitting ? "Creating..." : submitLabel}
+          </Button>
+        </div>
+        {form.formState.errors.name ? (
+          <p id="library-name-error" className="text-sm text-destructive" role="alert">
+            {form.formState.errors.name.message}
+          </p>
+        ) : null}
       </div>
-      {form.formState.errors.name ? (
-        <p className="text-sm text-destructive">
-          {form.formState.errors.name.message}
+      {requestError ? (
+        <p className="text-sm text-destructive" role="alert">
+          {requestError}
         </p>
       ) : null}
-      {requestError ? <p className="text-sm text-destructive">{requestError}</p> : null}
     </form>
   );
 }

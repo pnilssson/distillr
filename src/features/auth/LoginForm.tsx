@@ -51,14 +51,28 @@ export function LoginForm() {
         <p className="text-sm text-muted-foreground">
           Enter your email and we will send a magic link.
         </p>
-        <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
-          <Input
-            type="email"
-            {...form.register("email")}
-            placeholder="you@example.com"
-            autoComplete="email"
-            aria-invalid={Boolean(form.formState.errors.email)}
-          />
+        <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+          <div className="space-y-1.5">
+            <label htmlFor="email" className="sr-only">
+              Email address
+            </label>
+            <Input
+              id="email"
+              type="email"
+              {...form.register("email")}
+              placeholder="you@example.com"
+              autoComplete="email"
+              aria-invalid={Boolean(form.formState.errors.email)}
+              aria-describedby={
+                form.formState.errors.email ? "email-error" : undefined
+              }
+            />
+            {form.formState.errors.email ? (
+              <p id="email-error" className="text-sm text-destructive" role="alert">
+                {form.formState.errors.email.message}
+              </p>
+            ) : null}
+          </div>
           <Button
             disabled={form.formState.isSubmitting}
             type="submit"
@@ -67,13 +81,16 @@ export function LoginForm() {
             {form.formState.isSubmitting ? "Sending..." : "Send magic link"}
           </Button>
         </form>
-        {form.formState.errors.email ? (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.email.message}
+        {status ? (
+          <p className="text-sm text-primary" role="status">
+            {status}
           </p>
         ) : null}
-        {status ? <p className="text-sm text-primary">{status}</p> : null}
-        {requestError ? <p className="text-sm text-destructive">{requestError}</p> : null}
+        {requestError ? (
+          <p className="text-sm text-destructive" role="alert">
+            {requestError}
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   );

@@ -1,9 +1,9 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function AppLoading() {
+export default function DashboardLoading() {
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 py-10">
+    <main className="mx-auto w-full max-w-5xl px-6 py-10" aria-busy="true" aria-label="Loading your libraries">
       <div className="space-y-6">
         <div className="space-y-2">
           <Skeleton className="h-8 w-64" />

@@ -2,8 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabasePublishableKey =
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 export async function proxy(request: NextRequest) {
   if (!supabaseUrl || !supabasePublishableKey) {
@@ -34,20 +33,20 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isAppRoute = pathname.startsWith("/app");
+  const isDashboardRoute = pathname.startsWith("/dashboard");
   const isLoginRoute = pathname === "/login";
 
-  if (!user && isAppRoute) {
+  if (!user && isDashboardRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   if (user && isLoginRoute) {
-    return NextResponse.redirect(new URL("/app", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/login"],
+  matcher: ["/dashboard/:path*", "/login"],
 };

@@ -60,7 +60,7 @@ export function LibrariesDashboard({
         <div className="space-y-6">
           <CreateLibraryForm onCreated={onLibraryCreated} />
           {deleteError ? (
-            <p className="text-sm text-destructive">{deleteError}</p>
+            <p className="text-sm text-destructive" role="alert">{deleteError}</p>
           ) : null}
           <LibraryList libraries={libraries} onDelete={onDeleteLibrary} />
         </div>

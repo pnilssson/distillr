@@ -26,7 +26,7 @@ export function EmptyLibrariesState({ onCreated }: EmptyLibrariesStateProps) {
           </span>
           <span className="rounded-full border px-3 py-1">Mine a playlist</span>
         </div>
-        <CreateLibraryForm onCreated={onCreated} />
+        <CreateLibraryForm onCreated={onCreated} submitLabel="Create your first library" />
       </CardContent>
     </Card>
   );

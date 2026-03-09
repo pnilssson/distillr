@@ -12,3 +12,5 @@
 - Adopted PostHog Next.js best practices: client instrumentation setup and server event flush/shutdown behavior
 - Standardized forms on React Hook Form plus Zod resolver and updated docs to reflect the form stack
 - Removed base-ui generated UI primitives and setup-only packages to keep dependencies aligned with the documented stack
+- Re-initialized shadcn with Radix base and re-generated UI primitives via CLI to avoid manual edits in `src/components/ui`
+- Removed hardcoded PostHog host fallbacks and moved host configuration fully to environment variables

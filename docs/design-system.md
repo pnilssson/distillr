@@ -89,6 +89,19 @@ Rules:
 
 ---
 
+## Accessibility
+
+Follow WCAG 2.1 AA as the baseline. Key rules:
+
+- Every form input must have an associated `<label>` (visible or visually hidden via `sr-only`). Never rely on placeholder text alone.
+- Error messages must be linked to their input via `aria-describedby`.
+- Interactive elements must have a visible focus ring (shadcn's `outline-ring/50` default covers this).
+- Icon-only buttons must have `aria-label` or a visually hidden label.
+- Use semantic HTML (`<nav>`, `<main>`, `<section>`, `<header>`) over generic `<div>` for landmark regions.
+- Radix UI primitives handle keyboard navigation and ARIA roles for complex widgets (dialogs, dropdowns) - use them, don't reinvent.
+
+---
+
 ## Component Principles
 
 - Use shadcn/ui primitives as the base - customize via CSS variables, not by forking components

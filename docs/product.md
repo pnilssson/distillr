@@ -1,9 +1,3 @@
-# Writing Style Note
-
-Never use em dashes (--) anywhere in this project - not in code comments, documentation, UI copy, or any written content. Use a regular hyphen (-), a colon (:), or rewrite the sentence instead.
-
----
-
 # What is Distillr?
 
 Distillr is a **YouTube knowledge base SaaS**. Users add YouTube channels, playlists, or individual videos and Distillr extracts the transcripts, processes them with AI, and turns them into a persistent, searchable knowledge base they can chat with and export from.
@@ -79,18 +73,3 @@ Key differentiators:
 - Chat message: ~€0.005-0.02 per message (Claude Sonnet, depending on context)
 - Polar fee: 4% + €0.40 per transaction (MoR, includes EU VAT handling)
 
----
-
-# Intentionally Deferred (Post-MVP)
-
-- Whisper fallback for videos without captions
-- Cross-library search
-- Team / shared libraries
-- API access for developers
-- Topic export (semantic search over a keyword, export all matching clips)
-- Notion / Obsidian push integration
-- Auto-sync (watch a channel, ingest new videos automatically)
-- Dark mode
-- Chrome extension
-- Resend for custom domain email delivery and branded templates
-- Google OAuth (magic link only for MVP)

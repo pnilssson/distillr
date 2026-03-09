@@ -86,6 +86,14 @@ Hosted on Vercel.
 
 ---
 
+## Client State
+
+**Zustand**
+
+- Use for shared client-side state when local component state is no longer enough
+
+---
+
 ## Rate Limiting
 
 **Upstash Redis + @upstash/ratelimit**

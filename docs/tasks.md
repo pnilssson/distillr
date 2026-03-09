@@ -37,3 +37,17 @@
 - [ ] Auth flow - magic link only for MVP, or add Google OAuth from day one?
 - [ ] Free plan video limit - 15 might be too low to demonstrate cross-video value; consider 25
 - [ ] Inngest plan - free tier supports enough for early MVP, check concurrency limits
+
+# Intentionally Deferred (Post-MVP)
+
+- Whisper fallback for videos without captions
+- Cross-library search
+- Team / shared libraries
+- API access for developers
+- Topic export (semantic search over a keyword, export all matching clips)
+- Notion / Obsidian push integration
+- Auto-sync (watch a channel, ingest new videos automatically)
+- Dark mode
+- Chrome extension
+- Resend for custom domain email delivery and branded templates
+- Google OAuth (magic link only for MVP)

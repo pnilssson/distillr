@@ -50,7 +50,7 @@ UI responsibility: show a confirmation modal before destructive actions ("This w
 
 ## Multi-Tenant Isolation
 
-RLS policies on every table:
+RLS policies on every table are defined in Drizzle (for example in `src/db/schema.ts`) and generated into SQL via Drizzle migrations. The SQL below is illustrative:
 
 ```sql
 CREATE POLICY "user_own_libraries" ON libraries FOR ALL USING (user_id = auth.uid());

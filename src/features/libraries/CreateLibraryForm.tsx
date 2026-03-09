@@ -57,7 +57,7 @@ export function CreateLibraryForm({ onCreated, submitLabel = "Create library" }:
         <label htmlFor="library-name" className="sr-only">
           Library name
         </label>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3">
           <Input
             id="library-name"
             {...form.register("name")}
@@ -69,7 +69,7 @@ export function CreateLibraryForm({ onCreated, submitLabel = "Create library" }:
             }
           />
           <Button
-            className="sm:min-w-40"
+            className="w-full"
             disabled={form.formState.isSubmitting}
             type="submit"
           >

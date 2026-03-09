@@ -3,6 +3,7 @@ import { Library, MessageSquare, Download } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
 import { Button } from "@/components/ui/button";
+import { MarketingNav } from "@/features/navigation/MarketingNav";
 
 export default async function HomePage() {
   const supabase = await createSupabaseServerClient();
@@ -12,18 +13,13 @@ export default async function HomePage() {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <nav className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
-        <span className="text-lg font-semibold tracking-tight">Distillr</span>
-        {user ? (
-          <Button asChild size="sm">
-            <Link href="/dashboard">Go to dashboard</Link>
-          </Button>
-        ) : (
-          <Button asChild size="sm">
-            <Link href="/login">Sign in</Link>
-          </Button>
-        )}
-      </nav>
+      <MarketingNav>
+        <Button asChild size="sm">
+          <Link href={user ? "/dashboard" : "/login"}>
+            {user ? "Go to dashboard" : "Sign in"}
+          </Link>
+        </Button>
+      </MarketingNav>
 
       <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-start justify-center px-6 py-24">
         <h1 className="mb-6 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">

@@ -12,7 +12,10 @@ type DashboardWelcomeProps = {
   userId: string;
 };
 
-export function DashboardWelcome({ hasLibraries, userId }: DashboardWelcomeProps) {
+export function DashboardWelcome({
+  hasLibraries,
+  userId,
+}: DashboardWelcomeProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -45,7 +48,7 @@ export function DashboardWelcome({ hasLibraries, userId }: DashboardWelcomeProps
             Follow a creator
           </span>
           <span className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
-            Mine a playlist
+            Distill a playlist
           </span>
         </div>
         <Button className="mt-8" onClick={() => setDialogOpen(true)}>

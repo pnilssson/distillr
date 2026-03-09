@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Library, LogOut, Plus } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 
 import {
   Sidebar,
@@ -35,7 +35,7 @@ export function AppSidebar({ libraries, userEmail }: AppSidebarProps) {
   async function handleSignOut() {
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/");
   }
 
   return (
@@ -66,12 +66,9 @@ export function AppSidebar({ libraries, userEmail }: AppSidebarProps) {
                   <SidebarMenuButton
                     isActive={pathname === `/library/${library.id}`}
                     onClick={() => router.push(`/library/${library.id}`)}
-                    className="justify-between"
+                    className="group-data-[collapsible=icon]:hidden"
                   >
-                    <span className="flex items-center gap-2 truncate">
-                      <Library size={14} className="shrink-0 text-muted-foreground" />
-                      <span className="truncate">{library.name}</span>
-                    </span>
+                    <span className="truncate">{library.name}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -85,9 +82,9 @@ export function AppSidebar({ libraries, userEmail }: AppSidebarProps) {
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="px-4 py-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
+        <SidebarFooter className="px-3 py-3">
+          <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center">
+            <div className="min-w-0 group-data-[collapsible=icon]:hidden">
               <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
               <p className="text-xs font-medium">Free</p>
             </div>

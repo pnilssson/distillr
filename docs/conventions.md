@@ -78,7 +78,7 @@ No modals. No carousels. No "how it works" slides. The onboarding is the product
 After signup, the user sees:
 
 - Empty dashboard with a single prominent CTA: "Create your first library"
-- 2-3 example chips below it suggesting use cases: "Research a YouTube channel", "Follow a creator", "Mine a playlist"
+- 2-3 example chips below it suggesting use cases: "Research a YouTube channel", "Follow a creator", "Distill a playlist"
 - No other UI until they take that action
 
 Library creation is instant - just a name. Then the user is immediately inside the library and prompted to add their first source URL.

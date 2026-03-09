@@ -13,7 +13,7 @@ export default function LoginPage() {
         </Button>
       </MarketingNav>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-6">
+      <main className="flex flex-col items-center px-6 pt-20 pb-32">
         <div className="w-full max-w-sm">
           <h1 className="text-2xl font-semibold">Sign in</h1>
           <p className="mt-1 text-sm text-muted-foreground">

@@ -21,7 +21,7 @@ export default async function HomePage() {
         </Button>
       </MarketingNav>
 
-      <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-start justify-center px-6 py-24">
+      <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-start justify-center px-6 py-16">
         <h1 className="mb-6 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
           Your YouTube watching,
           <br />

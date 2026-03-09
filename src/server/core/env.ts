@@ -8,6 +8,7 @@ export const env = createEnv({
     DATABASE_URL: z.string().url(),
   },
   client: {
+    NEXT_PUBLIC_APP_URL: z.string().optional(),
     NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
     NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
@@ -15,6 +16,7 @@ export const env = createEnv({
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,

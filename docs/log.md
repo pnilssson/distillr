@@ -27,3 +27,9 @@
 - Removed base-ui generated UI primitives and setup-only packages to keep dependencies aligned with the documented stack
 - Re-initialized shadcn with Radix base and re-generated UI primitives via CLI to avoid manual edits in `src/components/ui`
 - Removed hardcoded PostHog host fallbacks and moved host configuration fully to environment variables
+
+## 2026-03-09 (Analytics Hardening)
+
+- Moved PostHog identify to `AppSidebar` so authenticated routes consistently bind events to the signed-in user
+- Added `posthog.reset()` on sign out to avoid identity carry-over between users on shared devices
+- Added safe error handling in server analytics capture and shutdown so product flows do not fail if PostHog is unavailable

@@ -34,6 +34,7 @@ export default async function AppLayout({
       <AppSidebar
         libraries={libraries}
         userEmail={user.email ?? ""}
+        userId={user.id}
       />
       <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>

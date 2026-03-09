@@ -19,11 +19,19 @@ export async function captureServerEvent(
     flushInterval: 0,
   });
 
-  client.capture({
-    distinctId,
-    event,
-    properties,
-  });
+  try {
+    client.capture({
+      distinctId,
+      event,
+      properties,
+    });
+  } catch (error) {
+    console.error("PostHog capture failed", { event, distinctId, error });
+  }
 
-  await client.shutdown();
+  try {
+    await client.shutdown();
+  } catch (error) {
+    console.error("PostHog shutdown failed", { event, distinctId, error });
+  }
 }

@@ -1,26 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Library } from "lucide-react";
-import posthog from "posthog-js";
 
 import { Button } from "@/components/ui/button";
 import { NewLibraryDialog } from "@/features/libraries/NewLibraryDialog";
 
 type DashboardWelcomeProps = {
   hasLibraries: boolean;
-  userId: string;
 };
 
-export function DashboardWelcome({
-  hasLibraries,
-  userId,
-}: DashboardWelcomeProps) {
+export function DashboardWelcome({ hasLibraries }: DashboardWelcomeProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  useEffect(() => {
-    posthog.identify(userId);
-  }, [userId]);
 
   if (hasLibraries) {
     return (

@@ -3,9 +3,6 @@ import { createSupabaseServerClient } from "@/server/core/supabase/server";
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   const { data } = await supabase
     .from("libraries")
@@ -16,7 +13,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6">
-      <DashboardWelcome hasLibraries={hasLibraries} userId={user!.id} />
+      <DashboardWelcome hasLibraries={hasLibraries} />
     </main>
   );
 }

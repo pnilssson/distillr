@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Plus } from "lucide-react";
+import posthog from "posthog-js";
 
 import {
   Sidebar,
@@ -25,16 +26,30 @@ import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
 type AppSidebarProps = {
   libraries: LibraryListItem[];
   userEmail: string;
+  userId: string;
 };
 
-export function AppSidebar({ libraries, userEmail }: AppSidebarProps) {
+export function AppSidebar({ libraries, userEmail, userId }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_POSTHOG_KEY || !process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+      return;
+    }
+
+    posthog.identify(userId, userEmail ? { email: userEmail } : undefined);
+  }, [userEmail, userId]);
+
   async function handleSignOut() {
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
+
+    if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+      posthog.reset();
+    }
+
     router.push("/");
   }
 

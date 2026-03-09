@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Library, MessageSquare, Download } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
 import { Button } from "@/components/ui/button";
@@ -25,48 +26,52 @@ export default async function HomePage() {
       </nav>
 
       <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-start justify-center px-6 py-24">
-        <p className="mb-4 text-sm font-medium text-muted-foreground">
-          YouTube knowledge base
-        </p>
         <h1 className="mb-6 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
           Your YouTube watching,
           <br />
           turned into something durable.
         </h1>
-        <p className="mb-10 max-w-xl text-base leading-relaxed text-muted-foreground">
+        <p className="mb-3 max-w-xl text-base leading-relaxed text-muted-foreground">
           Add channels, playlists, or videos. Distillr processes the transcripts,
           builds a searchable knowledge base, and lets you ask questions across
           everything you have collected.
         </p>
-        <div className="flex flex-wrap gap-3">
-          <Button asChild size="lg">
-            <Link href={user ? "/dashboard" : "/login"}>
-              {user ? "Go to dashboard" : "Get started for free"}
-            </Link>
-          </Button>
-        </div>
+        <p className="mb-10 text-sm text-muted-foreground">
+          Works with channels, playlists, and individual videos.
+        </p>
+        <Button asChild size="lg">
+          <Link href={user ? "/dashboard" : "/login"}>
+            {user ? "Go to dashboard" : "Get started for free"}
+          </Link>
+        </Button>
 
-        <div className="mt-20 grid gap-8 sm:grid-cols-3">
-          <div>
-            <p className="mb-1 text-sm font-medium">Cross-video search</p>
-            <p className="text-sm text-muted-foreground">
-              Ask questions across hundreds of videos at once. Get answers with
-              exact timestamp citations.
-            </p>
+        <div className="mt-20 w-full max-w-xl divide-y">
+          <div className="flex items-start gap-4 py-5">
+            <Library size={20} className="mt-0.5 shrink-0 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">Persistent knowledge libraries</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Add channels, playlists, or videos. They stay, growing over time.
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="mb-1 text-sm font-medium">Named libraries</p>
-            <p className="text-sm text-muted-foreground">
-              Organize by topic, channel, or project. Libraries grow over time,
-              not session by session.
-            </p>
+          <div className="flex items-start gap-4 py-5">
+            <MessageSquare size={20} className="mt-0.5 shrink-0 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">Chat across every video</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Ask questions. Get answers with timestamp-linked citations.
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="mb-1 text-sm font-medium">Export structured knowledge</p>
-            <p className="text-sm text-muted-foreground">
-              Export summaries, topic reports, and chat sessions. Not raw
-              transcripts.
-            </p>
+          <div className="flex items-start gap-4 py-5">
+            <Download size={20} className="mt-0.5 shrink-0 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">Export what you learned</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Summaries, transcripts, and full chat sessions - not just raw files.
+              </p>
+            </div>
           </div>
         </div>
       </section>

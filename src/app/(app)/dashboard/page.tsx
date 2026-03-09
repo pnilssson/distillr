@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
-
-import { LibrariesDashboard } from "@/features/libraries/LibrariesDashboard";
+import { DashboardWelcome } from "@/features/libraries/DashboardWelcome";
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
 
 export default async function DashboardPage() {
@@ -9,28 +7,16 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("libraries")
-    .select("id, name, created_at")
-    .order("created_at", { ascending: false });
+    .select("id")
+    .limit(1);
 
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  const libraries = (data ?? []).map((library) => ({
-    id: library.id,
-    name: library.name,
-    createdAt: library.created_at,
-  }));
+  const hasLibraries = (data ?? []).length > 0;
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 py-10">
-      <LibrariesDashboard initialLibraries={libraries} currentUserId={user.id} />
+    <main className="flex flex-1 flex-col items-center justify-center px-6">
+      <DashboardWelcome hasLibraries={hasLibraries} userId={user!.id} />
     </main>
   );
 }

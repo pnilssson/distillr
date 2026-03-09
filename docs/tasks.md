@@ -4,7 +4,7 @@
 
 ### Core
 
-- [ ] User authentication (Supabase Auth - email + magic link)
+- [x] User authentication (Supabase Auth - email + magic link)
 - [ ] Create, name, and delete Libraries
 - [ ] Add a YouTube source to a Library (channel URL, playlist URL, or video URL)
 - [ ] Background ingestion via Inngest (transcript fetch + summary + embed)

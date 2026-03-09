@@ -1,5 +1,18 @@
 # Log
 
+## 2026-03-09 (UI Polish + App Shell)
+
+- Installed shadcn sidebar, dialog, and dropdown-menu components via CLI
+- Created `src/app/(app)/layout.tsx` as the shared authenticated app shell with `SidebarProvider`
+- Built `AppSidebar` component: library list navigation, "+" to create, user email + sign out in footer
+- Built `NewLibraryDialog`: wraps `CreateLibraryForm` in a Dialog, triggered from sidebar
+- Built `DashboardWelcome`: replaces `LibrariesDashboard` on the main dashboard, shows empty state or "select a library" prompt
+- Redesigned login page: removed Card wrapper, bare centered form (no bounding box)
+- Redesigned landing page: removed eyebrow label, replaced 3-col feature grid with editorial text rows
+- Redesigned `EmptyLibrariesState`: removed Card wrapper, centered with floating use-case pills
+- Redesigned `LibraryList`: replaced Card grid with hover rows + kebab dropdown, delete off the main view
+- Added `TooltipProvider` to root layout (required by shadcn sidebar)
+
 ## 2026-03-09
 
 - Project documentation structure established

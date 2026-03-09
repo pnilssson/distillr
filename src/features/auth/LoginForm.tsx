@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { loginEmailSchema, type LoginEmailInput } from "@/lib/validation/auth";
 
@@ -43,55 +42,45 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle className="text-2xl">Sign in to Distillr</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Enter your email and we will send a magic link.
+    <form className="space-y-3 w-full" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <div className="space-y-1.5">
+        <label htmlFor="email" className="text-sm font-medium">
+          Email address
+        </label>
+        <Input
+          id="email"
+          type="email"
+          {...form.register("email")}
+          placeholder="you@example.com"
+          autoComplete="email"
+          aria-invalid={Boolean(form.formState.errors.email)}
+          aria-describedby={
+            form.formState.errors.email ? "email-error" : undefined
+          }
+        />
+        {form.formState.errors.email ? (
+          <p id="email-error" className="text-sm text-destructive" role="alert">
+            {form.formState.errors.email.message}
+          </p>
+        ) : null}
+      </div>
+      <Button
+        disabled={form.formState.isSubmitting}
+        type="submit"
+        className="w-full"
+      >
+        {form.formState.isSubmitting ? "Sending..." : "Send magic link"}
+      </Button>
+      {status ? (
+        <p className="text-sm text-primary" role="status">
+          {status}
         </p>
-        <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)} noValidate>
-          <div className="space-y-1.5">
-            <label htmlFor="email" className="sr-only">
-              Email address
-            </label>
-            <Input
-              id="email"
-              type="email"
-              {...form.register("email")}
-              placeholder="you@example.com"
-              autoComplete="email"
-              aria-invalid={Boolean(form.formState.errors.email)}
-              aria-describedby={
-                form.formState.errors.email ? "email-error" : undefined
-              }
-            />
-            {form.formState.errors.email ? (
-              <p id="email-error" className="text-sm text-destructive" role="alert">
-                {form.formState.errors.email.message}
-              </p>
-            ) : null}
-          </div>
-          <Button
-            disabled={form.formState.isSubmitting}
-            type="submit"
-            className="w-full"
-          >
-            {form.formState.isSubmitting ? "Sending..." : "Send magic link"}
-          </Button>
-        </form>
-        {status ? (
-          <p className="text-sm text-primary" role="status">
-            {status}
-          </p>
-        ) : null}
-        {requestError ? (
-          <p className="text-sm text-destructive" role="alert">
-            {requestError}
-          </p>
-        ) : null}
-      </CardContent>
-    </Card>
+      ) : null}
+      {requestError ? (
+        <p className="text-sm text-destructive" role="alert">
+          {requestError}
+        </p>
+      ) : null}
+    </form>
   );
 }

@@ -9,6 +9,9 @@ All decisions below are locked for MVP. Do not substitute without explicit decis
 **Next.js (App Router)**
 Hosted on Vercel.
 
+- Language/runtime: `react`, `react-dom`, `typescript`
+- Code quality: `eslint`, `eslint-config-next`
+
 ---
 
 ## Database
@@ -20,6 +23,8 @@ Hosted on Vercel.
 
 **ORM / Migrations:** Drizzle
 
+- Installed DB packages: `drizzle-orm`, `drizzle-kit`, `postgres`
+
 ---
 
 ## Auth
@@ -29,6 +34,19 @@ Hosted on Vercel.
 - Supabase handles magic link email delivery out of the box for MVP
 - Supabase's default email has low deliverability and Supabase branding - acceptable for early users, not for scale
 - Resend is post-MVP: custom domain sending, branded templates, transactional emails (ingestion complete, export ready)
+- Next.js clients use `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (no legacy anon key usage)
+- Installed auth packages: `@supabase/supabase-js`, `@supabase/ssr`
+
+---
+
+## Forms
+
+**React Hook Form + `@hookform/resolvers/zod`**
+
+- Use RHF for all interactive forms (login email, library name, source URL)
+- Use `zodResolver()` so client and server share the same Zod schemas
+- Prefer shadcn primitives with RHF over bespoke stateful form handling
+- Installed form packages: `react-hook-form`, `@hookform/resolvers`, `zod`
 
 ---
 
@@ -84,6 +102,9 @@ Hosted on Vercel.
 
 **shadcn/ui + Tailwind CSS**
 
+- Installed styling packages: `tailwindcss`, `@tailwindcss/postcss`
+- Installed UI support packages: `class-variance-authority`, `clsx`, `tailwind-merge`, `tw-animate-css`, `sonner`, `lucide-react`, `geist`
+
 ---
 
 ## Client State
@@ -91,6 +112,16 @@ Hosted on Vercel.
 **Zustand**
 
 - Use for shared client-side state when local component state is no longer enough
+
+---
+
+## URL Parameter State
+
+**nuqs**
+
+- Use for all URL search parameter state (filters, pagination, selected IDs, tab state)
+- Type-safe, works with Next.js App Router Server and Client Components
+- Prefer over manual `useSearchParams` / `router.push` for any stateful URL param
 
 ---
 
@@ -110,6 +141,8 @@ Hosted on Vercel.
 
 **@t3-oss/env-nextjs**
 
+- Installed support package: `server-only`
+
 ---
 
 ## Observability
@@ -117,7 +150,10 @@ Hosted on Vercel.
 **PostHog** for product analytics, session replay, and LLM cost monitoring.
 
 - Use PostHog's native `$ai_generation` event to track every Claude API call: tokens in, tokens out, latency, cost
+- Initialize `posthog-js` with Next.js `instrumentation-client.ts`
+- For `posthog-node`, use `flushAt: 1`, `flushInterval: 0`, and always `shutdown()` after server captures
 - Free tier: 1M events/month
+- Installed analytics packages: `posthog-js`, `posthog-node`
 
 **Inngest dashboard** for job observability (retries, failures, timing per function).
 

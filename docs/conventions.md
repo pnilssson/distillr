@@ -48,6 +48,8 @@ src/
 
 **Data fetching never lives in client components.** Server components fetch data. Client components receive it as props or read it from a hook.
 
+**Forms use React Hook Form with Zod resolvers.** Use `react-hook-form` + `@hookform/resolvers/zod` for all product forms, with shared Zod schemas between client and Route Handlers.
+
 **Migrations are generated, never hand-written.** Do not create migration files manually. Define schema and policy changes in Drizzle, then generate migrations from Drizzle.
 
 **Extract named feature components** when a chunk of JSX can be meaningfully described with a noun: `VideoCard`, `IngestionStatusBanner`, `LibrarySidebar`, `ChatMessage`. Feature components can reasonably be 100-200 lines.
@@ -60,6 +62,7 @@ src/
 
 - All writes go through Next.js Route Handlers - no direct client-to-database writes
 - Supabase RLS is the enforcement layer, not just application-level filtering
+- Supabase app clients use the publishable key (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`), not legacy anon/service role keys
 - `user_id` on every sensitive table - denormalized intentionally
 - Rate limiting on: source addition, chat messages, export endpoints
 - Polar webhook signature verification on `/api/billing/webhook`

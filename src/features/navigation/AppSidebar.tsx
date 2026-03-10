@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, MoreHorizontal, Plus } from "lucide-react";
+import { LogOut, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import posthog from "posthog-js";
 
 import {
@@ -23,11 +23,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { NewLibraryDialog } from "@/features/libraries/NewLibraryDialog";
 import { DeleteLibraryDialog } from "@/features/libraries/DeleteLibraryDialog";
+import { RenameLibraryDialog } from "@/features/libraries/RenameLibraryDialog";
 import { LibraryListItem } from "@/features/libraries/types";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
 
@@ -42,6 +44,7 @@ export function AppSidebar({ libraries, userEmail, userId }: AppSidebarProps) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deletingLibrary, setDeletingLibrary] = useState<LibraryListItem | null>(null);
+  const [renamingLibrary, setRenamingLibrary] = useState<LibraryListItem | null>(null);
 
   const libraryIdMatch = pathname.match(/^\/library\/([^/]+)/);
   const activeLibraryId = libraryIdMatch?.[1] ?? null;
@@ -111,11 +114,17 @@ export function AppSidebar({ libraries, userEmail, userId }: AppSidebarProps) {
                         <MoreHorizontal size={16} />
                       </SidebarMenuAction>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent side="right" align="start">
+                    <DropdownMenuContent side="right" align="start" className="min-w-40">
+                      <DropdownMenuItem className="cursor-pointer" onClick={() => setRenamingLibrary(library)}>
+                        <Pencil size={14} />
+                        Rename library
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
+                        className="cursor-pointer text-destructive focus:text-destructive"
                         onClick={() => setDeletingLibrary(library)}
                       >
+                        <Trash2 size={14} />
                         Delete library
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -175,6 +184,17 @@ export function AppSidebar({ libraries, userEmail, userId }: AppSidebarProps) {
           open={Boolean(deletingLibrary)}
           onOpenChange={(open) => {
             if (!open) setDeletingLibrary(null);
+          }}
+        />
+      )}
+
+      {renamingLibrary && (
+        <RenameLibraryDialog
+          libraryId={renamingLibrary.id}
+          libraryName={renamingLibrary.name}
+          open={Boolean(renamingLibrary)}
+          onOpenChange={(open) => {
+            if (!open) setRenamingLibrary(null);
           }}
         />
       )}

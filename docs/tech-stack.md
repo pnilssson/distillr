@@ -116,6 +116,16 @@ Hosted on Vercel.
 
 ---
 
+## Server State / Data Fetching
+
+**@tanstack/react-query**
+
+- Use for all client-side server state: fetching, caching, background refetching, and mutations
+- Wrap the app in a `QueryClientProvider`; include `ReactQueryDevtools` in development
+- Prefer `useQuery` for reads and `useMutation` for writes over manual `useState` + `fetch` patterns
+
+---
+
 ## URL Parameter State
 
 **nuqs**

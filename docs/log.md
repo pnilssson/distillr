@@ -1,5 +1,13 @@
 # Log
 
+## 2026-03-10
+
+- Added `PATCH /api/libraries/[libraryId]` route handler for renaming a library, validated with `createLibrarySchema`
+- Built `RenameLibraryDialog`: pre-filled dialog form using React Hook Form + Zod, calls PATCH on submit, refreshes router on success
+- Added "Rename library" item to the library ··· dropdown in `AppSidebar`, with `Pencil` icon and separator above "Delete library"
+- Added `Trash2` icon to "Delete library" dropdown item; both items use `cursor-pointer`
+- Removed redundant `<header>` from `LibraryPage` — active library is highlighted in sidebar
+
 ## 2026-03-09 (UI Polish + App Shell)
 
 - Installed shadcn sidebar, dialog, and dropdown-menu components via CLI

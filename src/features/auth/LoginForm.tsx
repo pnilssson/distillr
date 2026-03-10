@@ -30,7 +30,10 @@ export function LoginForm() {
       body: JSON.stringify(values),
     });
 
-    const payload = (await response.json()) as { message?: string; error?: string };
+    const payload = (await response.json()) as {
+      message?: string;
+      error?: string;
+    };
 
     if (!response.ok) {
       setRequestError(payload.error ?? "Unable to send magic link.");
@@ -42,7 +45,11 @@ export function LoginForm() {
   }
 
   return (
-    <form className="space-y-3 w-full" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+    <form
+      className="space-y-3 w-full"
+      onSubmit={form.handleSubmit(onSubmit)}
+      noValidate
+    >
       <div className="space-y-1.5">
         <label htmlFor="email" className="text-sm font-medium">
           Email address
@@ -72,7 +79,7 @@ export function LoginForm() {
         {form.formState.isSubmitting ? "Sending..." : "Send magic link"}
       </Button>
       {status ? (
-        <p className="text-sm text-primary" role="status">
+        <p className="text-sm" role="status">
           {status}
         </p>
       ) : null}

@@ -20,8 +20,9 @@ type NewLibraryDialogProps = {
 export function NewLibraryDialog({ open, onOpenChange }: NewLibraryDialogProps) {
   const router = useRouter();
 
-  function handleCreated(_library: LibraryListItem) {
+  function handleCreated(library: LibraryListItem) {
     onOpenChange(false);
+    router.push(`/library/${library.id}`);
     router.refresh();
   }
 

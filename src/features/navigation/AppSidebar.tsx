@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, MoreHorizontal, Plus } from "lucide-react";
 import posthog from "posthog-js";
 
 import {
@@ -14,12 +14,20 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { NewLibraryDialog } from "@/features/libraries/NewLibraryDialog";
+import { DeleteLibraryDialog } from "@/features/libraries/DeleteLibraryDialog";
 import { LibraryListItem } from "@/features/libraries/types";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
 
@@ -33,6 +41,13 @@ export function AppSidebar({ libraries, userEmail, userId }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deletingLibrary, setDeletingLibrary] = useState<LibraryListItem | null>(null);
+
+  const libraryIdMatch = pathname.match(/^\/library\/([^/]+)/);
+  const activeLibraryId = libraryIdMatch?.[1] ?? null;
+  const activeLibrary = activeLibraryId
+    ? libraries.find((l) => l.id === activeLibraryId) ?? null
+    : null;
 
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_POSTHOG_KEY || !process.env.NEXT_PUBLIC_POSTHOG_HOST) {
@@ -85,6 +100,26 @@ export function AppSidebar({ libraries, userEmail, userId }: AppSidebarProps) {
                   >
                     <span className="truncate">{library.name}</span>
                   </SidebarMenuButton>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuAction
+                        showOnHover
+                        aria-label={`Options for ${library.name}`}
+                        className="group-data-[collapsible=icon]:hidden"
+                      >
+                        <MoreHorizontal size={16} />
+                      </SidebarMenuAction>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" align="start">
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setDeletingLibrary(library)}
+                      >
+                        Delete library
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </SidebarMenuItem>
               ))}
 
@@ -95,6 +130,21 @@ export function AppSidebar({ libraries, userEmail, userId }: AppSidebarProps) {
               )}
             </SidebarMenu>
           </SidebarGroup>
+
+          {activeLibrary && (
+            <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+              <SidebarGroupLabel>Sources</SidebarGroupLabel>
+              <SidebarGroupAction aria-label="Add source" disabled>
+                <Plus size={16} />
+              </SidebarGroupAction>
+
+              <SidebarMenu>
+                <p className="px-2 py-1 text-xs text-muted-foreground">
+                  No sources yet
+                </p>
+              </SidebarMenu>
+            </SidebarGroup>
+          )}
         </SidebarContent>
 
         <SidebarFooter className="px-3 py-3">
@@ -117,6 +167,17 @@ export function AppSidebar({ libraries, userEmail, userId }: AppSidebarProps) {
       </Sidebar>
 
       <NewLibraryDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+
+      {deletingLibrary && (
+        <DeleteLibraryDialog
+          libraryId={deletingLibrary.id}
+          libraryName={deletingLibrary.name}
+          open={Boolean(deletingLibrary)}
+          onOpenChange={(open) => {
+            if (!open) setDeletingLibrary(null);
+          }}
+        />
+      )}
     </>
   );
 }

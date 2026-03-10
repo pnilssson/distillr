@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { appUrl } from "@/lib/app-url";
 import { loginEmailSchema } from "@/lib/validation/auth";
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
 
@@ -12,12 +11,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid email." }, { status: 400 });
   }
 
+  const { origin } = new URL(request.url);
   const supabase = await createSupabaseServerClient();
 
   const { error } = await supabase.auth.signInWithOtp({
     email: parse.data.email,
     options: {
-      emailRedirectTo: `${appUrl}/auth/callback`,
+      emailRedirectTo: `${origin}/auth/callback`,
     },
   });
 

@@ -2,20 +2,15 @@
 
 import { useState } from "react";
 import { Library } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { NewLibraryDialog } from "@/features/libraries/NewLibraryDialog";
-import { fetchLibraries } from "@/features/libraries/api";
+import { useLibraries } from "@/features/libraries/useLibraries";
 
 export function DashboardWelcome() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: libraries } = useQuery({
-    queryKey: ["libraries"],
-    queryFn: fetchLibraries,
-  });
-
+  const { data: libraries } = useLibraries();
   const hasLibraries = (libraries?.length ?? 0) > 0;
 
   if (hasLibraries) {

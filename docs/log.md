@@ -1,5 +1,17 @@
 # Log
 
+## 2026-03-11 (TanStack Query)
+
+- Installed `@tanstack/react-query` and `@tanstack/react-query-devtools`
+- Added `QueryClientProvider` in `src/lib/providers.tsx` using SSR-safe singleton pattern (new instance per server request, shared singleton on client)
+- Wrapped root layout with `Providers`; `ReactQueryDevtools` included for development
+- Created `src/features/libraries/api.ts` with typed fetch helpers for all library API endpoints
+- Created `src/features/libraries/useLibraries.ts` wrapping `useQuery(['libraries'])` per conventions
+- Replaced server-side library fetch in `(app)/layout.tsx` with `useLibraries()` in `AppSidebar` and `MobileTopNav`; both share the same cache entry automatically
+- Replaced `fetch` + `useState` in `CreateLibraryForm`, `DeleteLibraryDialog`, `RenameLibraryDialog`, and `LoginForm` with `useMutation`; library mutations invalidate `['libraries']` on success
+- Removed all `router.refresh()` calls from library CRUD flows - cache invalidation drives reactivity
+- Simplified `DashboardPage` to a plain RSC; `DashboardWelcome` derives `hasLibraries` from `useLibraries()`
+
 ## 2026-03-11
 
 - Migrated library API routes from direct Supabase JS queries to Drizzle ORM

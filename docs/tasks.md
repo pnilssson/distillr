@@ -6,7 +6,7 @@
 
 - [x] User authentication (Supabase Auth - email + magic link)
 - [x] Create, name, and delete Libraries
-- [ ] Set up `@tanstack/react-query` (QueryClient provider, devtools, standard query/mutation patterns)
+- [x] Set up `@tanstack/react-query` (QueryClient provider, devtools, standard query/mutation patterns)
 - [ ] Add a YouTube source to a Library (channel URL, playlist URL, or video URL)
 - [ ] Background ingestion via Inngest (transcript fetch + summary + embed)
 - [ ] Ingestion progress visible in UI (pending / processing / ready / failed per video)

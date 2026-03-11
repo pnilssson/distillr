@@ -11,11 +11,10 @@ export default async function LibraryPage({ params }: LibraryPageProps) {
   const { libraryId } = await params;
   const supabase = await createSupabaseServerClient();
 
-  const { data: library } = await supabase
-    .from("libraries")
-    .select("id")
-    .eq("id", libraryId)
-    .single();
+  const [{ data: library }, { count: sourceCount }] = await Promise.all([
+    supabase.from("libraries").select("id").eq("id", libraryId).single(),
+    supabase.from("sources").select("id", { count: "exact", head: true }).eq("library_id", libraryId),
+  ]);
 
   if (!library) {
     notFound();
@@ -23,9 +22,11 @@ export default async function LibraryPage({ params }: LibraryPageProps) {
 
   return (
     <main className="flex flex-1 flex-col h-full">
-      <div className="flex flex-1 items-center justify-center">
-        <EmptyLibraryState libraryId={libraryId} />
-      </div>
+      {sourceCount === 0 && (
+        <div className="flex flex-1 items-center justify-center">
+          <EmptyLibraryState libraryId={libraryId} />
+        </div>
+      )}
     </main>
   );
 }

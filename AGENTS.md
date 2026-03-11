@@ -72,11 +72,16 @@ This file is the operational source of truth for agent behavior in this reposito
 - Icon-only buttons require `aria-label`.
 - Use semantic landmarks (`nav`, `main`, `section`, `header`).
 
+## User Messaging Invariants
+
+- User-facing error messages must be provider-agnostic. Do not mention internal vendors or stack choices.
+- Include technical failure details only in logs and Sentry context.
+
 ## Observability
 
 - Track every OpenAI API call with PostHog `$ai_generation` (tokens in, tokens out, latency, cost).
 - Track: `library_created`, `source_added`, `video_ready`, `video_failed`, `chat_message_sent`, `export_triggered`, `upgrade_prompt_shown`, `upgrade_clicked`, `plan_upgraded`.
-- Surface ingestion failures in the UI with clear reason per video.
+- Surface ingestion failures in the UI with clear, provider-agnostic reason per video.
 
 ## Commits and Writing
 

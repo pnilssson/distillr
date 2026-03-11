@@ -42,3 +42,14 @@ export async function createSource(
     });
   return source ?? null;
 }
+
+export async function deleteSource(userId: string, libraryId: string, sourceId: string) {
+  const [deleted] = await db
+    .delete(sources)
+    .where(and(eq(sources.id, sourceId), eq(sources.userId, userId), eq(sources.libraryId, libraryId)))
+    .returning({
+      id: sources.id,
+    });
+
+  return deleted ?? null;
+}

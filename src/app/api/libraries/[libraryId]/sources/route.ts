@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
+import { z } from "zod";
 
 import { fetchYouTubeOEmbed } from "@/lib/youtube";
 import { addSourceSchema, parseYouTubeUrl } from "@/lib/validation/sources";
@@ -6,7 +8,7 @@ import { inngest } from "@/server/inngest/client";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { withApiAuth } from "@/server/core/auth/api";
 import { getLibraryById } from "@/server/libraries/queries";
-import { createSource, getLibrarySources } from "@/server/sources/queries";
+import { createSource, deleteSource, getLibrarySources } from "@/server/sources/queries";
 
 type SourcesRouteProps = {
   params: Promise<{ libraryId: string }>;
@@ -20,7 +22,13 @@ export const GET = withApiAuth<SourcesRouteProps>(async (_request, { params, use
 });
 
 export const POST = withApiAuth<SourcesRouteProps>(async (request, { params, user }) => {
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  }
+
   const parsed = addSourceSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -38,7 +46,14 @@ export const POST = withApiAuth<SourcesRouteProps>(async (request, { params, use
     return NextResponse.json({ error: "Library not found." }, { status: 404 });
   }
 
-  const parsedUrl = parseYouTubeUrl(parsed.data.url)!;
+  const parsedUrl = parseYouTubeUrl(parsed.data.url);
+  if (!parsedUrl) {
+    return NextResponse.json(
+      { error: "Must be a valid YouTube video, playlist, or channel URL." },
+      { status: 400 },
+    );
+  }
+
   const fallbackHandle = parsedUrl.type === "channel" ? parsedUrl.handle : null;
   const { channelName, title: oEmbedTitle } = await fetchYouTubeOEmbed(parsed.data.url, fallbackHandle);
   // Channel sources have no distinct title - only the channel name matters
@@ -50,19 +65,95 @@ export const POST = withApiAuth<SourcesRouteProps>(async (request, { params, use
     return NextResponse.json({ error: "Unable to add source." }, { status: 500 });
   }
 
+  try {
+    await inngest.send({
+      name: "source.added",
+      data: {
+        userId: user.id,
+        libraryId,
+        sourceId: source.id,
+      },
+    });
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: {
+        area: "source.create",
+      },
+      extra: {
+        userId: user.id,
+        libraryId,
+        sourceId: source.id,
+      },
+    });
+
+    try {
+      const rolledBack = await deleteSource(user.id, libraryId, source.id);
+
+      if (!rolledBack) {
+        Sentry.captureMessage("Failed to rollback source after queue failure.", {
+          level: "error",
+          tags: {
+            area: "source.create.rollback",
+          },
+          extra: {
+            userId: user.id,
+            libraryId,
+            sourceId: source.id,
+          },
+        });
+      }
+    } catch (rollbackError) {
+      Sentry.captureException(rollbackError, {
+        tags: {
+          area: "source.create.rollback",
+        },
+        extra: {
+          userId: user.id,
+          libraryId,
+          sourceId: source.id,
+        },
+      });
+    }
+
+    return NextResponse.json(
+      { error: "Could not process this source right now. Please try again." },
+      { status: 503 },
+    );
+  }
+
   await captureServerEvent(user.id, "source_added", {
     library_id: libraryId,
     source_type: parsedUrl.type,
   });
 
-  await inngest.send({
-    name: "source.added",
-    data: {
-      userId: user.id,
-      libraryId,
-      sourceId: source.id,
-    },
+  return NextResponse.json({ source }, { status: 201 });
+});
+
+const deleteSourceSchema = z.object({
+  sourceId: z.string().uuid(),
+});
+
+export const DELETE = withApiAuth<SourcesRouteProps>(async (request, { params, user }) => {
+  const { libraryId } = await params;
+
+  const library = await getLibraryById(user.id, libraryId);
+  if (!library) {
+    return NextResponse.json({ error: "Library not found." }, { status: 404 });
+  }
+
+  const url = new URL(request.url);
+  const parsed = deleteSourceSchema.safeParse({
+    sourceId: url.searchParams.get("sourceId"),
   });
 
-  return NextResponse.json({ source }, { status: 201 });
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid source id." }, { status: 400 });
+  }
+
+  const deleted = await deleteSource(user.id, libraryId, parsed.data.sourceId);
+  if (!deleted) {
+    return NextResponse.json({ error: "Source not found." }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true });
 });

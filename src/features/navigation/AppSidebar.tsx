@@ -33,7 +33,9 @@ import { RenameLibraryDialog } from "@/features/libraries/RenameLibraryDialog";
 import { LibraryListItem } from "@/features/libraries/types";
 import { useLibraries } from "@/features/libraries/useLibraries";
 import { AddSourceDialog } from "@/features/sources/AddSourceDialog";
-import { SourceSidebarItem } from "@/features/sources/SourceSidebarItem";
+import { DeleteSourceDialog } from "@/features/sources/DeleteSourceDialog";
+import { getSourceLabel, SourceSidebarItem } from "@/features/sources/SourceSidebarItem";
+import { SourceListItem } from "@/features/sources/types";
 import { useSources } from "@/features/sources/useSources";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
 
@@ -47,6 +49,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addingSource, setAddingSource] = useState(false);
+  const [deletingSource, setDeletingSource] = useState<SourceListItem | null>(null);
   const [deletingLibrary, setDeletingLibrary] = useState<LibraryListItem | null>(null);
   const [renamingLibrary, setRenamingLibrary] = useState<LibraryListItem | null>(null);
 
@@ -173,7 +176,11 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
 
               <SidebarMenu>
                 {sources.map((source) => (
-                  <SourceSidebarItem key={source.id} source={source} />
+                  <SourceSidebarItem
+                    key={source.id}
+                    source={source}
+                    onDelete={() => setDeletingSource(source)}
+                  />
                 ))}
 
                 {sources.length === 0 && (
@@ -212,6 +219,18 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
           libraryId={activeLibraryId}
           open={addingSource}
           onOpenChange={setAddingSource}
+        />
+      )}
+
+      {activeLibraryId && deletingSource && (
+        <DeleteSourceDialog
+          libraryId={activeLibraryId}
+          sourceId={deletingSource.id}
+          sourceLabel={getSourceLabel(deletingSource)}
+          open={Boolean(deletingSource)}
+          onOpenChange={(open) => {
+            if (!open) setDeletingSource(null);
+          }}
         />
       )}
 

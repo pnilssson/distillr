@@ -19,6 +19,8 @@ When a user adds a source URL:
 3. Video rows created with `status: 'pending'`
 4. Fan-out: one `video.ingest` event fired per video
 
+If queueing fails when adding a source, the source insert is rolled back and the API returns a generic retry message.
+
 ---
 
 ## Flow: Per-Video Ingestion (`video.ingest`)
@@ -42,6 +44,8 @@ All writes are idempotent. Retries must update existing rows for the same `(vide
 ## Failure Handling
 
 If TranscriptAPI fails (video has no captions), status is set to `'failed'` with an error reason. These are surfaced in the UI. Whisper fallback is post-MVP.
+
+User-facing errors must stay provider-agnostic. Include technical provider details only in logs and Sentry.
 
 ---
 

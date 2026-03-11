@@ -1,8 +1,15 @@
 "use client";
 
-import { List, User, Video } from "lucide-react";
+import { List, MoreHorizontal, Trash2, User, Video } from "lucide-react";
 
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
@@ -16,19 +23,24 @@ const SOURCE_TYPE_ICONS = {
 
 type Props = {
   source: SourceListItem;
+  onDelete?: (source: SourceListItem) => void;
 };
 
-export function SourceSidebarItem({ source }: Props) {
-  const Icon = SOURCE_TYPE_ICONS[source.sourceType] ?? Video;
-
-  let label: string;
+export function getSourceLabel(source: SourceListItem): string {
   if (source.channelName && source.title) {
-    label = `${source.channelName} - ${source.title}`;
-  } else if (source.channelName) {
-    label = source.channelName;
-  } else {
-    label = source.url;
+    return `${source.channelName} - ${source.title}`;
   }
+
+  if (source.channelName) {
+    return source.channelName;
+  }
+
+  return source.url;
+}
+
+export function SourceSidebarItem({ source, onDelete }: Props) {
+  const Icon = SOURCE_TYPE_ICONS[source.sourceType] ?? Video;
+  const label = getSourceLabel(source);
 
   return (
     <SidebarMenuItem>
@@ -43,6 +55,25 @@ export function SourceSidebarItem({ source }: Props) {
           <span className="truncate text-xs">{label}</span>
         </a>
       </SidebarMenuButton>
+
+      {onDelete ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuAction showOnHover aria-label={`Options for ${label}`}>
+              <MoreHorizontal size={14} />
+            </SidebarMenuAction>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="start" className="min-w-40">
+            <DropdownMenuItem
+              className="cursor-pointer text-destructive focus:text-destructive"
+              onClick={() => onDelete(source)}
+            >
+              <Trash2 size={14} />
+              Delete source
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : null}
     </SidebarMenuItem>
   );
 }

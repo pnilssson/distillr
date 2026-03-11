@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { fetchYouTubeOEmbed } from "@/lib/youtube";
 import { addSourceSchema, parseYouTubeUrl } from "@/lib/validation/sources";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
@@ -9,56 +10,6 @@ import { createSource, getLibrarySources } from "@/server/sources/queries";
 type SourcesRouteProps = {
   params: Promise<{ libraryId: string }>;
 };
-
-type OEmbedResponse = {
-  title: string;
-  author_name: string;
-};
-
-async function fetchYouTubeMetadata(
-  url: string,
-  sourceType: "video" | "playlist" | "channel",
-): Promise<{ channelName: string | null; title: string | null }> {
-  // For channel sources, try to extract the handle from the URL as a fallback
-  if (sourceType === "channel") {
-    const channelHandleMatch = url.match(/youtube\.com\/(?:@|channel\/|c\/)([^/?&]+)/);
-    const fallbackName = channelHandleMatch ? channelHandleMatch[1] : null;
-
-    try {
-      const res = await fetch(
-        `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`,
-        { signal: AbortSignal.timeout(5000) },
-      );
-      if (res.ok) {
-        const data = (await res.json()) as OEmbedResponse;
-        return { channelName: data.author_name ?? fallbackName, title: null };
-      }
-    } catch {
-      // oEmbed failed - use URL-parsed fallback
-    }
-
-    return { channelName: fallbackName, title: null };
-  }
-
-  // For video and playlist sources use oEmbed
-  try {
-    const res = await fetch(
-      `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`,
-      { signal: AbortSignal.timeout(5000) },
-    );
-    if (res.ok) {
-      const data = (await res.json()) as OEmbedResponse;
-      return {
-        channelName: data.author_name ?? null,
-        title: data.title ?? null,
-      };
-    }
-  } catch {
-    // oEmbed failed - store nulls and fall back to URL display
-  }
-
-  return { channelName: null, title: null };
-}
 
 export async function GET(_request: Request, { params }: SourcesRouteProps) {
   const supabase = await createSupabaseServerClient();
@@ -104,9 +55,13 @@ export async function POST(request: Request, { params }: SourcesRouteProps) {
     return NextResponse.json({ error: "Library not found." }, { status: 404 });
   }
 
-  const parsed_url = parseYouTubeUrl(parsed.data.url)!;
-  const metadata = await fetchYouTubeMetadata(parsed.data.url, parsed_url.type);
-  const source = await createSource(user.id, libraryId, parsed.data.url, parsed_url.type, metadata);
+  const parsedUrl = parseYouTubeUrl(parsed.data.url)!;
+  const fallbackHandle = parsedUrl.type === "channel" ? parsedUrl.handle : null;
+  const { channelName, title: oEmbedTitle } = await fetchYouTubeOEmbed(parsed.data.url, fallbackHandle);
+  // Channel sources have no distinct title - only the channel name matters
+  const title = parsedUrl.type === "channel" ? null : oEmbedTitle;
+
+  const source = await createSource(user.id, libraryId, parsed.data.url, parsedUrl.type, { channelName, title });
 
   if (!source) {
     return NextResponse.json({ error: "Unable to add source." }, { status: 500 });
@@ -114,7 +69,7 @@ export async function POST(request: Request, { params }: SourcesRouteProps) {
 
   await captureServerEvent(user.id, "source_added", {
     library_id: libraryId,
-    source_type: parsed_url.type,
+    source_type: parsedUrl.type,
   });
 
   // TODO: fire source.added Inngest event (wired in next task)

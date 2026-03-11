@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AppSidebar } from "@/features/navigation/AppSidebar";
+import { MobileTopNav } from "@/features/navigation/MobileTopNav";
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
@@ -36,7 +37,10 @@ export default async function AppLayout({
         userEmail={user.email ?? ""}
         userId={user.id}
       />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset>
+        <MobileTopNav libraries={libraries} />
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   );
 }

@@ -9,6 +9,11 @@
         "mcp"
       ],
       "enabled": true
+    },
+    "Sentry": {
+      "type": "remote",
+      "url": "https://mcp.sentry.dev/mcp/par-nilsson/distillr",
+      "oauth": {}
     }
   }
 }

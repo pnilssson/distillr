@@ -69,7 +69,7 @@ Rules:
 [Sidebar 240px fixed] | [Main content, full remaining width]
 ```
 
-**Mobile app shell:** Sidebar collapses into a bottom navigation bar with 4-5 icon items. No hamburger menus. Main content takes full screen.
+**Mobile app shell:** A minimal sticky top bar replaces the sidebar on mobile. The top bar shows a sidebar trigger (panel icon) on the left to open the sidebar as a slide-in sheet, and the active library name (or "Distillr" on the dashboard) as context. No bottom navigation bars. Main content takes full screen below the top bar.
 
 **Sidebar contents (desktop, top to bottom):**
 

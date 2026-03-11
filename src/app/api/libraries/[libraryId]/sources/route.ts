@@ -61,7 +61,7 @@ export async function POST(request: Request, { params }: SourcesRouteProps) {
   // Channel sources have no distinct title - only the channel name matters
   const title = parsedUrl.type === "channel" ? null : oEmbedTitle;
 
-  const source = await createSource(user.id, libraryId, parsed.data.url, parsedUrl.type, { channelName, title });
+  const source = await createSource(user.id, libraryId, parsed.data.url, parsedUrl.type, channelName, title);
 
   if (!source) {
     return NextResponse.json({ error: "Unable to add source." }, { status: 500 });

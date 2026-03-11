@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
-import { fetchYouTubeOEmbed } from "@/lib/youtube";
 import { addSourceSchema, parseYouTubeUrl } from "@/lib/validation/sources";
 import { inngest } from "@/server/inngest/client";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
@@ -54,12 +53,7 @@ export const POST = withApiAuth<SourcesRouteProps>(async (request, { params, use
     );
   }
 
-  const fallbackHandle = parsedUrl.type === "channel" ? parsedUrl.handle : null;
-  const { channelName, title: oEmbedTitle } = await fetchYouTubeOEmbed(parsed.data.url, fallbackHandle);
-  // Channel sources have no distinct title - only the channel name matters
-  const title = parsedUrl.type === "channel" ? null : oEmbedTitle;
-
-  const source = await createSource(user.id, libraryId, parsed.data.url, parsedUrl.type, channelName, title);
+  const source = await createSource(user.id, libraryId, parsed.data.url, parsedUrl.type, null, null);
 
   if (!source) {
     return NextResponse.json({ error: "Unable to add source." }, { status: 500 });

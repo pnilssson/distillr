@@ -6,15 +6,28 @@ const TRANSCRIPT_API_URL = "https://transcriptapi.com/api/v2/youtube/transcript"
 
 type TranscriptApiSegment = {
   start?: number;
+  duration?: number;
   text?: string;
 };
 
-type TranscriptApiResponse = {
-  title?: string;
-  duration?: string;
-  segments?: TranscriptApiSegment[];
-  error?: string;
+type TranscriptApiErrorDetail = {
   message?: string;
+};
+
+type TranscriptApiMetadata = {
+  title?: string;
+  author_name?: string;
+  author_url?: string;
+  thumbnail_url?: string;
+};
+
+type TranscriptApiResponse = {
+  video_id?: string;
+  language?: string;
+  transcript?: TranscriptApiSegment[];
+  metadata?: TranscriptApiMetadata;
+  detail?: string | TranscriptApiErrorDetail;
+  code?: string;
 };
 
 export type TranscriptSegment = {
@@ -48,6 +61,8 @@ export async function fetchTranscript(videoId: string): Promise<VideoTranscript>
   const url = new URL(TRANSCRIPT_API_URL);
   url.searchParams.set("video_url", `https://www.youtube.com/watch?v=${videoId}`);
   url.searchParams.set("format", "json");
+  url.searchParams.set("include_timestamp", "true");
+  url.searchParams.set("send_metadata", "true");
 
   const response = await fetch(url.toString(), {
     method: "GET",
@@ -60,11 +75,14 @@ export async function fetchTranscript(videoId: string): Promise<VideoTranscript>
   const body = await parseJson(response);
 
   if (!response.ok) {
-    const message = body?.error ?? body?.message ?? `Transcript API request failed (${response.status}).`;
+    const message = getTranscriptErrorMessage(body, response.status);
     const normalizedMessage = message.toLowerCase();
     const terminal =
       response.status === 400 ||
+      response.status === 401 ||
+      response.status === 402 ||
       response.status === 404 ||
+      response.status === 422 ||
       normalizedMessage.includes("no caption") ||
       normalizedMessage.includes("no transcript") ||
       normalizedMessage.includes("captions are disabled") ||
@@ -73,15 +91,15 @@ export async function fetchTranscript(videoId: string): Promise<VideoTranscript>
     throw new TranscriptUnavailableError(message, terminal);
   }
 
-  const segments = normalizeSegments(body?.segments ?? []);
+  const segments = normalizeSegments(getTranscriptSegments(body));
 
   if (segments.length === 0) {
     throw new TranscriptUnavailableError("No transcript segments were returned for this video.", true);
   }
 
   return {
-    title: body?.title ?? null,
-    duration: body?.duration ?? null,
+    title: body?.metadata?.title ?? null,
+    duration: null,
     segments,
     raw: body ?? {},
   };
@@ -99,6 +117,7 @@ function normalizeSegments(segments: TranscriptApiSegment[]): TranscriptSegment[
   const normalized = segments
     .map((segment) => {
       const startSeconds = Number(segment.start ?? 0);
+      const durationSeconds = Number(segment.duration ?? 0);
       const text = (segment.text ?? "").trim().replace(/\s+/g, " ");
 
       if (!text) {
@@ -107,19 +126,35 @@ function normalizeSegments(segments: TranscriptApiSegment[]): TranscriptSegment[
 
       return {
         startSeconds: Number.isFinite(startSeconds) ? startSeconds : 0,
+        durationSeconds:
+          Number.isFinite(durationSeconds) && durationSeconds > 0 ? durationSeconds : null,
         text,
       };
     })
-    .filter((segment): segment is { startSeconds: number; text: string } => Boolean(segment))
+    .filter(
+      (
+        segment,
+      ): segment is { startSeconds: number; durationSeconds: number | null; text: string } =>
+        Boolean(segment),
+    )
     .sort((a, b) => a.startSeconds - b.startSeconds);
 
   return normalized.map((segment, index) => {
     const nextStart = normalized[index + 1]?.startSeconds;
+    const durationEnd =
+      typeof segment.durationSeconds === "number"
+        ? segment.startSeconds + segment.durationSeconds
+        : null;
     const fallbackEnd = segment.startSeconds + 4;
-    const endSeconds =
-      typeof nextStart === "number" && nextStart > segment.startSeconds
-        ? nextStart
-        : fallbackEnd;
+    let endSeconds = fallbackEnd;
+
+    if (typeof durationEnd === "number" && durationEnd > segment.startSeconds) {
+      endSeconds = durationEnd;
+    }
+
+    if (typeof nextStart === "number" && nextStart > segment.startSeconds) {
+      endSeconds = Math.min(endSeconds, nextStart);
+    }
 
     return {
       startSeconds: segment.startSeconds,
@@ -127,4 +162,28 @@ function normalizeSegments(segments: TranscriptApiSegment[]): TranscriptSegment[
       text: segment.text,
     };
   });
+}
+
+function getTranscriptSegments(body: TranscriptApiResponse | null): TranscriptApiSegment[] {
+  return Array.isArray(body?.transcript) ? body.transcript : [];
+}
+
+function getTranscriptErrorMessage(body: TranscriptApiResponse | null, status: number): string {
+  const detail = body?.detail;
+
+  if (typeof detail === "string" && detail.length > 0) {
+    return detail;
+  }
+
+  if (
+    detail &&
+    typeof detail === "object" &&
+    "message" in detail &&
+    typeof detail.message === "string" &&
+    detail.message.length > 0
+  ) {
+    return detail.message;
+  }
+
+  return `Transcript API request failed (${status}).`;
 }

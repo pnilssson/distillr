@@ -65,6 +65,27 @@ export const sourceAdded = inngest.createFunction(
         new Map(discoveredVideos.map((video) => [video.youtubeVideoId, video])).values(),
       );
 
+      await step.run("update-source-metadata", async () => {
+        const primaryVideo = dedupedVideos[0] ?? null;
+        const sourceChannelName = primaryVideo?.channelName ?? null;
+        const sourceTitle = source.sourceType === "video" ? primaryVideo?.title ?? null : null;
+
+        await db
+          .update(sources)
+          .set({
+            channelName: sourceChannelName,
+            title: sourceTitle,
+            updatedAt: sql`now()`,
+          })
+          .where(
+            and(
+              eq(sources.id, source.id),
+              eq(sources.userId, source.userId),
+              eq(sources.libraryId, source.libraryId),
+            ),
+          );
+      });
+
       const upsertedRows: VideoRow[] = [];
 
       for (let i = 0; i < dedupedVideos.length; i += VIDEO_DB_BATCH_SIZE) {

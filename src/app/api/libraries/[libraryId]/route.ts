@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 
-import { createSupabaseServerClient } from "@/server/core/supabase/server";
 import { createLibrarySchema } from "@/lib/validation/libraries";
+import { createSupabaseServerClient } from "@/server/core/supabase/server";
+import { deleteLibrary, updateLibrary } from "@/server/libraries/queries";
 
-type DeleteLibraryRouteProps = {
+type LibraryRouteProps = {
   params: Promise<{ libraryId: string }>;
 };
 
 export async function DELETE(
   _request: Request,
-  { params }: DeleteLibraryRouteProps,
+  { params }: LibraryRouteProps,
 ) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -22,22 +23,14 @@ export async function DELETE(
 
   const { libraryId } = await params;
 
-  const { error } = await supabase
-    .from("libraries")
-    .delete()
-    .eq("id", libraryId)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
+  await deleteLibrary(user.id, libraryId);
 
   return NextResponse.json({ success: true });
 }
 
 export async function PATCH(
   request: Request,
-  { params }: DeleteLibraryRouteProps,
+  { params }: LibraryRouteProps,
 ) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -60,16 +53,10 @@ export async function PATCH(
 
   const { libraryId } = await params;
 
-  const { data: library, error } = await supabase
-    .from("libraries")
-    .update({ name: parsed.data.name })
-    .eq("id", libraryId)
-    .eq("user_id", user.id)
-    .select("id, name")
-    .single();
+  const library = await updateLibrary(user.id, libraryId, parsed.data.name);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  if (!library) {
+    return NextResponse.json({ error: "Library not found." }, { status: 404 });
   }
 
   return NextResponse.json({ library });

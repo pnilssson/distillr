@@ -4,6 +4,10 @@ The ingestion flow runs entirely through Inngest durable functions. Each step re
 
 Retrieval contracts are defined in `docs/retrieval-architecture.md`.
 
+MVP model policy: OpenAI-only for generation and embeddings.
+
+Database requirement: `pgvector` must be enabled to store and query embeddings.
+
 ---
 
 ## Flow: Source Added
@@ -22,7 +26,7 @@ When a user adds a source URL:
 1. Fetch transcript from TranscriptAPI.com - stored as `transcript_raw`
 2. Chunk transcript (see Chunking Strategy below)
 3. Generate embeddings for chunks via OpenAI - upsert `video_chunks` rows
-4. Generate insight objects via Claude Haiku and embeddings via OpenAI - upsert `video_insights` rows
+4. Generate insight objects via OpenAI (`gpt-4.1-mini`) and embeddings via OpenAI (`text-embedding-3-small`) - upsert `video_insights` rows
 5. Update `status: 'ready'`
 
 ### Artifacts Written

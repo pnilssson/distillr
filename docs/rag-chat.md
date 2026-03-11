@@ -2,6 +2,8 @@
 
 Retrieval contracts are defined in `docs/retrieval-architecture.md`.
 
+MVP model policy: OpenAI-only for generation and embeddings.
+
 ## Query Flow
 
 1. User submits a question in the library chat
@@ -13,7 +15,7 @@ Retrieval contracts are defined in `docs/retrieval-architecture.md`.
    - `match_chunks_fts()` over `video_chunks`
 5. Candidates are merged and ranked into one evidence set (MVP: deterministic weighted fusion)
 6. Top evidence is assembled into context and source candidates (video title + timestamp links)
-7. Prompt is sent to Claude Sonnet (`claude-sonnet-4-6`) with context + conversation history
+7. Prompt is sent to OpenAI (`gpt-4.1`) with context + conversation history
 8. Response streams back via Vercel AI SDK
 9. Message pair is saved to `chat_messages` with token counts
 

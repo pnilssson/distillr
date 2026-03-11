@@ -25,7 +25,7 @@ This file is the operational source of truth for agent behavior in this reposito
 - Billing: Polar
 - Transcript extraction: TranscriptAPI
 - Embeddings: OpenAI `text-embedding-3-small`
-- LLMs: Claude Haiku for ingestion summaries, Claude Sonnet for chat
+- LLMs (MVP): OpenAI only - `gpt-4.1-mini` for ingestion summaries, `gpt-4.1` for chat
 
 ## Next.js Best Practices
 
@@ -74,7 +74,7 @@ This file is the operational source of truth for agent behavior in this reposito
 
 ## Observability
 
-- Track every Claude API call with PostHog `$ai_generation` (tokens in, tokens out, latency, cost).
+- Track every OpenAI API call with PostHog `$ai_generation` (tokens in, tokens out, latency, cost).
 - Track: `library_created`, `source_added`, `video_ready`, `video_failed`, `chat_message_sent`, `export_triggered`, `upgrade_prompt_shown`, `upgrade_clicked`, `plan_upgraded`.
 - Surface ingestion failures in the UI with clear reason per video.
 

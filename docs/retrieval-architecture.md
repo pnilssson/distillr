@@ -2,6 +2,8 @@
 
 This is the source of truth for how retrieval works across ingestion and chat.
 
+MVP model policy: OpenAI-only for generation and embeddings.
+
 ## Goal
 
 Answer both conceptual questions and exact lookups over YouTube transcripts, with compact timestamp-linked sources, scoped to one library.
@@ -29,6 +31,8 @@ Required fields:
 - `end_seconds`
 - `embedding` (`text-embedding-3-small`)
 
+Embeddings are stored in `pgvector` columns.
+
 ### `video_insights`
 
 AI-generated per-video knowledge objects for higher-level retrieval.
@@ -40,6 +44,8 @@ Required fields:
 - `content`
 - `embedding` (`text-embedding-3-small`)
 
+Embeddings are stored in `pgvector` columns.
+
 ## Query-Time Pipeline
 
 1. Normalize user question and generate one retrieval-friendly rewrite.
@@ -50,8 +56,13 @@ Required fields:
    - full-text search over `video_chunks`
 4. Merge and rank candidates with a deterministic strategy (MVP: weighted score fusion).
 5. Build context block with source diversity and token budget limits.
-6. Generate answer with Claude Sonnet (`claude-sonnet-4-6`).
+6. Generate answer with OpenAI (`gpt-4.1`).
 7. Return a synthesized answer with a compact `Sources` block and persist chat messages + usage metrics.
+
+Model defaults (MVP):
+
+- Embeddings: OpenAI `text-embedding-3-small`
+- Chat generation: OpenAI `gpt-4.1`
 
 ## Evidence and Citation Policy
 

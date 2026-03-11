@@ -71,6 +71,6 @@ Key differentiators:
 
 - Transcript fetch: ~€0.005-0.01 per video (TranscriptAPI.com)
 - Embedding: ~€0.002 per video (OpenAI)
-- Summary generation: ~€0.002-0.005 per video (Claude Haiku)
-- Chat message: ~€0.005-0.02 per message (Claude Sonnet, depending on context)
+- Summary generation: ~€0.002-0.005 per video (OpenAI `gpt-4.1-mini`)
+- Chat message: ~€0.005-0.02 per message (OpenAI `gpt-4.1`, depending on context)
 - Polar fee: 4% + €0.40 per transaction (MoR, includes EU VAT handling)

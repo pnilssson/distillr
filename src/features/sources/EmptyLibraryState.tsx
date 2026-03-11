@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Video } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CenteredSpinner } from "@/components/CenteredSpinner";
 import { AddSourceDialog } from "@/features/sources/AddSourceDialog";
 import { useSources } from "@/features/sources/useSources";
 
@@ -13,9 +14,14 @@ type EmptyLibraryStateProps = {
 
 export function EmptyLibraryState({ libraryId }: EmptyLibraryStateProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { data: sources } = useSources(libraryId);
+  const sourcesQuery = useSources(libraryId);
+  const sources = sourcesQuery.data ?? [];
 
-  if ((sources?.length ?? 0) > 0) {
+  if (sourcesQuery.isPending) {
+    return <CenteredSpinner label="Loading sources" className="py-24" />;
+  }
+
+  if (sources.length > 0) {
     return null;
   }
 

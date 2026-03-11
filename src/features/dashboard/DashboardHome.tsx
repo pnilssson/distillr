@@ -4,14 +4,19 @@ import { useState } from "react";
 import { Library } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CenteredSpinner } from "@/components/CenteredSpinner";
 import { NewLibraryDialog } from "@/features/libraries/NewLibraryDialog";
 import { useLibraries } from "@/features/libraries/useLibraries";
 
 export function DashboardHome() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: libraries } = useLibraries();
-  const hasLibraries = (libraries?.length ?? 0) > 0;
+  const librariesQuery = useLibraries();
+  const hasLibraries = (librariesQuery.data?.length ?? 0) > 0;
+
+  if (librariesQuery.isPending) {
+    return <CenteredSpinner label="Loading libraries" className="py-24" />;
+  }
 
   if (hasLibraries) {
     return null;

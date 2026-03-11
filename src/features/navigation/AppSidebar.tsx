@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { NewLibraryDialog } from "@/features/libraries/NewLibraryDialog";
 import { DeleteLibraryDialog } from "@/features/libraries/DeleteLibraryDialog";
 import { RenameLibraryDialog } from "@/features/libraries/RenameLibraryDialog";
@@ -53,15 +54,15 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   const [deletingLibrary, setDeletingLibrary] = useState<LibraryListItem | null>(null);
   const [renamingLibrary, setRenamingLibrary] = useState<LibraryListItem | null>(null);
 
-  const { data: libraries = [] } = useLibraries();
+  const librariesQuery = useLibraries();
+  const libraries = librariesQuery.data ?? [];
 
   const libraryIdMatch = pathname.match(/^\/library\/([^/]+)/);
   const activeLibraryId = libraryIdMatch?.[1] ?? null;
-  const activeLibrary = activeLibraryId
-    ? libraries.find((l) => l.id === activeLibraryId) ?? null
-    : null;
+  const showSourcesSection = Boolean(activeLibraryId);
 
-  const { data: sources = [] } = useSources(activeLibraryId);
+  const sourcesQuery = useSources(activeLibraryId);
+  const sources = sourcesQuery.data ?? [];
 
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_POSTHOG_KEY || !process.env.NEXT_PUBLIC_POSTHOG_HOST) {
@@ -118,45 +119,53 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
             </SidebarGroupAction>
 
             <SidebarMenu>
-              {libraries.map((library) => (
-                <SidebarMenuItem key={library.id}>
-                  <SidebarMenuButton
-                    isActive={pathname === `/library/${library.id}`}
-                    onClick={() => router.push(`/library/${library.id}`)}
-                    className="group-data-[collapsible=icon]:hidden"
-                  >
-                    <span className="truncate">{library.name}</span>
-                  </SidebarMenuButton>
+              {librariesQuery.isPending ? (
+                <div className="space-y-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
+                  <Skeleton className="h-7 w-full" />
+                  <Skeleton className="h-7 w-full" />
+                  <Skeleton className="h-7 w-4/5" />
+                </div>
+              ) : (
+                libraries.map((library) => (
+                  <SidebarMenuItem key={library.id}>
+                    <SidebarMenuButton
+                      isActive={pathname === `/library/${library.id}`}
+                      onClick={() => router.push(`/library/${library.id}`)}
+                      className="group-data-[collapsible=icon]:hidden"
+                    >
+                      <span className="truncate">{library.name}</span>
+                    </SidebarMenuButton>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuAction
-                        showOnHover
-                        aria-label={`Options for ${library.name}`}
-                        className="group-data-[collapsible=icon]:hidden"
-                      >
-                        <MoreHorizontal size={16} />
-                      </SidebarMenuAction>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent side="right" align="start" className="min-w-40">
-                      <DropdownMenuItem className="cursor-pointer" onClick={() => setRenamingLibrary(library)}>
-                        <Pencil size={14} />
-                        Rename library
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="cursor-pointer text-destructive focus:text-destructive"
-                        onClick={() => setDeletingLibrary(library)}
-                      >
-                        <Trash2 size={14} />
-                        Delete library
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </SidebarMenuItem>
-              ))}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <SidebarMenuAction
+                          showOnHover
+                          aria-label={`Options for ${library.name}`}
+                          className="group-data-[collapsible=icon]:hidden"
+                        >
+                          <MoreHorizontal size={16} />
+                        </SidebarMenuAction>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent side="right" align="start" className="min-w-40">
+                        <DropdownMenuItem className="cursor-pointer" onClick={() => setRenamingLibrary(library)}>
+                          <Pencil size={14} />
+                          Rename library
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="cursor-pointer text-destructive focus:text-destructive"
+                          onClick={() => setDeletingLibrary(library)}
+                        >
+                          <Trash2 size={14} />
+                          Delete library
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </SidebarMenuItem>
+                ))
+              )}
 
-              {libraries.length === 0 && (
+              {!librariesQuery.isPending && libraries.length === 0 && (
                 <p className="px-2 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
                   No libraries yet
                 </p>
@@ -164,7 +173,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroup>
 
-          {activeLibrary && (
+          {showSourcesSection && (
             <SidebarGroup className="group-data-[collapsible=icon]:hidden">
               <SidebarGroupLabel>Sources</SidebarGroupLabel>
               <SidebarGroupAction
@@ -175,15 +184,23 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
               </SidebarGroupAction>
 
               <SidebarMenu>
-                {sources.map((source) => (
-                  <SourceSidebarItem
-                    key={source.id}
-                    source={source}
-                    onDelete={() => setDeletingSource(source)}
-                  />
-                ))}
+                {sourcesQuery.isPending ? (
+                  <div className="space-y-2 px-2 py-1">
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-6 w-4/5" />
+                  </div>
+                ) : (
+                  sources.map((source) => (
+                    <SourceSidebarItem
+                      key={source.id}
+                      source={source}
+                      onDelete={() => setDeletingSource(source)}
+                    />
+                  ))
+                )}
 
-                {sources.length === 0 && (
+                {!sourcesQuery.isPending && sources.length === 0 && (
                   <p className="px-2 py-1 text-xs text-muted-foreground">
                     No sources yet
                   </p>

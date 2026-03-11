@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
+import { getLibraryById } from "@/server/libraries/queries";
 import { EmptyLibraryState } from "@/features/sources/EmptyLibraryState";
 
 type LibraryPageProps = {
@@ -10,12 +11,13 @@ type LibraryPageProps = {
 export default async function LibraryPage({ params }: LibraryPageProps) {
   const { libraryId } = await params;
   const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: library } = await supabase
-    .from("libraries")
-    .select("id")
-    .eq("id", libraryId)
-    .single();
+  if (!user) {
+    notFound();
+  }
+
+  const library = await getLibraryById(user.id, libraryId);
 
   if (!library) {
     notFound();

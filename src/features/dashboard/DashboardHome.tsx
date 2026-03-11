@@ -19,7 +19,7 @@ export function DashboardHome() {
 
   return (
     <>
-      <div className="py-24 text-center">
+      <div className="px-6 py-24 text-center max-w-sm mx-auto">
         <Library size={32} className="mx-auto text-muted-foreground/40" />
         <h1 className="mt-4 text-lg font-semibold">Start your first library</h1>
         <p className="mt-2 text-sm text-muted-foreground">

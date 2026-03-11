@@ -5,6 +5,7 @@ import { Video } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { AddSourceDialog } from "@/features/sources/AddSourceDialog";
+import { useSources } from "@/features/sources/useSources";
 
 type EmptyLibraryStateProps = {
   libraryId: string;
@@ -12,10 +13,15 @@ type EmptyLibraryStateProps = {
 
 export function EmptyLibraryState({ libraryId }: EmptyLibraryStateProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { data: sources } = useSources(libraryId);
+
+  if ((sources?.length ?? 0) > 0) {
+    return null;
+  }
 
   return (
     <>
-      <div className="py-24 text-center">
+      <div className="px-6 py-24 text-center max-w-sm mx-auto">
         <Video size={32} className="mx-auto text-muted-foreground/40" />
         <h1 className="mt-4 text-lg font-semibold">Add your first source</h1>
         <p className="mt-2 text-sm text-muted-foreground">

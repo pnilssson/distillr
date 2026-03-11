@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { fetchYouTubeOEmbed } from "@/lib/youtube";
 import { addSourceSchema, parseYouTubeUrl } from "@/lib/validation/sources";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
@@ -54,8 +55,13 @@ export async function POST(request: Request, { params }: SourcesRouteProps) {
     return NextResponse.json({ error: "Library not found." }, { status: 404 });
   }
 
-  const parsed_url = parseYouTubeUrl(parsed.data.url)!;
-  const source = await createSource(user.id, libraryId, parsed.data.url, parsed_url.type);
+  const parsedUrl = parseYouTubeUrl(parsed.data.url)!;
+  const fallbackHandle = parsedUrl.type === "channel" ? parsedUrl.handle : null;
+  const { channelName, title: oEmbedTitle } = await fetchYouTubeOEmbed(parsed.data.url, fallbackHandle);
+  // Channel sources have no distinct title - only the channel name matters
+  const title = parsedUrl.type === "channel" ? null : oEmbedTitle;
+
+  const source = await createSource(user.id, libraryId, parsed.data.url, parsedUrl.type, channelName, title);
 
   if (!source) {
     return NextResponse.json({ error: "Unable to add source." }, { status: 500 });
@@ -63,7 +69,7 @@ export async function POST(request: Request, { params }: SourcesRouteProps) {
 
   await captureServerEvent(user.id, "source_added", {
     library_id: libraryId,
-    source_type: parsed_url.type,
+    source_type: parsedUrl.type,
   });
 
   // TODO: fire source.added Inngest event (wired in next task)

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { List, LogOut, MoreHorizontal, Pencil, Plus, Trash2, User, Video } from "lucide-react";
+import { LogOut, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import posthog from "posthog-js";
 import {
   Sidebar,
@@ -32,14 +32,9 @@ import { RenameLibraryDialog } from "@/features/libraries/RenameLibraryDialog";
 import { LibraryListItem } from "@/features/libraries/types";
 import { useLibraries } from "@/features/libraries/useLibraries";
 import { AddSourceDialog } from "@/features/sources/AddSourceDialog";
+import { SourceSidebarItem } from "@/features/sources/SourceSidebarItem";
 import { useSources } from "@/features/sources/useSources";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
-
-const SOURCE_TYPE_ICONS = {
-  video: Video,
-  playlist: List,
-  channel: User,
-} as const;
 
 type AppSidebarProps = {
   userEmail: string;
@@ -163,17 +158,9 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
               </SidebarGroupAction>
 
               <SidebarMenu>
-                {sources.map((source) => {
-                  const Icon = SOURCE_TYPE_ICONS[source.sourceType] ?? Video;
-                  return (
-                    <SidebarMenuItem key={source.id}>
-                      <SidebarMenuButton className="gap-2">
-                        <Icon size={14} className="shrink-0 text-muted-foreground" />
-                        <span className="truncate text-xs">{source.url}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                {sources.map((source) => (
+                  <SourceSidebarItem key={source.id} source={source} />
+                ))}
 
                 {sources.length === 0 && (
                   <p className="px-2 py-1 text-xs text-muted-foreground">

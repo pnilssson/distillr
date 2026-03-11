@@ -2,7 +2,12 @@ import { z } from "zod";
 
 export type YouTubeSourceType = "video" | "playlist" | "channel";
 
-export function parseYouTubeUrl(raw: string): { type: YouTubeSourceType } | null {
+export type ParsedYouTubeUrl =
+  | { type: "video" }
+  | { type: "playlist" }
+  | { type: "channel"; handle: string };
+
+export function parseYouTubeUrl(raw: string): ParsedYouTubeUrl | null {
   let url: URL;
   try {
     url = new URL(raw);
@@ -16,7 +21,14 @@ export function parseYouTubeUrl(raw: string): { type: YouTubeSourceType } | null
   if (host === "youtu.be" && url.pathname.length > 1) return { type: "video" };
   if (url.pathname === "/watch" && url.searchParams.get("v")) return { type: "video" };
   if (url.pathname === "/playlist" && url.searchParams.get("list")) return { type: "playlist" };
-  if (/^\/(channel\/|@|c\/)/.test(url.pathname)) return { type: "channel" };
+
+  const channelMatch = url.pathname.match(/^\/(channel\/|@|c\/)([^/?&]+)/);
+  if (channelMatch) {
+    const prefix = channelMatch[1];
+    const id = channelMatch[2];
+    const handle = prefix === "@" ? `@${id}` : id;
+    return { type: "channel", handle };
+  }
 
   return null;
 }

@@ -5,6 +5,7 @@ import { Video } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { AddSourceDialog } from "@/features/sources/AddSourceDialog";
+import { useSources } from "@/features/sources/useSources";
 
 type EmptyLibraryStateProps = {
   libraryId: string;
@@ -12,6 +13,11 @@ type EmptyLibraryStateProps = {
 
 export function EmptyLibraryState({ libraryId }: EmptyLibraryStateProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { data: sources } = useSources(libraryId);
+
+  if ((sources?.length ?? 0) > 0) {
+    return null;
+  }
 
   return (
     <>

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { Home, LogOut, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import posthog from "posthog-js";
 import {
   Sidebar,
@@ -91,6 +92,19 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
         </SidebarHeader>
 
         <SidebarContent>
+          <SidebarGroup>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/dashboard"}>
+                  <Link href="/dashboard">
+                    <Home size={16} />
+                    <span>Home</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+
           <SidebarGroup>
             <SidebarGroupLabel>Libraries</SidebarGroupLabel>
             <SidebarGroupAction

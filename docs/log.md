@@ -1,5 +1,12 @@
 # Log
 
+## 2026-03-11 (Empty library state)
+
+- Replaced "Chat coming soon." placeholder in `LibraryPage` with a proper `EmptyLibraryState` component
+- `EmptyLibraryState` mirrors the `DashboardWelcome` empty-state pattern: icon, heading, description, use-case chips, and a primary CTA
+- CTA opens `AddSourceDialog` directly from the main content area, giving users an obvious path to populate a new library
+- Component lives in `src/features/sources/EmptyLibraryState.tsx`; library page remains a Server Component
+
 ## 2026-03-11 (Source display and metadata)
 
 - Added `channel_name` and `title` nullable columns to the `sources` table; generated migration 0002

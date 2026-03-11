@@ -1,46 +1,24 @@
 import { NextResponse } from "next/server";
 
 import { createLibrarySchema } from "@/lib/validation/libraries";
-import { createSupabaseServerClient } from "@/server/core/supabase/server";
+import { withApiAuth } from "@/server/core/auth/api";
 import { deleteLibrary, updateLibrary } from "@/server/libraries/queries";
 
 type LibraryRouteProps = {
   params: Promise<{ libraryId: string }>;
 };
 
-export async function DELETE(
-  _request: Request,
-  { params }: LibraryRouteProps,
-) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export const DELETE = withApiAuth<LibraryRouteProps>(
+  async (_request, { params, user }) => {
+    const { libraryId } = await params;
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    await deleteLibrary(user.id, libraryId);
 
-  const { libraryId } = await params;
+    return NextResponse.json({ success: true });
+  },
+);
 
-  await deleteLibrary(user.id, libraryId);
-
-  return NextResponse.json({ success: true });
-}
-
-export async function PATCH(
-  request: Request,
-  { params }: LibraryRouteProps,
-) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const PATCH = withApiAuth<LibraryRouteProps>(async (request, { params, user }) => {
   const body = await request.json();
   const parsed = createLibrarySchema.safeParse(body);
 
@@ -60,4 +38,4 @@ export async function PATCH(
   }
 
   return NextResponse.json({ library });
-}
+});

@@ -1,8 +1,6 @@
-import { redirect } from "next/navigation";
-
 import { AppSidebar } from "@/features/navigation/AppSidebar";
 import { MobileTopNav } from "@/features/navigation/MobileTopNav";
-import { createSupabaseServerClient } from "@/server/core/supabase/server";
+import { requireUserOrRedirect } from "@/server/core/auth/user";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function AppLayout({
@@ -10,14 +8,7 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const user = await requireUserOrRedirect();
 
   return (
     <SidebarProvider>

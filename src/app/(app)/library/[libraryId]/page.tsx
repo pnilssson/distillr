@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { createSupabaseServerClient } from "@/server/core/supabase/server";
+import { requireUserOrRedirect } from "@/server/core/auth/user";
 import { getLibraryById } from "@/server/libraries/queries";
 import { EmptyLibraryState } from "@/features/sources/EmptyLibraryState";
 
@@ -10,12 +10,7 @@ type LibraryPageProps = {
 
 export default async function LibraryPage({ params }: LibraryPageProps) {
   const { libraryId } = await params;
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    notFound();
-  }
+  const user = await requireUserOrRedirect();
 
   const library = await getLibraryById(user.id, libraryId);
 

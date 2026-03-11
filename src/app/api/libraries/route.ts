@@ -2,34 +2,16 @@ import { NextResponse } from "next/server";
 
 import { createLibrarySchema } from "@/lib/validation/libraries";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
-import { createSupabaseServerClient } from "@/server/core/supabase/server";
+import { withApiAuth } from "@/server/core/auth/api";
 import { createLibrary, getUserLibraries } from "@/server/libraries/queries";
 
-export async function GET() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withApiAuth(async (_request, { user }) => {
   const libraries = await getUserLibraries(user.id);
 
   return NextResponse.json({ libraries });
-}
+});
 
-export async function POST(request: Request) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const POST = withApiAuth(async (request, { user }) => {
   const payload = await request.json();
   const parse = createLibrarySchema.safeParse(payload);
 
@@ -48,4 +30,4 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json({ library }, { status: 201 });
-}
+});

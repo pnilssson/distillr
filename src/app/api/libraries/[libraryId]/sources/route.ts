@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { fetchYouTubeOEmbed } from "@/lib/youtube";
 import { addSourceSchema, parseYouTubeUrl } from "@/lib/validation/sources";
+import { inngest } from "@/server/inngest/client";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { withApiAuth } from "@/server/core/auth/api";
 import { getLibraryById } from "@/server/libraries/queries";
@@ -54,7 +55,14 @@ export const POST = withApiAuth<SourcesRouteProps>(async (request, { params, use
     source_type: parsedUrl.type,
   });
 
-  // TODO: fire source.added Inngest event (wired in next task)
+  await inngest.send({
+    name: "source.added",
+    data: {
+      userId: user.id,
+      libraryId,
+      sourceId: source.id,
+    },
+  });
 
   return NextResponse.json({ source }, { status: 201 });
 });

@@ -67,10 +67,11 @@ Key differentiators:
 
 ---
 
-## Cost Basis (approximate)
+## Cost Basis (approximate, March 2026)
 
-- Transcript fetch: ~€0.005-0.01 per video (TranscriptAPI.com)
-- Embedding: ~€0.002 per video (OpenAI)
-- Summary generation: ~€0.002-0.005 per video (OpenAI `gpt-4.1-mini`)
-- Chat message: ~€0.005-0.02 per message (OpenAI `gpt-4.1`, depending on context)
-- Polar fee: 4% + €0.40 per transaction (MoR, includes EU VAT handling)
+- Transcript fetch: ~€0.005-0.017 per video (TranscriptAPI, volume dependent)
+- Embedding: ~€0.0001-0.0003 per video (OpenAI `text-embedding-3-small`)
+- Insight generation: ~€0.003-0.013 per video (OpenAI `gpt-4.1-mini`, transcript length dependent)
+- Total ingestion cost: ~€0.008-0.030 per video (transcript + embedding + insights)
+- Chat message: ~€0.012-0.028 per message (OpenAI `gpt-4.1`, context and answer length dependent)
+- Polar fees: base 4% + €0.40 per transaction, with +1.5% for international cards and +0.5% for subscriptions where applicable

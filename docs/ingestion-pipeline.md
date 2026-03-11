@@ -15,7 +15,7 @@ Database requirement: `pgvector` must be enabled to store and query embeddings.
 When a user adds a source URL:
 
 1. `source.added` event fired
-2. Inngest function discovers all video IDs from the URL (channel to video list, playlist to video list, single video to single ID)
+2. Inngest function discovers all video IDs from the URL via YouTube Data API (channel to uploads playlist, playlist pagination, single video to single ID)
 3. Video rows created with `status: 'pending'`
 4. Fan-out: one `video.ingest` event fired per video
 

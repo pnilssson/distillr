@@ -12,7 +12,7 @@
 - [ ] Ingestion progress visible in UI (pending / processing / ready / failed per video)
 - [ ] Per-video summary + key insights display
 - [ ] Library chat (RAG over all ready videos in the library)
-- [ ] Timestamp-linked citations in chat responses
+- [ ] Compact source rollup with timestamp links in chat responses
 - [ ] Chat history persisted per library
 - [ ] Mobile-first responsive UI across app shell and feature pages
 

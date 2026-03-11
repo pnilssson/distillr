@@ -12,7 +12,7 @@ Where competitors like Transcribr focus on extraction and file export, Distillr 
 
 YouTube is one of the richest knowledge sources on the internet, but it is fundamentally unsearchable and non-persistent. Watching 200 hours of content on a topic leaves you with no artifact. Nothing you can query, reference, or build on.
 
-Distillr turns video content into something durable: a personal knowledge base that understands what was said across hundreds of videos, can answer questions with timestamp citations, and lets you export structured insights into your own tools.
+Distillr turns video content into something durable: a personal knowledge base that understands what was said across hundreds of videos, can answer questions with compact timestamp-linked sources, and lets you export structured insights into your own tools.
 
 ---
 
@@ -33,7 +33,7 @@ Key differentiators:
 
 - **Libraries as the primary object** - users curate named collections over time, not one-off queries
 - **Cross-video semantic search** - ask questions across hundreds of videos simultaneously via RAG
-- **Timestamp-linked citations** - every AI answer links back to the exact moment in the source video
+- **Timestamp-linked sources** - every AI answer includes a compact source rollup with links to exact moments in source videos
 - **Knowledge exports** - export summaries, topic reports, and chat sessions, not raw transcripts
 
 ---

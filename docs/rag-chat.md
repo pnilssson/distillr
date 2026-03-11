@@ -1,26 +1,41 @@
 # RAG / Chat Architecture
 
+Retrieval contracts are defined in `docs/retrieval-architecture.md`.
+
 ## Query Flow
 
 1. User submits a question in the library chat
-2. Question is embedded via OpenAI (same model as chunks: `text-embedding-3-small`)
-3. Supabase `match_chunks()` function runs vector cosine similarity search, scoped to the library, returns top 8 chunks with video metadata + timestamps
-4. Chunks are assembled into a context block with source citations (video title + timestamp links)
-5. Prompt is sent to Claude Sonnet (`claude-sonnet-4-6`) with the context + conversation history
-6. Response streams back via Vercel AI SDK
-7. Message pair saved to `chat_messages` with token counts
+2. System normalizes the question and generates a retrieval-friendly rewrite
+3. Question is embedded via OpenAI (`text-embedding-3-small`)
+4. Retrieval runs in parallel, scoped to one library and `ready` videos:
+   - `match_chunks_vector()` over `video_chunks`
+   - `match_insights_vector()` over `video_insights`
+   - `match_chunks_fts()` over `video_chunks`
+5. Candidates are merged and ranked into one evidence set (MVP: deterministic weighted fusion)
+6. Top evidence is assembled into context and source candidates (video title + timestamp links)
+7. Prompt is sent to Claude Sonnet (`claude-sonnet-4-6`) with context + conversation history
+8. Response streams back via Vercel AI SDK
+9. Message pair is saved to `chat_messages` with token counts
 
 ---
 
-## Citation Format
+## Sources Format
 
-Every answer includes inline references linking back to the source video at the exact timestamp:
+Every answer ends with one compact `Sources` block:
 
 ```
-[Source: Video Title - 12:34]
+Sources (showing top 3-5 videos)
+1. Video Title A (02:10, 14:22)
+2. Video Title B (05:44)
+... +N more videos used
 ```
 
-Links to: `youtube.com/watch?v=ID&t=754`
+- No inline citations in the answer body for MVP.
+- Timestamps are grouped by video title.
+- Source links use `youtube.com/watch?v=ID&t=SECONDS`.
+- UI shows top 3-5 videos only. Full evidence is retained internally.
+
+If evidence is insufficient, the assistant should say that directly and avoid fabricated claims.
 
 ---
 

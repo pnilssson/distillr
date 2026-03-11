@@ -55,6 +55,14 @@ This file is the operational source of truth for agent behavior in this reposito
 - Preserve tenant isolation with `user_id` and RLS across sensitive tables.
 - Keep sensitive keys server-only.
 
+## Retrieval Invariants
+
+- Use hybrid retrieval by default: vector similarity + full-text search.
+- Retrieve from two layers: `video_chunks` and `video_insights`.
+- Scope retrieval to one library and only `videos.status = 'ready'`.
+- Include a compact source rollup with video title + timestamps in chat answers.
+- If retrieval evidence is weak, respond with uncertainty instead of guessing.
+
 ## UI and Accessibility Invariants
 
 - Never directly modify files in `src/components/ui/`.

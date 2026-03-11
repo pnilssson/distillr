@@ -1,5 +1,9 @@
 # Log
 
+## 2026-03-11
+
+- Investigated `text-primary` usage across the codebase; found it only exists in the `link` variant of shadcn UI primitives (`button.tsx`, `badge.tsx`) — no custom components use it, so no changes were made
+
 ## 2026-03-10
 
 - Added `PATCH /api/libraries/[libraryId]` route handler for renaming a library, validated with `createLibrarySchema`

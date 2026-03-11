@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   index,
+  integer,
   pgPolicy,
   pgRole,
   pgTable,
@@ -107,9 +108,16 @@ export const videos = pgTable(
       .notNull()
       .references(() => sources.id, { onDelete: "cascade" }),
     youtubeVideoId: text("youtube_video_id").notNull(),
-    title: text("title"),
+    title: text("title").notNull(),
+    thumbnailUrl: text("thumbnail_url").notNull(),
+    channelName: text("channel_name").notNull(),
+    channelId: text("channel_id").notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }).notNull(),
+    durationSeconds: integer("duration_seconds").notNull(),
     status: text("status").notNull().default("pending"), // 'pending' | 'processing' | 'ready' | 'failed'
     failureReason: text("failure_reason"),
+    chunkCount: integer("chunk_count").notNull().default(0),
+    tokenCount: integer("token_count").notNull().default(0),
     transcriptRaw: text("transcript_raw"),
     summary: text("summary"),
     keyInsights: text("key_insights"),

@@ -15,10 +15,7 @@ export default function DashboardError({ reset }: DashboardErrorProps) {
           <CardTitle>We could not load your libraries</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Please try again. If this keeps happening, check your Supabase
-            connection and migration state.
-          </p>
+          <p className="text-sm text-muted-foreground">Please try again.</p>
           <Button onClick={reset}>Try again</Button>
         </CardContent>
       </Card>

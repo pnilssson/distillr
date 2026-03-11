@@ -12,6 +12,8 @@ export async function getLibrarySources(userId: string, libraryId: string) {
       id: sources.id,
       url: sources.url,
       sourceType: sources.sourceType,
+      channelName: sources.channelName,
+      title: sources.title,
       createdAt: sources.createdAt,
     })
     .from(sources)
@@ -24,14 +26,17 @@ export async function createSource(
   libraryId: string,
   url: string,
   sourceType: YouTubeSourceType,
+  metadata: { channelName: string | null; title: string | null },
 ) {
   const [source] = await db
     .insert(sources)
-    .values({ userId, libraryId, url, sourceType })
+    .values({ userId, libraryId, url, sourceType, channelName: metadata.channelName, title: metadata.title })
     .returning({
       id: sources.id,
       url: sources.url,
       sourceType: sources.sourceType,
+      channelName: sources.channelName,
+      title: sources.title,
       createdAt: sources.createdAt,
     });
   return source ?? null;

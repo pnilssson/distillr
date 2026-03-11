@@ -1,5 +1,13 @@
 # Log
 
+## 2026-03-11 (Source display and metadata)
+
+- Added `channel_name` and `title` nullable columns to the `sources` table; generated migration 0002
+- On source creation, server fetches YouTube oEmbed metadata (`author_name` + `title`) with a 5 s timeout and graceful null fallback; no API key required
+- Channel-type sources set `title` to null and use `channel_name` only; URL handle is used as fallback if oEmbed fails
+- Sidebar sources list now shows "Channel Name - Video/Playlist Title" (or just "Channel Name" for channels, or the raw URL as a last resort)
+- Each source item in the sidebar is now an external link (`target="_blank"`) to the original YouTube URL
+
 ## 2026-03-11 (TanStack Query)
 
 - Installed `@tanstack/react-query` and `@tanstack/react-query-devtools`

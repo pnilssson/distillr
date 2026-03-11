@@ -66,6 +66,8 @@ export const sources = pgTable(
       .references(() => libraries.id, { onDelete: "cascade" }),
     url: text("url").notNull(),
     sourceType: text("source_type").notNull(), // 'video' | 'playlist' | 'channel'
+    channelName: text("channel_name"),
+    title: text("title"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

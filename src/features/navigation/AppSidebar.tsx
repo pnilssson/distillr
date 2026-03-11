@@ -165,11 +165,26 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
               <SidebarMenu>
                 {sources.map((source) => {
                   const Icon = SOURCE_TYPE_ICONS[source.sourceType] ?? Video;
+                  let label: string;
+                  if (source.channelName && source.title) {
+                    label = `${source.channelName} - ${source.title}`;
+                  } else if (source.channelName) {
+                    label = source.channelName;
+                  } else {
+                    label = source.url;
+                  }
                   return (
                     <SidebarMenuItem key={source.id}>
-                      <SidebarMenuButton className="gap-2">
-                        <Icon size={14} className="shrink-0 text-muted-foreground" />
-                        <span className="truncate text-xs">{source.url}</span>
+                      <SidebarMenuButton asChild className="gap-2">
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={label}
+                        >
+                          <Icon size={14} className="shrink-0 text-muted-foreground" />
+                          <span className="truncate text-xs">{label}</span>
+                        </a>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );

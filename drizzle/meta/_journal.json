@@ -15,6 +15,13 @@
       "when": 1773234905308,
       "tag": "0001_reflective_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773238094370,
+      "tag": "0002_far_miracleman",
+      "breakpoints": true
     }
   ]
 }

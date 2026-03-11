@@ -7,20 +7,14 @@ import { Button } from "@/components/ui/button";
 import { NewLibraryDialog } from "@/features/libraries/NewLibraryDialog";
 import { useLibraries } from "@/features/libraries/useLibraries";
 
-export function DashboardWelcome() {
+export function DashboardHome() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data: libraries } = useLibraries();
   const hasLibraries = (libraries?.length ?? 0) > 0;
 
   if (hasLibraries) {
-    return (
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground">
-          Select a library from the sidebar to get started.
-        </p>
-      </div>
-    );
+    return null;
   }
 
   return (

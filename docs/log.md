@@ -8,6 +8,15 @@
 - Sidebar sources list now shows "Channel Name - Video/Playlist Title" (or just "Channel Name" for channels, or the raw URL as a last resort)
 - Each source item in the sidebar is now an external link (`target="_blank"`) to the original YouTube URL
 
+## 2026-03-11 (YouTube Sources)
+
+- Added sources and videos tables to the Drizzle schema with RLS policies and a migration
+- Implemented YouTube URL parsing to classify video, playlist, and channel URLs
+- Built API routes for managing sources per library
+- Added `AddSourceDialog` and a live sources list in `AppSidebar`
+- Extended the videos table with metadata fields (title, thumbnail, channel, duration, publish date) and ingestion counters for metering
+- Added a GitHub Actions workflow that runs Drizzle migrations on every push to `main` using the `Production` environment
+
 ## 2026-03-11 (TanStack Query)
 
 - Installed `@tanstack/react-query` and `@tanstack/react-query-devtools`

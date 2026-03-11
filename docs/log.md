@@ -1,5 +1,12 @@
 # Log
 
+## 2026-03-11
+
+- Migrated library API routes from direct Supabase JS queries to Drizzle ORM
+- Created `src/server/libraries/queries.ts` as a typed data-access layer with `getUserLibraries`, `createLibrary`, `updateLibrary`, and `deleteLibrary`
+- Each query enforces ownership via explicit `userId` checks; Supabase is retained for auth only
+- Simplified `GET/POST /api/libraries` and `PATCH/DELETE /api/libraries/[libraryId]` route handlers to delegate all DB work to the query layer
+
 ## 2026-03-10
 
 - Added `PATCH /api/libraries/[libraryId]` route handler for renaming a library, validated with `createLibrarySchema`

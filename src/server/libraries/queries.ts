@@ -27,6 +27,14 @@ export async function deleteLibrary(userId: string, libraryId: string) {
     .where(and(eq(libraries.id, libraryId), eq(libraries.userId, userId)));
 }
 
+export async function getLibraryById(userId: string, libraryId: string) {
+  const [library] = await db
+    .select({ id: libraries.id })
+    .from(libraries)
+    .where(and(eq(libraries.id, libraryId), eq(libraries.userId, userId)));
+  return library ?? null;
+}
+
 export async function updateLibrary(userId: string, libraryId: string, name: string) {
   const [library] = await db
     .update(libraries)

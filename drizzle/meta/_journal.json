@@ -8,6 +8,13 @@
       "when": 1773085735710,
       "tag": "0000_oval_carnage",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773234905308,
+      "tag": "0001_reflective_rockslide",
+      "breakpoints": true
     }
   ]
 }

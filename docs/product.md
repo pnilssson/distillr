@@ -67,28 +67,6 @@ Key differentiators:
 
 ---
 
-# Dashboard
-
-The dashboard (`/dashboard`) is the authenticated home screen. It is the first page a user sees after login and serves as the central overview of their Distillr activity.
-
-## Current state
-
-A minimal landing page. New users see the onboarding empty state (library icon, headline, use-case chips, "New library" CTA). Users with existing libraries see a blank page — future content will go here.
-
-## Planned content
-
-- **Usage stats** — videos ingested this billing period, chat messages used, remaining quota vs. plan limits
-- **Plan indicator** — current plan tier with a contextual upgrade prompt when limits are approaching
-- **Recent activity** — latest chat sessions across all libraries (title, library name, timestamp)
-- **Recently added sources** — last N sources added, with ingestion status (pending / processing / ready / failed)
-- **Quick-access library list** — all libraries with video count and last-active timestamp, sorted by recency
-
-## Design intent
-
-Calm overview. One glance should tell the user where they left off and how much of their plan they have used. No busy analytics grids — just the information that is directly actionable.
-
----
-
 ## Cost Basis (approximate)
 
 - Transcript fetch: ~€0.005-0.01 per video (TranscriptAPI.com)
@@ -96,4 +74,3 @@ Calm overview. One glance should tell the user where they left off and how much 
 - Summary generation: ~€0.002-0.005 per video (Claude Haiku)
 - Chat message: ~€0.005-0.02 per message (Claude Sonnet, depending on context)
 - Polar fee: 4% + €0.40 per transaction (MoR, includes EU VAT handling)
-

@@ -1,81 +1,77 @@
 # AGENTS
 
-This file is the source of truth for agent behavior in this repository.
+This file is the operational source of truth for agent behavior in this repository.
+
+## Product and Docs Scope
+
+- `docs/` is for agents.
+- Keep docs lean: product overview and feature-specific implementation plans.
+- When behavior or decisions change, update this file and any impacted feature doc in the same PR.
+- Remove outdated guidance instead of keeping historical notes.
 
 ## Project Context
 
-- Framework: Next.js App Router (hosted on Vercel)
-- Database: Supabase Postgres with Drizzle ORM/migrations
+- Framework: Next.js App Router on Vercel
+- Database: Supabase Postgres with Drizzle ORM and generated migrations
 - Jobs: Inngest
-- UI: shadcn/ui + Tailwind CSS
+- UI: shadcn/ui with Tailwind CSS
+- Analytics and errors: PostHog and Sentry
 
-## Source Of Truth Docs
+## Locked Stack Choices
 
-- `docs/product.md` - product scope, pricing, and target users
-- `docs/tech-stack.md` - locked stack choices
-- `docs/data-architecture.md` - schema, tenancy, and RLS model
-- `docs/conventions.md` - repo structure and engineering conventions
-- `docs/design-system.md` - colors, typography, layout, and component principles
-- `docs/ingestion-pipeline.md` - Inngest flow, chunking strategy, and failure handling
-- `docs/rag-chat.md` - RAG query flow, citation format, and chat persistence
-- `docs/tasks.md` - current and upcoming work items
-- `docs/log.md` - changelog of significant decisions and changes
+- Auth: Supabase Auth (magic link)
+- Forms and validation: React Hook Form + Zod
+- Client server-state: TanStack Query
+- Billing: Polar
+- Transcript extraction: TranscriptAPI
+- Embeddings: OpenAI `text-embedding-3-small`
+- LLMs: Claude Haiku for ingestion summaries, Claude Sonnet for chat
 
-## Next.js Execution Rules
+## Next.js Best Practices
 
-- Default to Server Components. Add `'use client'` only when needed for interactivity, browser APIs, or client state.
-- Do not access browser-only APIs during SSR (`window`, `document`, `localStorage`, `navigator`, `matchMedia`). Use guarded client-only logic in `useEffect` or isolate with dynamic import.
-- Prevent hydration mismatches. Do not render non-deterministic values in server output (`Date`, random values, browser-derived values) without a stable initial render.
-- Keep data fetching on the server whenever possible (Server Components, Route Handlers, server-side utilities).
-- Use dynamic imports with `ssr: false` for truly client-only modules.
-- Add explicit loading and error states for async route-level UX (`loading.tsx`, `error.tsx`) or equivalent component-level fallbacks.
-- Prefer Next.js primitives (`next/link`, `next/image`, metadata APIs) when applicable.
+- Default to Server Components. Add `'use client'` only for interactivity, client state, lifecycle hooks, or browser APIs.
+- Keep data fetching on the server when possible. Pass serialized data to Client Components.
+- Keep secrets and sensitive logic server-only.
+- Do not use browser-only APIs during SSR (`window`, `document`, `localStorage`, `navigator`, `matchMedia`).
+- Prevent hydration mismatches. Avoid non-deterministic values in server output.
+- Use route-level loading and error states (`loading.tsx`, `error.tsx`, `global-error.tsx`) for async UX and uncaught exceptions.
+- Use explicit caching and revalidation behavior for server fetches.
+- Prefer parallel fetching (`Promise.all`) for independent requests.
+- Use dynamic import with `ssr: false` only for truly client-only modules.
+- Prefer Next.js primitives (`next/link`, `next/image`, Metadata API) when applicable.
 
-## Component Architecture Rules
+## Architecture Rules
 
-- Extract named feature components when a chunk of JSX can be meaningfully described with a noun: `VideoCard`, `IngestionStatusBanner`, `LibrarySidebar`, `ChatMessage`. Feature components can reasonably be 100-200 lines.
-- Extract custom hooks when a component has more than 2-3 `useState` calls, polling logic, or complex state transitions. Examples: `useLibraryIngestion()`, `useChat()`, `usePlanLimits()`.
-- Keep page components under 80 lines. Files in `/app/**/page.tsx` compose sections and pass data down only.
-- Do not extract one-off wrappers that will never be reused, or when splitting would require threading 6+ props to the actual consumer.
+- Keep page files in `/app/**/page.tsx` thin and compositional.
+- Extract named feature components when JSX blocks represent clear domain concepts.
+- Extract custom hooks for complex client state transitions, polling, or mutation flows.
+- Avoid extra wrappers that add indirection without reuse value.
 
-## Repo-Specific Invariants
+## Data and Security Invariants
 
-- Never hand-write migrations. Define schema and policy changes in Drizzle and generate migrations from Drizzle.
-- Define RLS policies in Drizzle schema (`src/db/schema.ts` pattern) and generate SQL via Drizzle migrations.
-- All writes must go through server-side boundaries (Route Handlers / server code), never direct client-to-database writes.
+- Never hand-write migrations. Define schema and policy changes in Drizzle and generate migrations.
+- Define RLS policies in Drizzle schema and generate SQL through migrations.
+- All writes go through server boundaries (Route Handlers or server code), never direct client-to-database writes.
+- Preserve tenant isolation with `user_id` and RLS across sensitive tables.
 - Keep sensitive keys server-only.
+
+## UI and Accessibility Invariants
+
 - Never directly modify files in `src/components/ui/`.
-- If a UI primitive in `src/components/ui/` needs to be added, updated, or replaced, use the shadcn CLI and official docs (`https://ui.shadcn.com/docs/installation/next`) to regenerate it.
-
-## Documentation Hygiene
-
-- Keep `docs/` human-facing (product, architecture, process).
-- Keep AI/LLM prompt instructions centralized in `AGENTS.md`, not scattered across `docs/`.
-- After making a significant change (new feature, architecture decision, schema change, config change), append a dated entry to `docs/log.md` using format `## YYYY-MM-DD` with a short bullet summary of what changed and why.
-
-## Commits
-
-- Use conventional commit messages: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `style:`.
-- Keep the subject line under 72 characters.
-- No em dashes in commit messages.
+- Target WCAG 2.1 AA baseline.
+- Every input must have an associated label.
+- Link field errors with `aria-describedby`.
+- Icon-only buttons require `aria-label`.
+- Use semantic landmarks (`nav`, `main`, `section`, `header`).
 
 ## Observability
 
-- Use PostHog's native `$ai_generation` event for every Claude API call: tokens in, tokens out, latency, cost.
-- Track these custom PostHog events: `library_created`, `source_added`, `video_ready`, `video_failed`, `chat_message_sent` (token count as property), `export_triggered`, `upgrade_prompt_shown`, `upgrade_clicked`, `plan_upgraded`.
-- Log ingestion failures with reason per video - surfaced in UI, not hidden.
+- Track every Claude API call with PostHog `$ai_generation` (tokens in, tokens out, latency, cost).
+- Track: `library_created`, `source_added`, `video_ready`, `video_failed`, `chat_message_sent`, `export_triggered`, `upgrade_prompt_shown`, `upgrade_clicked`, `plan_upgraded`.
+- Surface ingestion failures in the UI with clear reason per video.
 
-## Accessibility
+## Commits and Writing
 
-- Target WCAG 2.1 AA. Don't over-engineer it, but follow the basics.
-- Every `<input>` needs an associated `<label>` (visible or `sr-only`). Placeholder alone is not a label.
-- Link field error messages to their input with `aria-describedby`.
-- Icon-only buttons need `aria-label`.
-- Use semantic landmarks (`<nav>`, `<main>`, `<section>`, `<header>`).
-- Radix UI (via shadcn) handles ARIA for dialogs, dropdowns, etc. - use those primitives rather than rolling custom implementations.
-
----
-
-## Writing Rule
-
+- Use conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `style:`.
+- Keep commit subject lines under 72 characters.
 - Do not use em dashes in generated copy. Use hyphens or rewrite.

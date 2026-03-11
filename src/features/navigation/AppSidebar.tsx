@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import posthog from "posthog-js";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   Sidebar,
@@ -31,20 +32,25 @@ import { NewLibraryDialog } from "@/features/libraries/NewLibraryDialog";
 import { DeleteLibraryDialog } from "@/features/libraries/DeleteLibraryDialog";
 import { RenameLibraryDialog } from "@/features/libraries/RenameLibraryDialog";
 import { LibraryListItem } from "@/features/libraries/types";
+import { fetchLibraries } from "@/features/libraries/api";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
 
 type AppSidebarProps = {
-  libraries: LibraryListItem[];
   userEmail: string;
   userId: string;
 };
 
-export function AppSidebar({ libraries, userEmail, userId }: AppSidebarProps) {
+export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deletingLibrary, setDeletingLibrary] = useState<LibraryListItem | null>(null);
   const [renamingLibrary, setRenamingLibrary] = useState<LibraryListItem | null>(null);
+
+  const { data: libraries = [] } = useQuery({
+    queryKey: ["libraries"],
+    queryFn: fetchLibraries,
+  });
 
   const libraryIdMatch = pathname.match(/^\/library\/([^/]+)/);
   const activeLibraryId = libraryIdMatch?.[1] ?? null;

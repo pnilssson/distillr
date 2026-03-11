@@ -1,16 +1,18 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { LibraryListItem } from "@/features/libraries/types";
+import { fetchLibraries } from "@/features/libraries/api";
 
-type MobileTopNavProps = {
-  libraries: LibraryListItem[];
-};
-
-export function MobileTopNav({ libraries }: MobileTopNavProps) {
+export function MobileTopNav() {
   const pathname = usePathname();
+
+  const { data: libraries = [] } = useQuery({
+    queryKey: ["libraries"],
+    queryFn: fetchLibraries,
+  });
 
   const libraryIdMatch = pathname.match(/^\/library\/([^/]+)/);
   const activeLibraryId = libraryIdMatch?.[1] ?? null;

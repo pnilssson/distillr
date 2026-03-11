@@ -19,26 +19,11 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  const { data } = await supabase
-    .from("libraries")
-    .select("id, name, created_at")
-    .order("created_at", { ascending: false });
-
-  const libraries = (data ?? []).map((library) => ({
-    id: library.id,
-    name: library.name,
-    createdAt: library.created_at,
-  }));
-
   return (
     <SidebarProvider>
-      <AppSidebar
-        libraries={libraries}
-        userEmail={user.email ?? ""}
-        userId={user.id}
-      />
+      <AppSidebar userEmail={user.email ?? ""} userId={user.id} />
       <SidebarInset>
-        <MobileTopNav libraries={libraries} />
+        <MobileTopNav />
         {children}
       </SidebarInset>
     </SidebarProvider>

@@ -23,7 +23,6 @@ export function NewLibraryDialog({ open, onOpenChange }: NewLibraryDialogProps) 
   function handleCreated(library: LibraryListItem) {
     onOpenChange(false);
     router.push(`/library/${library.id}`);
-    router.refresh();
   }
 
   return (

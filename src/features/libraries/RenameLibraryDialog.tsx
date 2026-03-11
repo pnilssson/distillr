@@ -1,9 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +16,7 @@ import {
   createLibrarySchema,
   type CreateLibraryInput,
 } from "@/lib/validation/libraries";
+import { renameLibrary } from "@/features/libraries/api";
 
 type RenameLibraryDialogProps = {
   libraryId: string;
@@ -31,41 +31,28 @@ export function RenameLibraryDialog({
   open,
   onOpenChange,
 }: RenameLibraryDialogProps) {
-  const router = useRouter();
+  const queryClient = useQueryClient();
   const form = useForm<CreateLibraryInput>({
     resolver: zodResolver(createLibrarySchema),
     defaultValues: { name: libraryName },
   });
-  const [requestError, setRequestError] = useState<string | null>(null);
 
-  async function onSubmit(values: CreateLibraryInput) {
-    setRequestError(null);
+  const mutation = useMutation({
+    mutationFn: (values: CreateLibraryInput) => renameLibrary(libraryId, values.name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+      onOpenChange(false);
+    },
+  });
 
-    const response = await fetch(`/api/libraries/${libraryId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-
-    const payload = (await response.json()) as
-      | { library: { id: string; name: string } }
-      | { error: string };
-
-    if (!response.ok || !("library" in payload)) {
-      const errorMessage =
-        "error" in payload ? payload.error : "Unable to rename library.";
-      setRequestError(errorMessage);
-      return;
-    }
-
-    onOpenChange(false);
-    router.refresh();
+  function onSubmit(values: CreateLibraryInput) {
+    mutation.mutate(values);
   }
 
   function handleOpenChange(open: boolean) {
     if (!open) {
       form.reset({ name: libraryName });
-      setRequestError(null);
+      mutation.reset();
     }
     onOpenChange(open);
   }
@@ -95,10 +82,10 @@ export function RenameLibraryDialog({
               />
               <Button
                 className="w-full"
-                disabled={form.formState.isSubmitting}
+                disabled={mutation.isPending}
                 type="submit"
               >
-                {form.formState.isSubmitting ? "Renaming..." : "Rename library"}
+                {mutation.isPending ? "Renaming..." : "Rename library"}
               </Button>
             </div>
             {form.formState.errors.name ? (
@@ -111,9 +98,9 @@ export function RenameLibraryDialog({
               </p>
             ) : null}
           </div>
-          {requestError ? (
+          {mutation.isError ? (
             <p className="text-sm text-destructive" role="alert">
-              {requestError}
+              {mutation.error.message}
             </p>
           ) : null}
         </form>

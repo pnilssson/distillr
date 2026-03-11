@@ -3,14 +3,12 @@
 import { usePathname } from "next/navigation";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { LibraryListItem } from "@/features/libraries/types";
+import { useLibraries } from "@/features/libraries/useLibraries";
 
-type MobileTopNavProps = {
-  libraries: LibraryListItem[];
-};
-
-export function MobileTopNav({ libraries }: MobileTopNavProps) {
+export function MobileTopNav() {
   const pathname = usePathname();
+
+  const { data: libraries = [] } = useLibraries();
 
   const libraryIdMatch = pathname.match(/^\/library\/([^/]+)/);
   const activeLibraryId = libraryIdMatch?.[1] ?? null;

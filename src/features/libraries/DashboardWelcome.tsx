@@ -5,13 +5,13 @@ import { Library } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { NewLibraryDialog } from "@/features/libraries/NewLibraryDialog";
+import { useLibraries } from "@/features/libraries/useLibraries";
 
-type DashboardWelcomeProps = {
-  hasLibraries: boolean;
-};
-
-export function DashboardWelcome({ hasLibraries }: DashboardWelcomeProps) {
+export function DashboardWelcome() {
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const { data: libraries } = useLibraries();
+  const hasLibraries = (libraries?.length ?? 0) > 0;
 
   if (hasLibraries) {
     return (

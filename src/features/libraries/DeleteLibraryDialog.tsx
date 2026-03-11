@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
   AlertDialog,
@@ -13,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { deleteLibrary } from "@/features/libraries/api";
 
 type DeleteLibraryDialogProps = {
   libraryId: string;
@@ -29,22 +30,18 @@ export function DeleteLibraryDialog({
 }: DeleteLibraryDialogProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const queryClient = useQueryClient();
 
-  async function handleDelete() {
-    setIsDeleting(true);
-
-    await fetch(`/api/libraries/${libraryId}`, { method: "DELETE" });
-
-    onOpenChange(false);
-    setIsDeleting(false);
-
-    if (pathname === `/library/${libraryId}`) {
-      router.push("/dashboard");
-    }
-
-    router.refresh();
-  }
+  const mutation = useMutation({
+    mutationFn: () => deleteLibrary(libraryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+      onOpenChange(false);
+      if (pathname === `/library/${libraryId}`) {
+        router.push("/dashboard");
+      }
+    },
+  });
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -57,13 +54,13 @@ export function DeleteLibraryDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={mutation.isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleDelete}
-            disabled={isDeleting}
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isDeleting ? "Deleting..." : "Delete library"}
+            {mutation.isPending ? "Deleting..." : "Delete library"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

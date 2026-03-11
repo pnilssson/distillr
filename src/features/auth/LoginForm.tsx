@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,33 +15,25 @@ export function LoginForm() {
       email: "",
     },
   });
-  const [status, setStatus] = useState<string | null>(null);
-  const [requestError, setRequestError] = useState<string | null>(null);
 
-  async function onSubmit(values: LoginEmailInput) {
-    setRequestError(null);
-    setStatus(null);
+  const mutation = useMutation({
+    mutationFn: async (values: LoginEmailInput) => {
+      const response = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const payload = (await response.json()) as { message?: string; error?: string };
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Unable to send magic link.");
+      }
+      return payload;
+    },
+    onSuccess: () => form.reset(),
+  });
 
-    const response = await fetch("/api/auth/magic-link", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(values),
-    });
-
-    const payload = (await response.json()) as {
-      message?: string;
-      error?: string;
-    };
-
-    if (!response.ok) {
-      setRequestError(payload.error ?? "Unable to send magic link.");
-      return;
-    }
-
-    setStatus(payload.message ?? "Check your inbox for the magic link.");
-    form.reset();
+  function onSubmit(values: LoginEmailInput) {
+    mutation.mutate(values);
   }
 
   return (
@@ -72,20 +64,20 @@ export function LoginForm() {
         ) : null}
       </div>
       <Button
-        disabled={form.formState.isSubmitting}
+        disabled={mutation.isPending}
         type="submit"
         className="w-full"
       >
-        {form.formState.isSubmitting ? "Sending..." : "Send magic link"}
+        {mutation.isPending ? "Sending..." : "Send magic link"}
       </Button>
-      {status ? (
+      {mutation.isSuccess ? (
         <p className="text-sm" role="status">
-          {status}
+          {mutation.data.message ?? "Check your inbox for the magic link."}
         </p>
       ) : null}
-      {requestError ? (
+      {mutation.isError ? (
         <p className="text-sm text-destructive" role="alert">
-          {requestError}
+          {mutation.error.message}
         </p>
       ) : null}
     </form>

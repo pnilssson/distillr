@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { List, LogOut, MoreHorizontal, Pencil, Plus, Trash2, User, Video } from "lucide-react";
 import posthog from "posthog-js";
 import {
   Sidebar,
@@ -31,7 +31,15 @@ import { DeleteLibraryDialog } from "@/features/libraries/DeleteLibraryDialog";
 import { RenameLibraryDialog } from "@/features/libraries/RenameLibraryDialog";
 import { LibraryListItem } from "@/features/libraries/types";
 import { useLibraries } from "@/features/libraries/useLibraries";
+import { AddSourceDialog } from "@/features/sources/AddSourceDialog";
+import { useSources } from "@/features/sources/useSources";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
+
+const SOURCE_TYPE_ICONS = {
+  video: Video,
+  playlist: List,
+  channel: User,
+} as const;
 
 type AppSidebarProps = {
   userEmail: string;
@@ -42,6 +50,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [addingSource, setAddingSource] = useState(false);
   const [deletingLibrary, setDeletingLibrary] = useState<LibraryListItem | null>(null);
   const [renamingLibrary, setRenamingLibrary] = useState<LibraryListItem | null>(null);
 
@@ -52,6 +61,8 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   const activeLibrary = activeLibraryId
     ? libraries.find((l) => l.id === activeLibraryId) ?? null
     : null;
+
+  const { data: sources = [] } = useSources(activeLibraryId);
 
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_POSTHOG_KEY || !process.env.NEXT_PUBLIC_POSTHOG_HOST) {
@@ -144,14 +155,31 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
           {activeLibrary && (
             <SidebarGroup className="group-data-[collapsible=icon]:hidden">
               <SidebarGroupLabel>Sources</SidebarGroupLabel>
-              <SidebarGroupAction aria-label="Add source" disabled>
+              <SidebarGroupAction
+                onClick={() => setAddingSource(true)}
+                aria-label="Add source"
+              >
                 <Plus size={16} />
               </SidebarGroupAction>
 
               <SidebarMenu>
-                <p className="px-2 py-1 text-xs text-muted-foreground">
-                  No sources yet
-                </p>
+                {sources.map((source) => {
+                  const Icon = SOURCE_TYPE_ICONS[source.sourceType] ?? Video;
+                  return (
+                    <SidebarMenuItem key={source.id}>
+                      <SidebarMenuButton className="gap-2">
+                        <Icon size={14} className="shrink-0 text-muted-foreground" />
+                        <span className="truncate text-xs">{source.url}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+
+                {sources.length === 0 && (
+                  <p className="px-2 py-1 text-xs text-muted-foreground">
+                    No sources yet
+                  </p>
+                )}
               </SidebarMenu>
             </SidebarGroup>
           )}
@@ -177,6 +205,14 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
       </Sidebar>
 
       <NewLibraryDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+
+      {activeLibraryId && (
+        <AddSourceDialog
+          libraryId={activeLibraryId}
+          open={addingSource}
+          onOpenChange={setAddingSource}
+        />
+      )}
 
       {deletingLibrary && (
         <DeleteLibraryDialog

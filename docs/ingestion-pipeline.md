@@ -18,6 +18,9 @@ When a user adds a source URL:
 2. Inngest function discovers all video IDs from the URL via YouTube Data API (channel to uploads playlist, playlist pagination, single video to single ID)
 3. Video rows created with `status: 'pending'`
 4. Fan-out: one `video.ingest` event fired per video
+5. Source row status moves from `processing` to `ready` (or `failed` if setup fails)
+
+Duplicate sources are blocked per library using a canonical `source_key` (video ID, playlist ID, or channel reference). If a duplicate is submitted, the API returns a conflict response and no ingestion event is sent.
 
 If queueing fails when adding a source, the source insert is rolled back and the API returns a generic retry message.
 
@@ -46,6 +49,26 @@ All writes are idempotent. Retries must update existing rows for the same `(vide
 If TranscriptAPI fails (video has no captions), status is set to `'failed'` with an error reason. These are surfaced in the UI. Whisper fallback is post-MVP.
 
 User-facing errors must stay provider-agnostic. Include technical provider details only in logs and Sentry.
+
+---
+
+## UI Progress Visibility
+
+The library UI reads ingestion progress from `GET /api/libraries/[libraryId]/videos`.
+
+Response contract includes:
+
+- Per-video status rows (`pending`, `processing`, `ready`, `failed`)
+- Aggregate counts (`total`, `pending`, `processing`, `ready`, `failed`)
+- Derived state flags (`hasInFlight`, `isProcessing`, `isSettled`)
+
+Polling behavior:
+
+- Poll every 3 seconds while `hasInFlight` is true
+- Poll every 3 seconds while `isProcessing` is true (source setup is in progress)
+- Stop polling once all videos are settled
+
+The floating progress indicator appears while ingestion is active, briefly shows completion, then dismisses itself.
 
 ---
 

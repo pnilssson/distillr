@@ -9,6 +9,12 @@ This file is the operational source of truth for agent behavior in this reposito
 - When behavior or decisions change, update this file and any impacted feature doc in the same PR.
 - Remove outdated guidance instead of keeping historical notes.
 
+## MVP Code Hygiene
+
+- Prefer forward-only implementation. Do not add backward-compatibility shims, dual-write paths, or legacy fallbacks.
+- Keep the codebase clean and current for MVP. Remove obsolete paths instead of carrying both old and new behavior.
+- If a forward-only change requires manual data cleanup or operational action, tell the user exactly what to do before implementing follow-up logic.
+
 ## Project Context
 
 - Framework: Next.js App Router on Vercel

@@ -3,9 +3,9 @@ import { z } from "zod";
 export type YouTubeSourceType = "video" | "playlist" | "channel";
 
 export type ParsedYouTubeUrl =
-  | { type: "video" }
-  | { type: "playlist" }
-  | { type: "channel"; handle: string };
+  | { type: "video"; sourceKey: string }
+  | { type: "playlist"; sourceKey: string }
+  | { type: "channel"; sourceKey: string; channelRef: string };
 
 export function parseYouTubeUrl(raw: string): ParsedYouTubeUrl | null {
   let url: URL;
@@ -18,19 +18,45 @@ export function parseYouTubeUrl(raw: string): ParsedYouTubeUrl | null {
   const host = url.hostname.replace(/^www\./, "");
   if (host !== "youtube.com" && host !== "youtu.be") return null;
 
-  if (host === "youtu.be" && url.pathname.length > 1) return { type: "video" };
-  if (url.pathname === "/watch" && url.searchParams.get("v")) return { type: "video" };
-  if (url.pathname === "/playlist" && url.searchParams.get("list")) return { type: "playlist" };
+  if (host === "youtu.be") {
+    const videoId = getPathFirstSegment(url.pathname);
+    if (videoId) {
+      return { type: "video", sourceKey: `video:${videoId}` };
+    }
+  }
+
+  if (url.pathname === "/watch") {
+    const videoId = url.searchParams.get("v")?.trim();
+    if (videoId) {
+      return { type: "video", sourceKey: `video:${videoId}` };
+    }
+  }
+
+  if (url.pathname === "/playlist") {
+    const playlistId = url.searchParams.get("list")?.trim();
+    if (playlistId) {
+      return { type: "playlist", sourceKey: `playlist:${playlistId}` };
+    }
+  }
 
   const channelMatch = url.pathname.match(/^\/(channel\/|@|c\/)([^/?&]+)/);
   if (channelMatch) {
     const prefix = channelMatch[1];
     const id = channelMatch[2];
-    const handle = prefix === "@" ? `@${id}` : id;
-    return { type: "channel", handle };
+    const channelRef = prefix === "@" ? `@${id}`.toLowerCase() : `${prefix}${id}`;
+    return {
+      type: "channel",
+      sourceKey: `channel:${channelRef}`,
+      channelRef,
+    };
   }
 
   return null;
+}
+
+function getPathFirstSegment(pathname: string): string | null {
+  const firstSegment = pathname.split("/").filter(Boolean)[0]?.trim();
+  return firstSegment && firstSegment.length > 0 ? firstSegment : null;
 }
 
 export const addSourceSchema = z.object({

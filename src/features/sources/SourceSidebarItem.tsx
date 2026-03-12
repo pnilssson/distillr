@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   SidebarMenuAction,
   SidebarMenuButton,
@@ -41,6 +42,7 @@ export function getSourceLabel(source: SourceListItem): string {
 export function SourceSidebarItem({ source, onDelete }: Props) {
   const Icon = SOURCE_TYPE_ICONS[source.sourceType] ?? Video;
   const label = getSourceLabel(source);
+  const isResolvingName = source.status === "processing" && !source.channelName && !source.title;
 
   return (
     <SidebarMenuItem>
@@ -52,7 +54,11 @@ export function SourceSidebarItem({ source, onDelete }: Props) {
           title={label}
         >
           <Icon size={14} className="shrink-0 text-muted-foreground" />
-          <span className="truncate text-xs">{label}</span>
+          {isResolvingName ? (
+            <Skeleton className="h-3 w-28" aria-hidden="true" />
+          ) : (
+            <span className="truncate text-xs">{label}</span>
+          )}
         </a>
       </SidebarMenuButton>
 

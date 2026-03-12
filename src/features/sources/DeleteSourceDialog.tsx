@@ -35,6 +35,7 @@ export function DeleteSourceDialog({
     mutationFn: () => deleteSource(libraryId, sourceId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sources", libraryId] });
+      queryClient.invalidateQueries({ queryKey: ["videos", libraryId] });
       onOpenChange(false);
     },
   });

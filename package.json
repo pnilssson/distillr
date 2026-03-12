@@ -23,6 +23,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.1",
+    "framer-motion": "^12.36.0",
     "geist": "^1.7.0",
     "inngest": "^3.52.6",
     "js-tiktoken": "^1.0.21",

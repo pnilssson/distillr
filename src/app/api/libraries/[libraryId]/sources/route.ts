@@ -7,7 +7,12 @@ import { inngest } from "@/server/inngest/client";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { withApiAuth } from "@/server/core/auth/api";
 import { getLibraryById } from "@/server/libraries/queries";
-import { createSource, deleteSource, getLibrarySources } from "@/server/sources/queries";
+import {
+  createSource,
+  deleteSource,
+  getLibrarySources,
+  getSourceBySourceKey,
+} from "@/server/sources/queries";
 
 type SourcesRouteProps = {
   params: Promise<{ libraryId: string }>;
@@ -53,10 +58,30 @@ export const POST = withApiAuth<SourcesRouteProps>(async (request, { params, use
     );
   }
 
-  const source = await createSource(user.id, libraryId, parsed.data.url, parsedUrl.type, null, null);
+  const existingSource = await getSourceBySourceKey(user.id, libraryId, parsedUrl.sourceKey);
+  if (existingSource) {
+    return NextResponse.json(
+      { error: "This source has already been added to this library." },
+      { status: 409 },
+    );
+  }
+
+  const source = await createSource(
+    user.id,
+    libraryId,
+    parsed.data.url,
+    parsedUrl.sourceKey,
+    parsedUrl.type,
+    "processing",
+    null,
+    null,
+  );
 
   if (!source) {
-    return NextResponse.json({ error: "Unable to add source." }, { status: 500 });
+    return NextResponse.json(
+      { error: "This source has already been added to this library." },
+      { status: 409 },
+    );
   }
 
   try {

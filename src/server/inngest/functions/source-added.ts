@@ -23,6 +23,12 @@ export const sourceAdded = inngest.createFunction(
   { id: "source-added" },
   { event: "source.added" },
   async ({ event, step }) => {
+    const failureContext = {
+      userId: event.data.userId,
+      libraryId: event.data.libraryId,
+      sourceId: event.data.sourceId,
+    };
+
     try {
       const source = await step.run("load-source", async () => {
         const [row] = await db
@@ -49,11 +55,47 @@ export const sourceAdded = inngest.createFunction(
         return row;
       });
 
+      failureContext.userId = source.userId;
+      failureContext.libraryId = source.libraryId;
+      failureContext.sourceId = source.id;
+
+      await step.run("mark-source-processing", async () => {
+        await db
+          .update(sources)
+          .set({
+            status: "processing",
+            updatedAt: sql`now()`,
+          })
+          .where(
+            and(
+              eq(sources.id, source.id),
+              eq(sources.userId, source.userId),
+              eq(sources.libraryId, source.libraryId),
+            ),
+          );
+      });
+
       const discoveredVideos = await step.run("discover-source-videos", async () => {
         return discoverVideosFromSource(source.url, source.sourceType as YouTubeSourceType);
       });
 
       if (discoveredVideos.length === 0) {
+        await step.run("mark-source-ready-no-videos", async () => {
+          await db
+            .update(sources)
+            .set({
+              status: "ready",
+              updatedAt: sql`now()`,
+            })
+            .where(
+              and(
+                eq(sources.id, source.id),
+                eq(sources.userId, source.userId),
+                eq(sources.libraryId, source.libraryId),
+              ),
+            );
+        });
+
         return {
           sourceId: source.id,
           discovered: 0,
@@ -155,12 +197,44 @@ export const sourceAdded = inngest.createFunction(
         );
       }
 
+      await step.run("mark-source-ready", async () => {
+        await db
+          .update(sources)
+          .set({
+            status: "ready",
+            updatedAt: sql`now()`,
+          })
+          .where(
+            and(
+              eq(sources.id, source.id),
+              eq(sources.userId, source.userId),
+              eq(sources.libraryId, source.libraryId),
+            ),
+          );
+      });
+
       return {
         sourceId: source.id,
         discovered: dedupedVideos.length,
         queued: rowsToQueue.length,
       };
     } catch (error) {
+      await step.run("mark-source-failed", async () => {
+        await db
+          .update(sources)
+          .set({
+            status: "failed",
+            updatedAt: sql`now()`,
+          })
+          .where(
+            and(
+              eq(sources.id, failureContext.sourceId),
+              eq(sources.userId, failureContext.userId),
+              eq(sources.libraryId, failureContext.libraryId),
+            ),
+          );
+      });
+
       if (!(error instanceof NonRetriableError)) {
         Sentry.captureException(error);
       }

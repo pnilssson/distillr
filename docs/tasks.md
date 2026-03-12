@@ -9,7 +9,7 @@
 - [x] Set up `@tanstack/react-query` (QueryClient provider, devtools, standard query/mutation patterns)
 - [x] Add a YouTube source to a Library (channel URL, playlist URL, or video URL)
 - [x] Background ingestion via Inngest (transcript fetch + summary + embed)
-- [ ] Ingestion progress visible in UI (pending / processing / ready / failed per video)
+- [x] Ingestion progress visible in UI (pending / processing / ready / failed per video)
 - [ ] Per-video summary + key insights display
 - [ ] Library chat (RAG over all ready videos in the library)
 - [ ] Compact source rollup with timestamp links in chat responses

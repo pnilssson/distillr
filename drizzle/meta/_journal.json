@@ -29,6 +29,27 @@
       "when": 1773265029640,
       "tag": "0003_complete_jetstream",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773334716464,
+      "tag": "0004_slim_slipstream",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1773335934790,
+      "tag": "0005_spicy_raza",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773336944900,
+      "tag": "0006_perpetual_killmonger",
+      "breakpoints": true
     }
   ]
 }

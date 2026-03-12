@@ -67,7 +67,9 @@ export const sources = pgTable(
       .notNull()
       .references(() => libraries.id, { onDelete: "cascade" }),
     url: text("url").notNull(),
+    sourceKey: text("source_key").notNull(),
     sourceType: text("source_type").notNull(), // 'video' | 'playlist' | 'channel'
+    status: text("status").notNull().default("processing"), // 'processing' | 'ready' | 'failed'
     channelName: text("channel_name"),
     title: text("title"),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -80,6 +82,7 @@ export const sources = pgTable(
   (table) => [
     index("sources_library_id_idx").on(table.libraryId),
     index("sources_user_id_idx").on(table.userId),
+    uniqueIndex("sources_library_id_source_key_idx").on(table.libraryId, table.sourceKey),
     pgPolicy("sources_select_own", {
       for: "select",
       to: authenticatedRole,

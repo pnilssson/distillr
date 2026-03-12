@@ -33,6 +33,7 @@ export function AddSourceDialog({ libraryId, open, onOpenChange }: AddSourceDial
     mutationFn: (values: AddSourceInput) => addSource(libraryId, values.url),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sources", libraryId] });
+      queryClient.invalidateQueries({ queryKey: ["videos", libraryId] });
       form.reset();
       onOpenChange(false);
       toast.success("Source added.");

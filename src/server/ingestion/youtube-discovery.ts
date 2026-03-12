@@ -50,6 +50,26 @@ type YoutubeChannelsResponse = {
   }>;
 };
 
+type YoutubePlaylistsResponse = {
+  items?: Array<{
+    snippet?: {
+      title?: string;
+      channelTitle?: string;
+    };
+  }>;
+};
+
+type YoutubeApiErrorResponse = {
+  error?: {
+    code?: number;
+    message?: string;
+    errors?: Array<{
+      message?: string;
+      reason?: string;
+    }>;
+  };
+};
+
 export type DiscoveredVideo = {
   youtubeVideoId: string;
   title: string;
@@ -60,17 +80,63 @@ export type DiscoveredVideo = {
   durationSeconds: number;
 };
 
+export type SourceDiscoveryResult = {
+  videos: DiscoveredVideo[];
+  sourceChannelName: string | null;
+  sourceTitle: string | null;
+};
+
+export class YouTubeDiscoveryError extends Error {
+  readonly terminal: boolean;
+
+  constructor(message: string, terminal: boolean) {
+    super(message);
+    this.name = "YouTubeDiscoveryError";
+    this.terminal = terminal;
+  }
+}
+
 export async function discoverVideosFromSource(
   url: string,
   sourceType: YouTubeSourceType,
-): Promise<DiscoveredVideo[]> {
+): Promise<SourceDiscoveryResult> {
+  const playlistMetadata =
+    sourceType === "playlist" ? await fetchPlaylistMetadata(extractPlaylistId(url)) : null;
+
   const videoIds = await discoverVideoIds(url, sourceType);
 
   if (videoIds.length === 0) {
-    return [];
+    return {
+      videos: [],
+      sourceChannelName: playlistMetadata?.channelName ?? null,
+      sourceTitle: sourceType === "playlist" ? playlistMetadata?.title ?? null : null,
+    };
   }
 
-  return fetchVideoMetadata(videoIds);
+  const videos = await fetchVideoMetadata(videoIds);
+  const primaryVideo = videos[0] ?? null;
+
+  if (sourceType === "video") {
+    return {
+      videos,
+      sourceChannelName: primaryVideo?.channelName ?? null,
+      sourceTitle: primaryVideo?.title ?? null,
+    };
+  }
+
+  if (sourceType === "playlist") {
+    return {
+      videos,
+      sourceChannelName: playlistMetadata?.channelName ?? primaryVideo?.channelName ?? null,
+      sourceTitle: playlistMetadata?.title ?? null,
+    };
+  }
+
+  return {
+    videos,
+    sourceChannelName: primaryVideo?.channelName ?? null,
+    sourceTitle: null,
+  };
 }
 
 async function discoverVideoIds(url: string, sourceType: YouTubeSourceType): Promise<string[]> {
@@ -135,6 +201,27 @@ async function fetchPlaylistVideoIds(playlistId: string): Promise<string[]> {
   }
 
   return Array.from(ids).slice(0, MAX_PLAYLIST_VIDEOS);
+}
+
+async function fetchPlaylistMetadata(
+  playlistId: string | null,
+): Promise<{ title: string | null; channelName: string | null } | null> {
+  if (!playlistId) {
+    return null;
+  }
+
+  const response = await fetchYouTube<YoutubePlaylistsResponse>("playlists", {
+    part: "snippet",
+    id: playlistId,
+    maxResults: "1",
+  });
+
+  const item = response.items?.[0];
+
+  return {
+    title: item?.snippet?.title?.trim() || null,
+    channelName: item?.snippet?.channelTitle?.trim() || null,
+  };
 }
 
 async function fetchVideoMetadata(videoIds: string[]): Promise<DiscoveredVideo[]> {
@@ -320,8 +407,68 @@ async function fetchYouTube<T>(endpoint: string, params: Record<string, string |
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`YouTube API request failed (${response.status}): ${body}`);
+    const parsedBody = safelyParseYouTubeErrorBody(body);
+    throw new YouTubeDiscoveryError(
+      getUserFacingYouTubeErrorMessage(response.status, parsedBody),
+      isTerminalYouTubeError(response.status, parsedBody),
+    );
   }
 
   return (await response.json()) as T;
+}
+
+function safelyParseYouTubeErrorBody(body: string): YoutubeApiErrorResponse | null {
+  if (!body) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(body) as YoutubeApiErrorResponse;
+  } catch {
+    return null;
+  }
+}
+
+function isTerminalYouTubeError(status: number, body: YoutubeApiErrorResponse | null): boolean {
+  const reasons = new Set((body?.error?.errors ?? []).map((error) => error.reason).filter(Boolean));
+
+  if (reasons.has("playlistNotFound") || reasons.has("playlistForbidden")) {
+    return true;
+  }
+
+  if (status === 400 || status === 404) {
+    return true;
+  }
+
+  if (status === 401 || status === 403) {
+    return true;
+  }
+
+  return false;
+}
+
+function getUserFacingYouTubeErrorMessage(status: number, body: YoutubeApiErrorResponse | null): string {
+  const reasons = new Set((body?.error?.errors ?? []).map((error) => error.reason).filter(Boolean));
+
+  if (reasons.has("playlistNotFound") || reasons.has("playlistForbidden")) {
+    return "This playlist is not accessible. Use a public or unlisted playlist URL.";
+  }
+
+  if (status === 404) {
+    return "This source could not be found. Check the URL and try again.";
+  }
+
+  if (status === 401 || status === 403) {
+    return "This source is not accessible right now. Check permissions and try again.";
+  }
+
+  if (status === 429) {
+    return "Source processing is temporarily busy. Please try again.";
+  }
+
+  if (status >= 500) {
+    return "Source processing is temporarily unavailable. Please try again.";
+  }
+
+  return "Could not process this source. Check the URL and try again.";
 }

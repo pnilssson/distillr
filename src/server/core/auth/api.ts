@@ -4,6 +4,7 @@ import type { User } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { getCurrentUserUncached } from "@/server/core/auth/user";
+import { createApiErrorResponse } from "@/server/core/http/api-errors";
 
 type ApiAuthContext = {
   user: User;
@@ -22,15 +23,19 @@ export function withApiAuth<TContext extends object = RouteContextLike>(
   handler: ApiAuthHandler<TContext>,
 ) {
   return async (request: Request, context: RouteContextLike): Promise<Response> => {
-    const user = await getCurrentUserUncached();
+    try {
+      const user = await getCurrentUserUncached();
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      return await handler(request, {
+        ...(context as TContext),
+        user,
+      });
+    } catch (error) {
+      return createApiErrorResponse(error);
     }
-
-    return handler(request, {
-      ...(context as TContext),
-      user,
-    });
   };
 }

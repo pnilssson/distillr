@@ -7,8 +7,10 @@ import { NonRetriableError } from "inngest";
 import { db } from "@/db";
 import { sources, videos } from "@/db/schema";
 import type { YouTubeSourceType } from "@/lib/validation/sources";
+import { classifyIngestionError } from "@/server/ingestion/errors";
 import { discoverVideosFromSource } from "@/server/ingestion/youtube-discovery";
 import { inngest } from "@/server/inngest/client";
+import { shouldStopRetrying } from "@/server/inngest/retry-policy";
 
 const VIDEO_DB_BATCH_SIZE = 100;
 const VIDEO_EVENT_BATCH_SIZE = 100;
@@ -20,9 +22,12 @@ type VideoRow = {
 };
 
 export const sourceAdded = inngest.createFunction(
-  { id: "source-added" },
+  {
+    id: "source-added",
+    retries: 3,
+  },
   { event: "source.added" },
-  async ({ event, step }) => {
+  async ({ event, step, attempt, maxAttempts }) => {
     const failureContext = {
       userId: event.data.userId,
       libraryId: event.data.libraryId,
@@ -75,8 +80,27 @@ export const sourceAdded = inngest.createFunction(
           );
       });
 
-      const discoveredVideos = await step.run("discover-source-videos", async () => {
+      const discoveryResult = await step.run("discover-source-videos", async () => {
         return discoverVideosFromSource(source.url, source.sourceType as YouTubeSourceType);
+      });
+
+      const discoveredVideos = discoveryResult.videos;
+
+      await step.run("update-source-metadata", async () => {
+        await db
+          .update(sources)
+          .set({
+            channelName: discoveryResult.sourceChannelName,
+            title: discoveryResult.sourceTitle,
+            updatedAt: sql`now()`,
+          })
+          .where(
+            and(
+              eq(sources.id, source.id),
+              eq(sources.userId, source.userId),
+              eq(sources.libraryId, source.libraryId),
+            ),
+          );
       });
 
       if (discoveredVideos.length === 0) {
@@ -106,27 +130,6 @@ export const sourceAdded = inngest.createFunction(
       const dedupedVideos = Array.from(
         new Map(discoveredVideos.map((video) => [video.youtubeVideoId, video])).values(),
       );
-
-      await step.run("update-source-metadata", async () => {
-        const primaryVideo = dedupedVideos[0] ?? null;
-        const sourceChannelName = primaryVideo?.channelName ?? null;
-        const sourceTitle = source.sourceType === "video" ? primaryVideo?.title ?? null : null;
-
-        await db
-          .update(sources)
-          .set({
-            channelName: sourceChannelName,
-            title: sourceTitle,
-            updatedAt: sql`now()`,
-          })
-          .where(
-            and(
-              eq(sources.id, source.id),
-              eq(sources.userId, source.userId),
-              eq(sources.libraryId, source.libraryId),
-            ),
-          );
-      });
 
       const upsertedRows: VideoRow[] = [];
 
@@ -219,6 +222,13 @@ export const sourceAdded = inngest.createFunction(
         queued: rowsToQueue.length,
       };
     } catch (error) {
+      const decision = classifyIngestionError(error);
+      const stopRetrying = shouldStopRetrying({
+        retryable: decision.retryable,
+        attempt,
+        maxAttempts,
+      });
+
       await step.run("mark-source-failed", async () => {
         await db
           .update(sources)
@@ -235,8 +245,16 @@ export const sourceAdded = inngest.createFunction(
           );
       });
 
-      if (!(error instanceof NonRetriableError)) {
+      if (decision.captureException) {
         Sentry.captureException(error);
+      }
+
+      if (stopRetrying) {
+        return {
+          sourceId: failureContext.sourceId,
+          status: "failed",
+          reason: decision.reason,
+        };
       }
 
       throw error;

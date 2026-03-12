@@ -7,10 +7,12 @@ import { NonRetriableError } from "inngest";
 import { db } from "@/db";
 import { videoChunks, videoInsights, videos } from "@/db/schema";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
+import { classifyIngestionError } from "@/server/ingestion/errors";
 import { chunkTranscriptSegments } from "@/server/ingestion/chunking";
 import { embedTexts, generateInsights } from "@/server/ingestion/openai";
 import { fetchTranscript, TranscriptUnavailableError } from "@/server/ingestion/transcript";
 import { inngest } from "@/server/inngest/client";
+import { shouldStopRetrying } from "@/server/inngest/retry-policy";
 
 const DB_BATCH_SIZE = 100;
 
@@ -22,13 +24,14 @@ type InsightRecord = {
 export const videoIngest = inngest.createFunction(
   {
     id: "video-ingest",
+    retries: 3,
     concurrency: {
       limit: 5,
       key: "event.data.userId",
     },
   },
   { event: "video.ingest" },
-  async ({ event, step }) => {
+  async ({ event, step, attempt, maxAttempts }) => {
     const failureContext = {
       userId: event.data.userId,
       libraryId: event.data.libraryId,
@@ -254,12 +257,15 @@ export const videoIngest = inngest.createFunction(
         chunks: chunkingResult.chunks.length,
       };
     } catch (error) {
-      const terminal =
-        error instanceof NonRetriableError ||
-        (error instanceof TranscriptUnavailableError && error.terminal);
-      const reason = getFailureReason(error);
+      const decision = classifyIngestionError(error);
+      const reason = decision.reason;
+      const stopRetrying = shouldStopRetrying({
+        retryable: decision.retryable,
+        attempt,
+        maxAttempts,
+      });
 
-      if (!terminal) {
+      if (decision.captureException) {
         Sentry.captureException(error);
       }
 
@@ -289,27 +295,15 @@ export const videoIngest = inngest.createFunction(
         });
       });
 
-      if (terminal) {
-        throw new NonRetriableError(reason);
+      if (stopRetrying) {
+        return {
+          videoId: failureContext.videoId,
+          status: "failed",
+          reason,
+        };
       }
 
       throw error;
     }
   },
 );
-
-function getFailureReason(error: unknown): string {
-  if (error instanceof NonRetriableError) {
-    return error.message;
-  }
-
-  if (error instanceof TranscriptUnavailableError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Video ingestion failed due to an unknown error.";
-}

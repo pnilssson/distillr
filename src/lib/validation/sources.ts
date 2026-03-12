@@ -18,6 +18,11 @@ export function parseYouTubeUrl(raw: string): ParsedYouTubeUrl | null {
   const host = url.hostname.replace(/^www\./, "");
   if (host !== "youtube.com" && host !== "youtu.be") return null;
 
+  const playlistId = url.searchParams.get("list")?.trim();
+  if (playlistId) {
+    return { type: "playlist", sourceKey: `playlist:${playlistId}` };
+  }
+
   if (host === "youtu.be") {
     const videoId = getPathFirstSegment(url.pathname);
     if (videoId) {
@@ -29,13 +34,6 @@ export function parseYouTubeUrl(raw: string): ParsedYouTubeUrl | null {
     const videoId = url.searchParams.get("v")?.trim();
     if (videoId) {
       return { type: "video", sourceKey: `video:${videoId}` };
-    }
-  }
-
-  if (url.pathname === "/playlist") {
-    const playlistId = url.searchParams.get("list")?.trim();
-    if (playlistId) {
-      return { type: "playlist", sourceKey: `playlist:${playlistId}` };
     }
   }
 

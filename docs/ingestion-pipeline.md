@@ -46,6 +46,10 @@ All writes are idempotent. Retries must update existing rows for the same `(vide
 
 ## Failure Handling
 
+`video.ingest` uses an explicit max of 3 attempts. A video is always marked `'failed'` at the end of the final attempt.
+
+Transcript-unavailable failures are treated as terminal on the first attempt, marked `'failed'` immediately, and are not retried.
+
 If TranscriptAPI fails (video has no captions), status is set to `'failed'` with an error reason. These are surfaced in the UI. Whisper fallback is post-MVP.
 
 User-facing errors must stay provider-agnostic. Include technical provider details only in logs and Sentry.

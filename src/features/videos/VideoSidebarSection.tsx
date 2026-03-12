@@ -6,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarMenu } from "@/components/ui/sidebar";
 import { VideoDetailsDialog } from "@/features/videos/VideoDetailsDialog";
 import { VideoSidebarItem } from "@/features/videos/VideoSidebarItem";
-import type { LibraryVideoProgressItem } from "@/features/videos/types";
 import { useLibraryVideos } from "@/features/videos/useLibraryVideos";
 
 type VideoSidebarSectionProps = {
@@ -14,9 +13,12 @@ type VideoSidebarSectionProps = {
 };
 
 export function VideoSidebarSection({ libraryId }: VideoSidebarSectionProps) {
-  const [selectedVideo, setSelectedVideo] = useState<LibraryVideoProgressItem | null>(null);
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const videosQuery = useLibraryVideos(libraryId);
   const videos = videosQuery.data?.videos ?? [];
+  const selectedVideo = selectedVideoId
+    ? (videos.find((video) => video.id === selectedVideoId) ?? null)
+    : null;
   const isPreparing = (videosQuery.data?.isProcessing ?? false) && videos.length === 0;
 
   return (
@@ -35,7 +37,7 @@ export function VideoSidebarSection({ libraryId }: VideoSidebarSectionProps) {
 
           {!videosQuery.isPending && videos.length > 0
             ? videos.map((video) => (
-                <VideoSidebarItem key={video.id} video={video} onSelect={setSelectedVideo} />
+                <VideoSidebarItem key={video.id} video={video} onSelect={setSelectedVideoId} />
               ))
             : null}
 
@@ -55,10 +57,10 @@ export function VideoSidebarSection({ libraryId }: VideoSidebarSectionProps) {
 
       <VideoDetailsDialog
         video={selectedVideo}
-        open={Boolean(selectedVideo)}
+        open={Boolean(selectedVideoId)}
         onOpenChange={(open) => {
           if (!open) {
-            setSelectedVideo(null);
+            setSelectedVideoId(null);
           }
         }}
       />

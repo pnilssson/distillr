@@ -44,7 +44,8 @@ const STATUS_META: Record<LibraryVideoProgressItem["status"], StatusMeta> = {
   processing: {
     label: "Processing",
     variant: "outline",
-    className: "border-primary/30 bg-primary/10 text-primary",
+    className:
+      "border-blue-300 bg-blue-100 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
   },
   ready: {
     label: "Ready",

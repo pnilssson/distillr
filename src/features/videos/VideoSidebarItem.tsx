@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 type VideoSidebarItemProps = {
   video: LibraryVideoProgressItem;
-  onSelect: (video: LibraryVideoProgressItem) => void;
+  onSelect: (videoId: string) => void;
 };
 
 type StatusMeta = {
@@ -23,7 +23,7 @@ const STATUS_META: Record<LibraryVideoProgressItem["status"], StatusMeta> = {
   },
   processing: {
     icon: Loader2,
-    iconClassName: "text-primary",
+    iconClassName: "text-blue-600 dark:text-blue-400",
   },
   ready: {
     icon: CheckCircle2,
@@ -43,7 +43,7 @@ export function VideoSidebarItem({ video, onSelect }: VideoSidebarItemProps) {
     <SidebarMenuItem>
       <SidebarMenuButton
         className="gap-2"
-        onClick={() => onSelect(video)}
+        onClick={() => onSelect(video.id)}
         aria-label={`View details for ${video.title}`}
         title={video.title}
       >

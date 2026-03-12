@@ -10,11 +10,8 @@
 - [x] Add a YouTube source to a Library (channel URL, playlist URL, or video URL)
 - [x] Background ingestion via Inngest (transcript fetch + summary + embed)
 - [x] Ingestion progress visible in UI (pending / processing / ready / failed per video)
-- [ ] Per-video summary + key insights display
 - [ ] Library chat (RAG over all ready videos in the library)
-- [ ] Compact source rollup with timestamp links in chat responses
 - [ ] Chat history persisted per library
-- [ ] Mobile-first responsive UI across app shell and feature pages
 
 ### Monetization
 

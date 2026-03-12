@@ -76,7 +76,10 @@ export function VideoDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-lg" showCloseButton={false}>
+      <DialogContent
+        className="gap-0 overflow-hidden p-0 sm:max-w-lg"
+        showCloseButton={false}
+      >
         {video ? (
           <>
             <a
@@ -100,7 +103,7 @@ export function VideoDetailsDialog({
                 </div>
               )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/40 via-black/10 to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
                 <div className="rounded-full border border-white/30 bg-black/40 p-3 text-white shadow-lg">
                   <CirclePlay size={28} aria-hidden="true" />
@@ -110,7 +113,9 @@ export function VideoDetailsDialog({
 
             <div className="space-y-4 p-5">
               <DialogHeader className="space-y-1">
-                <DialogTitle className="leading-snug">{video.title}</DialogTitle>
+                <DialogTitle className="leading-snug">
+                  {video.title}
+                </DialogTitle>
                 <DialogDescription className="flex items-center gap-1.5">
                   <User size={13} aria-hidden="true" />
                   <span className="truncate">{video.channelName}</span>
@@ -136,7 +141,11 @@ export function VideoDetailsDialog({
                   </Button>
 
                   <Button variant="outline" size="sm" asChild>
-                    <a href={youtubeUrl} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={youtubeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <ExternalLink aria-hidden="true" />
                       Watch on YouTube
                     </a>
@@ -147,8 +156,14 @@ export function VideoDetailsDialog({
               <Separator />
 
               <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                <MetaCell label="Published" value={formatDateTime(video.publishedAt)} />
-                <MetaCell label="Added to library" value={formatDateTime(video.createdAt)} />
+                <MetaCell
+                  label="Published"
+                  value={formatDateTime(video.publishedAt)}
+                />
+                <MetaCell
+                  label="Added to library"
+                  value={formatDateTime(video.createdAt)}
+                />
               </div>
 
               {video.status === "failed" && video.failureReason ? (
@@ -160,7 +175,7 @@ export function VideoDetailsDialog({
                     <AlertCircle size={14} aria-hidden="true" />
                     Processing failed
                   </p>
-                  <p className="mt-1 break-words text-xs text-destructive/90">
+                  <p className="mt-1 wrap-break-word text-xs text-destructive/90">
                     {video.failureReason}
                   </p>
                 </div>
@@ -181,17 +196,11 @@ export function VideoDetailsDialog({
   );
 }
 
-function MetaCell({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function MetaCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-0.5 break-words text-sm">{value}</p>
+      <p className="mt-0.5 wrap-break-word text-sm">{value}</p>
     </div>
   );
 }

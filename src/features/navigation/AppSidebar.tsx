@@ -35,6 +35,7 @@ import { LibraryListItem } from "@/features/libraries/types";
 import { useLibraries } from "@/features/libraries/useLibraries";
 import { AddSourceDialog } from "@/features/sources/AddSourceDialog";
 import { DeleteSourceDialog } from "@/features/sources/DeleteSourceDialog";
+import { SourceDetailsDialog } from "@/features/sources/SourceDetailsDialog";
 import { getSourceLabel, SourceSidebarItem } from "@/features/sources/SourceSidebarItem";
 import { SourceListItem } from "@/features/sources/types";
 import { useSources } from "@/features/sources/useSources";
@@ -51,6 +52,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addingSource, setAddingSource] = useState(false);
+  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const [deletingSource, setDeletingSource] = useState<SourceListItem | null>(null);
   const [deletingLibrary, setDeletingLibrary] = useState<LibraryListItem | null>(null);
   const [renamingLibrary, setRenamingLibrary] = useState<LibraryListItem | null>(null);
@@ -63,6 +65,9 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
 
   const sourcesQuery = useSources(activeLibraryId);
   const sources = sourcesQuery.data ?? [];
+  const selectedSource = selectedSourceId
+    ? (sources.find((source) => source.id === selectedSourceId) ?? null)
+    : null;
 
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_POSTHOG_KEY || !process.env.NEXT_PUBLIC_POSTHOG_HOST) {
@@ -133,7 +138,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
                       onClick={() => router.push(`/library/${library.id}`)}
                       className="group-data-[collapsible=icon]:hidden"
                     >
-                      <span className="truncate">{library.name}</span>
+                      <span className="truncate text-xs">{library.name}</span>
                     </SidebarMenuButton>
 
                     <DropdownMenu>
@@ -192,11 +197,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
                   </div>
                 ) : (
                   sources.map((source) => (
-                    <SourceSidebarItem
-                      key={source.id}
-                      source={source}
-                      onDelete={() => setDeletingSource(source)}
-                    />
+                    <SourceSidebarItem key={source.id} source={source} onSelect={setSelectedSourceId} />
                   ))
                 )}
 
@@ -238,6 +239,22 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
           libraryId={activeLibraryId}
           open={addingSource}
           onOpenChange={setAddingSource}
+        />
+      )}
+
+      {activeLibraryId && (
+        <SourceDetailsDialog
+          source={selectedSource}
+          open={Boolean(selectedSourceId && selectedSource)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedSourceId(null);
+            }
+          }}
+          onDelete={(source) => {
+            setDeletingSource(source);
+            setSelectedSourceId(null);
+          }}
         />
       )}
 

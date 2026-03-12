@@ -26,8 +26,8 @@ const STATUS_META: Record<LibraryVideoProgressItem["status"], StatusMeta> = {
   processing: {
     label: "Processing",
     icon: Loader2,
-    badgeClassName: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
-    iconClassName: "text-sky-600",
+    badgeClassName: "bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200",
+    iconClassName: "text-primary",
   },
   ready: {
     label: "Ready",

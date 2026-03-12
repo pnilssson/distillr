@@ -13,6 +13,14 @@ export type IngestionErrorDecision = {
 };
 
 export function classifyIngestionError(error: unknown): IngestionErrorDecision {
+  if (hasTranscriptUnavailableSignal(error)) {
+    return {
+      reason: "No transcript is available for this video.",
+      retryable: false,
+      captureException: false,
+    };
+  }
+
   if (error instanceof NonRetriableError) {
     return {
       reason: normalizeFailureReason(error.message),
@@ -38,14 +46,6 @@ export function classifyIngestionError(error: unknown): IngestionErrorDecision {
   }
 
   if (error instanceof Error) {
-    if (isTranscriptUnavailableMessage(error.message)) {
-      return {
-        reason: "No transcript is available for this video.",
-        retryable: false,
-        captureException: false,
-      };
-    }
-
     return {
       reason: normalizeFailureReason(error.message),
       retryable: true,
@@ -72,4 +72,77 @@ function normalizeFailureReason(reason: string): string {
   }
 
   return message;
+}
+
+function hasTranscriptUnavailableSignal(error: unknown): boolean {
+  const messages = collectErrorMessages(error);
+  return messages.some((message) => isTranscriptUnavailableMessage(message));
+}
+
+function collectErrorMessages(error: unknown): string[] {
+  const messages: string[] = [];
+  const queue: unknown[] = [error];
+  const seen = new Set<unknown>();
+
+  while (queue.length > 0 && messages.length < 24) {
+    const current = queue.shift();
+
+    if (!current || seen.has(current)) {
+      continue;
+    }
+
+    seen.add(current);
+
+    if (current instanceof Error) {
+      if (current.message) {
+        messages.push(current.message);
+      }
+
+      if (current.name) {
+        messages.push(current.name);
+      }
+
+      const combined = `${current.name}: ${current.message}`.trim();
+      if (combined) {
+        messages.push(combined);
+      }
+
+      const withCause = current as Error & { cause?: unknown };
+      if (withCause.cause) {
+        queue.push(withCause.cause);
+      }
+      continue;
+    }
+
+    if (typeof current === "string") {
+      messages.push(current);
+      continue;
+    }
+
+    if (typeof current === "object") {
+      const value = current as Record<string, unknown>;
+
+      if (typeof value.message === "string") {
+        messages.push(value.message);
+      }
+
+      if (typeof value.detail === "string") {
+        messages.push(value.detail);
+      }
+
+      if (typeof value.reason === "string") {
+        messages.push(value.reason);
+      }
+
+      if (value.cause) {
+        queue.push(value.cause);
+      }
+
+      if (value.error) {
+        queue.push(value.error);
+      }
+    }
+  }
+
+  return messages;
 }

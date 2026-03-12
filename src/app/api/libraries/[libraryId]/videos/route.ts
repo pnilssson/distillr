@@ -21,12 +21,14 @@ export const GET = withApiAuth<VideosRouteProps>(async (_request, { params, user
 
   const responseVideos = progress.videos.map((video) => ({
     id: video.id,
+    youtubeVideoId: video.youtubeVideoId,
     title: video.title,
     thumbnailUrl: video.thumbnailUrl,
     channelName: video.channelName,
     status: video.status,
     failureReason: sanitizeVideoFailureReasonForUser(video.failureReason),
     publishedAt: video.publishedAt.toISOString(),
+    createdAt: video.createdAt.toISOString(),
     updatedAt: video.updatedAt.toISOString(),
   }));
 

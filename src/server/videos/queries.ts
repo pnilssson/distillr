@@ -9,12 +9,14 @@ export type VideoIngestionStatus = "pending" | "processing" | "ready" | "failed"
 
 export type LibraryVideoProgressItem = {
   id: string;
+  youtubeVideoId: string;
   title: string;
   thumbnailUrl: string;
   channelName: string;
   status: VideoIngestionStatus;
   failureReason: string | null;
   publishedAt: Date;
+  createdAt: Date;
   updatedAt: Date;
 };
 
@@ -32,16 +34,6 @@ export type LibraryVideosProgress = {
   isSettled: boolean;
 };
 
-const STATUS_ORDER = sql<number>`
-  case
-    when ${videos.status} = 'processing' then 0
-    when ${videos.status} = 'pending' then 1
-    when ${videos.status} = 'failed' then 2
-    when ${videos.status} = 'ready' then 3
-    else 4
-  end
-`;
-
 export async function getLibraryVideosProgress(
   userId: string,
   libraryId: string,
@@ -50,17 +42,19 @@ export async function getLibraryVideosProgress(
     db
       .select({
         id: videos.id,
+        youtubeVideoId: videos.youtubeVideoId,
         title: videos.title,
         thumbnailUrl: videos.thumbnailUrl,
         channelName: videos.channelName,
         status: videos.status,
         failureReason: videos.failureReason,
         publishedAt: videos.publishedAt,
+        createdAt: videos.createdAt,
         updatedAt: videos.updatedAt,
       })
       .from(videos)
       .where(and(eq(videos.userId, userId), eq(videos.libraryId, libraryId)))
-      .orderBy(STATUS_ORDER, desc(videos.updatedAt)),
+      .orderBy(desc(videos.createdAt), desc(videos.updatedAt)),
     db
       .select({ count: sql<number>`count(*)` })
       .from(sources)

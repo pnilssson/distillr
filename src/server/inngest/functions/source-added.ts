@@ -10,6 +10,7 @@ import type { YouTubeSourceType } from "@/lib/validation/sources";
 import { classifyIngestionError } from "@/server/ingestion/errors";
 import { discoverVideosFromSource } from "@/server/ingestion/youtube-discovery";
 import { inngest } from "@/server/inngest/client";
+import { runIngestionStep } from "@/server/inngest/ingestion-step";
 import { shouldStopRetrying } from "@/server/inngest/retry-policy";
 
 const VIDEO_DB_BATCH_SIZE = 100;
@@ -80,7 +81,7 @@ export const sourceAdded = inngest.createFunction(
           );
       });
 
-      const discoveryResult = await step.run("discover-source-videos", async () => {
+      const discoveryResult = await runIngestionStep(step, "discover-source-videos", async () => {
         return discoverVideosFromSource(source.url, source.sourceType as YouTubeSourceType);
       });
 

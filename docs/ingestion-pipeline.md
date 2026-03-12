@@ -50,6 +50,8 @@ All writes are idempotent. Retries must update existing rows for the same `(vide
 
 Transcript-unavailable failures are treated as terminal on the first attempt, marked `'failed'` immediately, and are not retried.
 
+Terminal failures are converted to non-retriable step errors inside Inngest `step.run` blocks so step-level retry loops are bypassed.
+
 If TranscriptAPI fails (video has no captions), status is set to `'failed'` with an error reason. These are surfaced in the UI. Whisper fallback is post-MVP.
 
 User-facing errors must stay provider-agnostic. Include technical provider details only in logs and Sentry.
@@ -72,7 +74,9 @@ Polling behavior:
 - Poll every 3 seconds while `isProcessing` is true (source setup is in progress)
 - Stop polling once all videos are settled
 
-The floating progress indicator appears while ingestion is active, briefly shows completion, then dismisses itself.
+Progress and terminal states are displayed in the sidebar under `Sources` -> `Videos` for the active library.
+All videos remain listed after ingestion settles, ordered by newest added to the library first.
+Rows stay compact in the sidebar; clicking a video opens a details modal with full status and metadata.
 
 ---
 

@@ -38,6 +38,7 @@ import { DeleteSourceDialog } from "@/features/sources/DeleteSourceDialog";
 import { getSourceLabel, SourceSidebarItem } from "@/features/sources/SourceSidebarItem";
 import { SourceListItem } from "@/features/sources/types";
 import { useSources } from "@/features/sources/useSources";
+import { VideoSidebarSection } from "@/features/videos/VideoSidebarSection";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
 
 type AppSidebarProps = {
@@ -59,7 +60,6 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
 
   const libraryIdMatch = pathname.match(/^\/library\/([^/]+)/);
   const activeLibraryId = libraryIdMatch?.[1] ?? null;
-  const showSourcesSection = Boolean(activeLibraryId);
 
   const sourcesQuery = useSources(activeLibraryId);
   const sources = sourcesQuery.data ?? [];
@@ -173,7 +173,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroup>
 
-          {showSourcesSection && (
+          {activeLibraryId && (
             <SidebarGroup className="group-data-[collapsible=icon]:hidden">
               <SidebarGroupLabel>Sources</SidebarGroupLabel>
               <SidebarGroupAction
@@ -206,6 +206,8 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
                   </p>
                 )}
               </SidebarMenu>
+
+              <VideoSidebarSection libraryId={activeLibraryId} />
             </SidebarGroup>
           )}
         </SidebarContent>

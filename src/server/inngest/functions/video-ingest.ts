@@ -12,6 +12,7 @@ import { chunkTranscriptSegments } from "@/server/ingestion/chunking";
 import { embedTexts, generateInsights } from "@/server/ingestion/openai";
 import { fetchTranscript, TranscriptUnavailableError } from "@/server/ingestion/transcript";
 import { inngest } from "@/server/inngest/client";
+import { runIngestionStep } from "@/server/inngest/ingestion-step";
 import { shouldStopRetrying } from "@/server/inngest/retry-policy";
 
 const DB_BATCH_SIZE = 100;
@@ -81,7 +82,7 @@ export const videoIngest = inngest.createFunction(
           .where(eq(videos.id, video.id));
       });
 
-      const transcript = await step.run("fetch-transcript", async () => {
+      const transcript = await runIngestionStep(step, "fetch-transcript", async () => {
         return fetchTranscript(video.youtubeVideoId);
       });
 

@@ -75,12 +75,12 @@ export function FeatureShowcaseDark() {
               Export
             </p>
             <h2 className="mb-4 font-serif text-3xl leading-tight text-background sm:text-4xl">
-              Export structured knowledge, not raw files.
+              Export structured knowledge, not raw transcripts.
             </h2>
             <p className="mb-6 leading-relaxed text-background/60">
-              Get summaries, structured notes, full transcripts, and your entire
-              chat history, formatted and ready to paste into Notion, Obsidian,
-              or anywhere else you work.
+              Summaries, structured notes, full transcripts, and chat history.
+              Formatted and ready for Notion, Obsidian, or wherever you take
+              notes.
             </p>
             <div className="flex flex-wrap gap-2">
               {exportFormats.map((fmt) => (

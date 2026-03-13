@@ -22,10 +22,11 @@ export function FinalCtaSection({ isAuthenticated }: FinalCtaSectionProps) {
         transition={{ duration: 0.55, ease: "easeOut" }}
       >
         <h2 className="mb-4 font-serif text-4xl leading-tight sm:text-5xl">
-          Ask your YouTube library anything.
+          Build your knowledge base in under a minute.
         </h2>
         <p className="mb-10 text-muted-foreground">
-          Free to start. Add your first channel or video in under a minute.
+          Add your first channel or video and start asking questions. Free, no
+          credit card.
         </p>
         <Button asChild size="lg">
           <Link href={ctaHref}>{ctaLabel}</Link>

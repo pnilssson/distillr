@@ -10,7 +10,7 @@ const fadeUp = {
   visible: (delay = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.55, ease: "easeOut", delay },
+    transition: { duration: 0.55, ease: "easeOut" as const, delay },
   }),
 };
 
@@ -95,7 +95,7 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
         className="mt-16 w-full max-w-3xl overflow-hidden rounded-2xl border shadow-xl"
         initial={{ opacity: 0, y: 24, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut", delay: 0.45 }}
+        transition={{ duration: 0.6, ease: "easeOut" as const, delay: 0.45 }}
       >
         <div className="flex items-center gap-1.5 border-b bg-muted px-4 py-3">
           <div className="h-3 w-3 rounded-full bg-border" />

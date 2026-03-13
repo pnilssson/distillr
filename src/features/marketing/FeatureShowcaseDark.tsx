@@ -25,12 +25,12 @@ const exportPreview = [
 
 const slideLeft = {
   hidden: { opacity: 0, x: -24 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: "easeOut" } },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: "easeOut" as const } },
 };
 
 const slideRight = {
   hidden: { opacity: 0, x: 24 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: "easeOut" } },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: "easeOut" as const } },
 };
 
 export function FeatureShowcaseDark() {

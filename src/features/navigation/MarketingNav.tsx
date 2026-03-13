@@ -20,6 +20,7 @@ export function MarketingNav({ isAuthenticated, children }: MarketingNavProps) {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" as const }}
+      >
         <Link
           href="/"
           className="text-base font-semibold tracking-tight transition-opacity hover:opacity-80"

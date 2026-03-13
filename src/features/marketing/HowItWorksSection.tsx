@@ -47,7 +47,7 @@ export function HowItWorksSection() {
           How it works
         </p>
         <h2 className="mb-16 text-center font-serif text-3xl sm:text-4xl">
-          How it works
+          Three steps to your knowledge base
         </h2>
       </motion.div>
 

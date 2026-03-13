@@ -5,7 +5,7 @@ const steps = [
     step: "01",
     icon: PlusCircle,
     title: "Add your content",
-    desc: "Paste a YouTube channel, playlist, or video link. That is all - Distillr handles everything else automatically.",
+    desc: "Paste a YouTube channel, playlist, or video link. Distillr handles everything else automatically.",
   },
   {
     step: "02",
@@ -23,7 +23,7 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="mx-auto w-full max-w-5xl px-6 py-24">
+    <section id="how-it-works" className="mx-auto w-full max-w-5xl px-6 py-24 lg:py-36">
       <p className="mb-2 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
         How it works
       </p>

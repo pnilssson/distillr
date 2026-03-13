@@ -11,24 +11,24 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
   const ctaLabel = isAuthenticated ? "Go to dashboard" : "Try it free";
 
   return (
-    <section className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 py-24 text-center">
+    <section className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 py-28 text-center lg:py-36">
       {/* Badge */}
       <div className="mb-6 inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium tracking-wide text-muted-foreground">
-        Your AI. Your content.
+        Your content. Your knowledge base.
       </div>
 
       {/* Headline */}
       <h1 className="mb-6 max-w-2xl font-serif text-5xl leading-tight tracking-tight sm:text-6xl lg:text-7xl">
-        ChatGPT knows everything.
+        Your YouTube watching,
         <br />
-        Distillr knows your library.
+        turned into lasting knowledge.
       </h1>
 
       {/* Subheadline */}
       <p className="mb-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
-        Add the YouTube channels and videos you already follow. Ask questions in
-        plain language. Get specific answers from your content - not from the
-        entire internet.
+        Most AI tools give you generic answers from across the internet.
+        Distillr builds a personal knowledge base from your specific channels
+        and videos so you always get answers about what you actually watch.
       </p>
 
       {/* Social proof hint */}

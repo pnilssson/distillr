@@ -14,32 +14,32 @@ const features = [
   {
     icon: Library,
     title: "Persistent libraries",
-    desc: "Your content stays. Add once, search forever. Libraries grow automatically as you add more.",
+    desc: "Add once, search forever. Your libraries grow as you add more channels and videos.",
   },
   {
     icon: MessageSquare,
-    title: "Ask your content anything",
-    desc: "Ask questions across your whole library. Get specific answers from your own videos, not generic AI knowledge.",
+    title: "Cross-video chat",
+    desc: "Ask questions across your entire library. Answers come from your videos, not generic AI knowledge.",
   },
   {
     icon: Search,
-    title: "Search by meaning",
-    desc: "Find anything by what it means, not just the exact words. Surface ideas you forgot you had.",
+    title: "Semantic search",
+    desc: "Find content by meaning, not just keywords. Surface ideas you forgot you saved.",
   },
   {
     icon: Download,
     title: "Structured exports",
-    desc: "Summaries, transcripts, and chat logs formatted and ready for Notion, Obsidian, or anywhere else.",
+    desc: "Summaries, transcripts, and chat logs ready for Notion, Obsidian, or wherever you work.",
   },
   {
     icon: Youtube,
     title: "Channels and playlists",
-    desc: "Add entire channels or playlists at once. New uploads are picked up automatically.",
+    desc: "Add entire channels or playlists. New uploads are picked up automatically.",
   },
   {
     icon: Shield,
-    title: "Your data, private",
-    desc: "Libraries are private to your account. Nothing is shared, nothing is public by default.",
+    title: "Private by default",
+    desc: "Your libraries are private to your account. Nothing is shared or public.",
   },
 ];
 
@@ -66,7 +66,7 @@ export function FeaturesGridSection() {
           Features
         </p>
         <h2 className="mb-16 max-w-md font-serif text-3xl sm:text-4xl">
-          Everything you need to stop losing knowledge
+          Built for knowledge that compounds
         </h2>
       </motion.div>
 

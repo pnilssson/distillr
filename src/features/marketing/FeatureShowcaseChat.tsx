@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 const checkpoints = [
   "Answers from your videos, not generic AI knowledge",
   "Works with content published yesterday, not just years ago",
-  "Your full conversation history saved automatically",
+  "Full conversation history saved automatically",
 ];
 
 const slideLeft = {
@@ -34,13 +34,13 @@ export function FeatureShowcaseChat() {
             Chat
           </p>
           <h2 className="mb-4 font-serif text-3xl leading-tight sm:text-4xl">
-            Get answers from your content, not the whole internet.
+            Answers from your content, not the entire internet.
           </h2>
           <p className="mb-6 leading-relaxed text-muted-foreground">
             Most AI tools give you broad answers based on everything they have
-            ever learned. Distillr focuses on what you actually watch. Your
-            library stays current because it reads from your real channels and
-            videos, including content published last week.
+            ever learned. Distillr only answers from your channels and videos.
+            Your library stays current because new uploads are indexed
+            automatically.
           </p>
           <ul className="space-y-2">
             {checkpoints.map((item) => (

@@ -14,7 +14,7 @@ const plans = [
     name: "Free",
     price: "€0",
     period: null,
-    tagline: "Forever free",
+    tagline: "Always free",
     features: [
       "15 videos",
       "50 chat messages / mo",
@@ -44,7 +44,7 @@ const plans = [
     name: "Pro",
     price: "€34",
     period: "/mo",
-    tagline: "For power users",
+    tagline: "For teams and power users",
     features: [
       "1,500 videos",
       "2,000 chat messages / mo",
@@ -82,10 +82,10 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
           Pricing
         </p>
         <h2 className="mb-4 text-center font-serif text-3xl sm:text-4xl">
-          Start free. Scale as you grow.
+          Simple pricing. Start free.
         </h2>
         <p className="mb-16 text-center text-muted-foreground">
-          No contracts. Cancel anytime.
+          No contracts. No credit card. Cancel anytime.
         </p>
       </motion.div>
 

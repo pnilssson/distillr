@@ -8,19 +8,19 @@ const steps = [
     step: "01",
     icon: PlusCircle,
     title: "Add your content",
-    desc: "Paste a YouTube channel, playlist, or video link. Distillr handles everything else automatically.",
+    desc: "Paste a channel, playlist, or video link. Distillr does the rest.",
   },
   {
     step: "02",
     icon: BookOpen,
-    title: "We read every video",
-    desc: "Distillr goes through the videos you added and builds a knowledge base from your content. Ready in minutes.",
+    title: "We process every video",
+    desc: "Every video is transcribed and turned into a searchable knowledge base. Ready in minutes.",
   },
   {
     step: "03",
     icon: MessageSquare,
-    title: "Ask anything you want",
-    desc: "Type a question like you would ask a friend. Get a specific answer pulled directly from your videos and channels.",
+    title: "Ask anything",
+    desc: "Ask a question in plain language. Get answers pulled directly from your videos, with sources.",
   },
 ];
 
@@ -47,7 +47,7 @@ export function HowItWorksSection() {
           How it works
         </p>
         <h2 className="mb-16 text-center font-serif text-3xl sm:text-4xl">
-          Three steps to your knowledge base
+          How it works
         </h2>
       </motion.div>
 

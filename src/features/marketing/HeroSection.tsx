@@ -32,7 +32,7 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
         custom={0}
         variants={fadeUp}
       >
-        Your content. Your knowledge base.
+        Turn videos into a searchable knowledge base
       </motion.div>
 
       {/* Headline */}
@@ -43,9 +43,9 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
         custom={0.1}
         variants={fadeUp}
       >
-        Your YouTube watching,
+        YouTube has the knowledge.
         <br />
-        turned into lasting knowledge.
+        Distillr makes it yours.
       </motion.h1>
 
       {/* Subheadline */}
@@ -57,8 +57,8 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
         variants={fadeUp}
       >
         Most AI tools give you generic answers from across the internet.
-        Distillr builds a personal knowledge base from your specific channels
-        and videos so you always get answers about what you actually watch.
+        Distillr builds a personal knowledge base from your channels and videos
+        so you get specific answers, always.
       </motion.p>
 
       {/* Social proof hint */}
@@ -85,7 +85,7 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
         </Button>
         {!isAuthenticated && (
           <p className="text-xs text-muted-foreground">
-            Free forever. No credit card needed.
+            Free to start. No credit card needed.
           </p>
         )}
       </motion.div>

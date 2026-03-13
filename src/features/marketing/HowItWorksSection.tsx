@@ -63,8 +63,10 @@ export function HowItWorksSection() {
             <span className="font-mono text-xs text-muted-foreground">
               {step}
             </span>
-            <Icon size={20} className="text-foreground" />
-            <p className="font-medium">{title}</p>
+            <div className="flex items-center gap-2">
+              <Icon size={20} className="shrink-0 text-foreground" />
+              <p className="font-medium">{title}</p>
+            </div>
             <p className="text-sm leading-relaxed text-muted-foreground">
               {desc}
             </p>

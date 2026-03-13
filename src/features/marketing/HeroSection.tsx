@@ -23,7 +23,7 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
   const ctaLabel = isAuthenticated ? "Go to dashboard" : "Try it free";
 
   return (
-    <section className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 py-28 text-center lg:py-36">
+    <section className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 pt-10 pb-24 text-center lg:py-36">
       {/* Badge */}
       <motion.div
         className="mb-6 inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium tracking-wide text-muted-foreground"

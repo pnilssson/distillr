@@ -26,7 +26,7 @@ const features = [
   {
     icon: Download,
     title: "Structured exports",
-    desc: "Summaries, transcripts, and chat logs - formatted and ready for Notion, Obsidian, or anywhere else.",
+    desc: "Summaries, transcripts, and chat logs formatted and ready for Notion, Obsidian, or anywhere else.",
   },
   {
     icon: Youtube,
@@ -42,7 +42,7 @@ const features = [
 
 export function FeaturesGridSection() {
   return (
-    <section id="features" className="border-t mx-auto w-full max-w-5xl px-6 py-24">
+    <section id="features" className="border-t mx-auto w-full max-w-5xl px-6 py-24 lg:py-36">
       <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
         Features
       </p>

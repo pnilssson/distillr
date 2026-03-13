@@ -1,7 +1,7 @@
 const exportFormats = ["Markdown", "PDF", "TXT", "Full chat log"];
 
 const exportPreview = [
-  { type: "heading", text: "## Summary - Transformer Architecture" },
+  { type: "heading", text: "## Summary: Transformer Architecture" },
   { type: "bold", text: "Key concepts:" },
   { type: "item", text: "- Self-attention: each token attends to all others" },
   {
@@ -22,7 +22,7 @@ const exportPreview = [
 export function FeatureShowcaseDark() {
   return (
     <section className="bg-foreground text-background">
-      <div className="mx-auto w-full max-w-5xl px-6 py-24">
+      <div className="mx-auto w-full max-w-5xl px-6 py-24 lg:py-36">
         <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
           {/* Export mockup */}
           <div className="space-y-1.5 rounded-xl border border-background/10 bg-background/5 p-5 font-mono text-xs">
@@ -54,7 +54,7 @@ export function FeatureShowcaseDark() {
             </h2>
             <p className="mb-6 leading-relaxed text-background/60">
               Get summaries, structured notes, full transcripts, and your entire
-              chat history - formatted and ready to paste into Notion, Obsidian,
+              chat history, formatted and ready to paste into Notion, Obsidian,
               or anywhere else you work.
             </p>
             <div className="flex flex-wrap gap-2">

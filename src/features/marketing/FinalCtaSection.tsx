@@ -11,7 +11,7 @@ export function FinalCtaSection({ isAuthenticated }: FinalCtaSectionProps) {
   const ctaLabel = isAuthenticated ? "Go to dashboard" : "Try it free";
 
   return (
-    <section className="border-t mx-auto w-full max-w-3xl px-6 py-24 text-center">
+    <section className="border-t mx-auto w-full max-w-3xl px-6 py-24 text-center lg:py-36">
       <h2 className="mb-4 font-serif text-4xl leading-tight sm:text-5xl">
         Ask your YouTube library anything.
       </h2>

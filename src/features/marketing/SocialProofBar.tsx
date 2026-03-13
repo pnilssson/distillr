@@ -13,7 +13,7 @@ const quotes = [
 
 export function SocialProofBar() {
   return (
-    <section className="border-y bg-muted/30 py-16">
+    <section className="border-y bg-muted/30 py-16 lg:py-24">
       <div className="mx-auto w-full max-w-5xl px-6">
         <p className="mb-8 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
           What people are saying

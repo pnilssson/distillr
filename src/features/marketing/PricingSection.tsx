@@ -58,7 +58,7 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
   const ctaHref = isAuthenticated ? "/dashboard" : "/login";
 
   return (
-    <section id="pricing" className="mx-auto w-full max-w-5xl px-6 py-24">
+    <section id="pricing" className="mx-auto w-full max-w-5xl px-6 py-24 lg:py-36">
       <p className="mb-2 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
         Pricing
       </p>

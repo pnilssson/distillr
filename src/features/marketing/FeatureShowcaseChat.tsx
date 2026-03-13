@@ -8,7 +8,7 @@ const checkpoints = [
 
 export function FeatureShowcaseChat() {
   return (
-    <section className="mx-auto w-full max-w-5xl px-6 py-24">
+    <section className="mx-auto w-full max-w-5xl px-6 py-24 lg:py-36">
       <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
         {/* Text */}
         <div>
@@ -19,10 +19,10 @@ export function FeatureShowcaseChat() {
             Get answers from your content, not the whole internet.
           </h2>
           <p className="mb-6 leading-relaxed text-muted-foreground">
-            ChatGPT is powerful but gives you generic answers based on
-            everything it knows. Distillr only answers from the videos and
-            channels you added. Ask about something your favorite creator
-            published last week - Distillr knows. ChatGPT does not.
+            Most AI tools give you broad answers based on everything they have
+            ever learned. Distillr focuses on what you actually watch. Your
+            library stays current because it reads from your real channels and
+            videos, including content published last week.
           </p>
           <ul className="space-y-2">
             {checkpoints.map((item) => (

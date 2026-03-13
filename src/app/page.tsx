@@ -1,7 +1,6 @@
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
 import { MarketingNav } from "@/features/navigation/MarketingNav";
 import { HeroSection } from "@/features/marketing/HeroSection";
-import { SocialProofBar } from "@/features/marketing/SocialProofBar";
 import { HowItWorksSection } from "@/features/marketing/HowItWorksSection";
 import { FeaturesGridSection } from "@/features/marketing/FeaturesGridSection";
 import { FeatureShowcaseChat } from "@/features/marketing/FeatureShowcaseChat";
@@ -21,7 +20,6 @@ export default async function HomePage() {
     <main className="flex min-h-screen flex-col">
       <MarketingNav isAuthenticated={isAuthenticated} />
       <HeroSection isAuthenticated={isAuthenticated} />
-      <SocialProofBar />
       <HowItWorksSection />
       <FeaturesGridSection />
       <FeatureShowcaseChat />

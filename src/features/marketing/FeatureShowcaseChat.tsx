@@ -1,4 +1,7 @@
+"use client";
+
 import { Check } from "lucide-react";
+import { motion } from "framer-motion";
 
 const checkpoints = [
   "Answers from your videos, not generic AI knowledge",
@@ -6,12 +9,27 @@ const checkpoints = [
   "Your full conversation history saved automatically",
 ];
 
+const slideLeft = {
+  hidden: { opacity: 0, x: -24 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: "easeOut" } },
+};
+
+const slideRight = {
+  hidden: { opacity: 0, x: 24 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: "easeOut" } },
+};
+
 export function FeatureShowcaseChat() {
   return (
     <section className="mx-auto w-full max-w-5xl px-6 py-24 lg:py-36">
       <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
         {/* Text */}
-        <div>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={slideLeft}
+        >
           <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">
             Chat
           </p>
@@ -32,10 +50,16 @@ export function FeatureShowcaseChat() {
               </li>
             ))}
           </ul>
-        </div>
+        </motion.div>
 
         {/* PLACEHOLDER: Replace with actual chat screenshot */}
-        <div className="overflow-hidden rounded-2xl border bg-card shadow-lg">
+        <motion.div
+          className="overflow-hidden rounded-2xl border bg-card shadow-lg"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={slideRight}
+        >
           <div className="border-b bg-muted/40 px-4 py-3">
             <p className="text-xs font-medium">Chat with your library</p>
           </div>
@@ -50,7 +74,7 @@ export function FeatureShowcaseChat() {
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

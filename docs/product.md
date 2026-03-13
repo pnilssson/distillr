@@ -51,27 +51,19 @@ Key differentiators:
 
 ## Plans
 
-| Plan        | Price  | Monthly videos | Total video cap | Monthly credits | Chat models            |
-| ----------- | ------ | -------------- | --------------- | --------------- | ---------------------- |
-| **Free**    | €0     | 5              | 20              | 100             | Standard only          |
-| **Builder** | €17/mo | 50             | 500             | 1,000           | Standard + Advanced    |
-| **Pro**     | €39/mo | 150            | Unlimited       | 4,000           | Standard + Advanced    |
+| Plan        | Price  | Monthly videos | Total video cap | Monthly credits |
+| ----------- | ------ | -------------- | --------------- | --------------- |
+| **Free**    | €0     | 10             | 50              | 100             |
+| **Builder** | €17/mo | 100            | 1,000           | 1,000           |
+| **Pro**     | €39/mo | 300            | Unlimited       | 4,000           |
 
 ## Credits
 
-Credits are the universal unit for chat. Users choose their model per message; credits are deducted accordingly.
+Credits are the universal unit for chat. Users choose their AI model per message; credit cost scales with model capability so margin is protected regardless of which model a user picks.
 
-| Model                     | Credits per message | Notes                                  |
-| ------------------------- | ------------------- | -------------------------------------- |
-| Standard (`gpt-4.1-mini`) | 5                   | Fast, accurate, great for most queries |
-| Advanced (`gpt-4.1`)      | 25                  | Deeper reasoning, complex synthesis    |
+Monthly credit allowances reset on the billing cycle anniversary. Unused credits do not roll over. Top-up: 500 credits for €5, available to Builder and Pro via Polar one-time purchase. Free users see an upgrade prompt instead.
 
-Monthly credit allowances reset on the billing cycle anniversary. Unused credits do not roll over. Top-up: 500 credits for €5, available to Builder and Pro via Polar one-time purchase.
-
-**Example usage at Builder (1,000 credits/mo):**
-- 200 Standard messages, or
-- 40 Advanced messages, or
-- Any mix in between
+Credits per model are set so the credit cost always covers actual LLM cost with margin. The ratio between models reflects their real cost ratio (gpt-4.1 costs ~5x gpt-4.1-mini, so it costs ~5x credits). Exact per-message credit costs to be finalised when model pricing is fully benchmarked.
 
 ## Monthly Video Cap
 

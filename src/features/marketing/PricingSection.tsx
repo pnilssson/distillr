@@ -11,47 +11,61 @@ interface PricingSectionProps {
 
 const plans = [
   {
-    name: "Free",
-    price: "€0",
-    period: null,
-    tagline: "Always free",
+    name: "Pro",
+    price: "€39",
+    period: "/mo",
+    tagline: "For researchers and power users",
     features: [
-      "15 videos",
-      "50 chat messages / mo",
-      "TXT export",
-      "1 library",
+      "300 new videos per month",
+      "Unlimited videos in your library",
+      "4,000 credits / mo",
+      "Priority processing",
+      "All export formats",
+      "Credit top-ups available",
     ],
-    cta: "Get started free",
+    missing: [],
+    cta: "Go Pro",
     variant: "outline" as const,
     highlighted: false,
   },
   {
     name: "Builder",
-    price: "€14",
+    price: "€17",
     period: "/mo",
-    tagline: "For serious learners",
+    tagline: "Your personal research stack",
     features: [
-      "300 videos",
-      "500 chat messages / mo",
+      "100 new videos per month",
+      "Up to 1,000 videos in your library",
+      "1,000 credits / mo",
       "All export formats",
-      "Channels & playlists",
+      "Unlimited libraries",
+      "Credit top-ups available",
+    ],
+    missing: [
+      "Unlimited videos in library",
+      "Priority processing",
     ],
     cta: "Start building",
     variant: "default" as const,
     highlighted: true,
   },
   {
-    name: "Pro",
-    price: "€34",
-    period: "/mo",
-    tagline: "For teams and power users",
+    name: "Free",
+    price: "€0",
+    period: null,
+    tagline: "Try it out",
     features: [
-      "1,500 videos",
-      "2,000 chat messages / mo",
-      "Priority processing",
-      "All formats + API access",
+      "10 new videos per month",
+      "Up to 50 videos in your library",
+      "100 credits / mo",
+      "TXT export",
+      "1 library",
     ],
-    cta: "Go pro",
+    missing: [
+      "All export formats",
+      "Credit top-ups",
+    ],
+    cta: "Get started free",
     variant: "outline" as const,
     highlighted: false,
   },
@@ -85,7 +99,7 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
           Simple pricing. Start free.
         </h2>
         <p className="mb-16 text-center text-muted-foreground">
-          No contracts. No credit card. Cancel anytime.
+          No contracts. No credit card required. Cancel anytime.
         </p>
       </motion.div>
 
@@ -123,9 +137,18 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
             <p className="mt-1 mb-6 text-sm text-muted-foreground">
               {plan.tagline}
             </p>
-            <ul className="flex-1 space-y-2 text-sm text-muted-foreground">
+            <ul className="flex-1 space-y-2 text-sm">
               {plan.features.map((feature) => (
-                <li key={feature}>✓ {feature}</li>
+                <li key={feature} className="flex items-start gap-2 text-muted-foreground">
+                  <span className="mt-0.5 shrink-0 text-foreground">✓</span>
+                  {feature}
+                </li>
+              ))}
+              {plan.missing.map((feature) => (
+                <li key={feature} className="flex items-start gap-2 text-muted-foreground/40 line-through">
+                  <span className="mt-0.5 shrink-0">✗</span>
+                  {feature}
+                </li>
               ))}
             </ul>
             <Button
@@ -138,6 +161,7 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
           </motion.div>
         ))}
       </motion.div>
+
     </section>
   );
 }

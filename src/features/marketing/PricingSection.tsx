@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 
@@ -54,30 +57,54 @@ const plans = [
   },
 ];
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1 } },
+};
+
 export function PricingSection({ isAuthenticated }: PricingSectionProps) {
   const ctaHref = isAuthenticated ? "/dashboard" : "/login";
 
   return (
     <section id="pricing" className="mx-auto w-full max-w-5xl px-6 py-24 lg:py-36">
-      <p className="mb-2 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
-        Pricing
-      </p>
-      <h2 className="mb-4 text-center font-serif text-3xl sm:text-4xl">
-        Start free. Scale as you grow.
-      </h2>
-      <p className="mb-16 text-center text-muted-foreground">
-        No contracts. Cancel anytime.
-      </p>
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        variants={fadeUp}
+      >
+        <p className="mb-2 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
+          Pricing
+        </p>
+        <h2 className="mb-4 text-center font-serif text-3xl sm:text-4xl">
+          Start free. Scale as you grow.
+        </h2>
+        <p className="mb-16 text-center text-muted-foreground">
+          No contracts. Cancel anytime.
+        </p>
+      </motion.div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <motion.div
+        className="grid gap-4 sm:grid-cols-3"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        variants={staggerContainer}
+      >
         {plans.map((plan) => (
-          <div
+          <motion.div
             key={plan.name}
             className={`relative flex flex-col rounded-xl p-6 ${
               plan.highlighted
                 ? "border-2 border-foreground bg-card"
                 : "border bg-card"
             }`}
+            variants={fadeUp}
           >
             {plan.highlighted && (
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-foreground px-3 py-0.5 text-xs font-medium text-background">
@@ -108,9 +135,9 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
             >
               <Link href={ctaHref}>{plan.cta}</Link>
             </Button>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 }

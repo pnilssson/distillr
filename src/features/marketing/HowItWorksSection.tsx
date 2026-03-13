@@ -1,4 +1,7 @@
+"use client";
+
 import { PlusCircle, BookOpen, MessageSquare } from "lucide-react";
+import { motion } from "framer-motion";
 
 const steps = [
   {
@@ -21,19 +24,42 @@ const steps = [
   },
 ];
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.12 } },
+};
+
 export function HowItWorksSection() {
   return (
     <section id="how-it-works" className="mx-auto w-full max-w-5xl px-6 py-24 lg:py-36">
-      <p className="mb-2 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
-        How it works
-      </p>
-      <h2 className="mb-16 text-center font-serif text-3xl sm:text-4xl">
-        Three steps to your knowledge base
-      </h2>
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        variants={fadeUp}
+      >
+        <p className="mb-2 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
+          How it works
+        </p>
+        <h2 className="mb-16 text-center font-serif text-3xl sm:text-4xl">
+          Three steps to your knowledge base
+        </h2>
+      </motion.div>
 
-      <div className="grid gap-10 sm:grid-cols-3">
+      <motion.div
+        className="grid gap-10 sm:grid-cols-3"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        variants={staggerContainer}
+      >
         {steps.map(({ step, icon: Icon, title, desc }) => (
-          <div key={step} className="flex flex-col gap-3">
+          <motion.div key={step} className="flex flex-col gap-3" variants={fadeUp}>
             <span className="font-mono text-xs text-muted-foreground">
               {step}
             </span>
@@ -42,9 +68,9 @@ export function HowItWorksSection() {
             <p className="text-sm leading-relaxed text-muted-foreground">
               {desc}
             </p>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 }

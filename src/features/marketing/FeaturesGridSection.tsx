@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Library,
   MessageSquare,
@@ -6,6 +8,7 @@ import {
   Youtube,
   Shield,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 const features = [
   {
@@ -40,30 +43,54 @@ const features = [
   },
 ];
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.07 } },
+};
+
 export function FeaturesGridSection() {
   return (
     <section id="features" className="border-t mx-auto w-full max-w-5xl px-6 py-24 lg:py-36">
-      <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-        Features
-      </p>
-      <h2 className="mb-16 max-w-md font-serif text-3xl sm:text-4xl">
-        Everything you need to stop losing knowledge
-      </h2>
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        variants={fadeUp}
+      >
+        <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+          Features
+        </p>
+        <h2 className="mb-16 max-w-md font-serif text-3xl sm:text-4xl">
+          Everything you need to stop losing knowledge
+        </h2>
+      </motion.div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <motion.div
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        variants={staggerContainer}
+      >
         {features.map(({ icon: Icon, title, desc }) => (
-          <div
+          <motion.div
             key={title}
             className="flex flex-col gap-2 rounded-xl border bg-card p-5"
+            variants={fadeUp}
           >
             <Icon size={18} className="mb-1 text-muted-foreground" />
             <p className="text-sm font-medium">{title}</p>
             <p className="text-sm leading-relaxed text-muted-foreground">
               {desc}
             </p>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 }

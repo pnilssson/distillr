@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 const exportFormats = ["Markdown", "PDF", "TXT", "Full chat log"];
 
 const exportPreview = [
@@ -19,13 +23,29 @@ const exportPreview = [
   },
 ];
 
+const slideLeft = {
+  hidden: { opacity: 0, x: -24 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: "easeOut" } },
+};
+
+const slideRight = {
+  hidden: { opacity: 0, x: 24 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: "easeOut" } },
+};
+
 export function FeatureShowcaseDark() {
   return (
     <section className="bg-foreground text-background">
       <div className="mx-auto w-full max-w-5xl px-6 py-24 lg:py-36">
         <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
           {/* Export mockup */}
-          <div className="space-y-1.5 rounded-xl border border-background/10 bg-background/5 p-5 font-mono text-xs">
+          <motion.div
+            className="space-y-1.5 rounded-xl border border-background/10 bg-background/5 p-5 font-mono text-xs"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={slideLeft}
+          >
             {exportPreview.map(({ type, text }, i) =>
               type === "spacer" ? (
                 <div key={i} className="h-2" />
@@ -42,10 +62,15 @@ export function FeatureShowcaseDark() {
                 </p>
               )
             )}
-          </div>
+          </motion.div>
 
           {/* Text */}
-          <div>
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={slideRight}
+          >
             <p className="mb-3 text-xs font-medium uppercase tracking-widest text-background/50">
               Export
             </p>
@@ -67,7 +92,7 @@ export function FeatureShowcaseDark() {
                 </span>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

@@ -14,7 +14,7 @@ export function MarketingNav({ isAuthenticated, children }: MarketingNavProps) {
   const showCenterLinks = !children && !isAuthenticated;
 
   return (
-    <div className="sticky top-0 z-50 px-4 pt-4">
+    <div className="sticky top-0 z-50 px-3 pt-2 sm:px-4 sm:pt-4">
       <motion.nav
         className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-xl border bg-card/80 px-5 py-3 backdrop-blur-md"
         initial={{ opacity: 0, y: -8 }}

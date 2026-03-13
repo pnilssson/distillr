@@ -5,16 +5,16 @@ import { motion } from "framer-motion";
 const exportFormats = ["Markdown", "PDF", "TXT", "Full chat log"];
 
 const exportPreview = [
-  { type: "heading", text: "## Summary: Transformer Architecture" },
-  { type: "bold", text: "Key concepts:" },
-  { type: "item", text: "- Self-attention: each token attends to all others" },
+  { type: "heading", text: "# Summary: Building a Morning Routine" },
+  { type: "bold", text: "Main takeaways:" },
+  { type: "item", text: "- Wake up at the same time every day" },
   {
     type: "item",
-    text: "- Multi-head attention: parallel attention across subspaces",
+    text: "- Avoid your phone for the first 30 minutes",
   },
   {
     type: "item",
-    text: "- Positional encoding: injects position information",
+    text: "- Start with movement, even just a short walk",
   },
   { type: "spacer", text: "" },
   {

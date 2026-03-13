@@ -15,34 +15,34 @@ const features = [
   },
   {
     icon: MessageSquare,
-    title: "Cross-video chat",
-    desc: "Ask questions across your whole library. Answers come with timestamp citations, not guesses.",
+    title: "Ask your content anything",
+    desc: "Ask questions across your whole library. Get specific answers from your own videos, not generic AI knowledge.",
   },
   {
     icon: Search,
-    title: "Semantic search",
-    desc: "Find anything by meaning, not just keywords. Surface ideas you forgot you had.",
+    title: "Search by meaning",
+    desc: "Find anything by what it means, not just the exact words. Surface ideas you forgot you had.",
   },
   {
     icon: Download,
     title: "Structured exports",
-    desc: "Summaries, transcripts, and chat logs — formatted and ready to use in your workflow.",
+    desc: "Summaries, transcripts, and chat logs - formatted and ready for Notion, Obsidian, or anywhere else.",
   },
   {
     icon: Youtube,
-    title: "Channels & playlists",
+    title: "Channels and playlists",
     desc: "Add entire channels or playlists at once. New uploads are picked up automatically.",
   },
   {
     icon: Shield,
-    title: "Your data, isolated",
+    title: "Your data, private",
     desc: "Libraries are private to your account. Nothing is shared, nothing is public by default.",
   },
 ];
 
 export function FeaturesGridSection() {
   return (
-    <section className="border-t mx-auto w-full max-w-5xl px-6 py-24">
+    <section id="features" className="border-t mx-auto w-full max-w-5xl px-6 py-24">
       <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
         Features
       </p>

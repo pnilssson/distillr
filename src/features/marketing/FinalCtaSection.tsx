@@ -8,15 +8,15 @@ interface FinalCtaSectionProps {
 
 export function FinalCtaSection({ isAuthenticated }: FinalCtaSectionProps) {
   const ctaHref = isAuthenticated ? "/dashboard" : "/login";
-  const ctaLabel = isAuthenticated ? "Go to dashboard" : "Build my first library →";
+  const ctaLabel = isAuthenticated ? "Go to dashboard" : "Try it free";
 
   return (
     <section className="border-t mx-auto w-full max-w-3xl px-6 py-24 text-center">
       <h2 className="mb-4 font-serif text-4xl leading-tight sm:text-5xl">
-        Your next great idea is already on YouTube.
+        Ask your YouTube library anything.
       </h2>
       <p className="mb-10 text-muted-foreground">
-        Start building a knowledge base today — free forever.
+        Free to start. Add your first channel or video in under a minute.
       </p>
       <Button asChild size="lg">
         <Link href={ctaHref}>{ctaLabel}</Link>

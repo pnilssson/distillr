@@ -7,16 +7,28 @@ export function FooterSection() {
         <span className="font-semibold tracking-tight text-foreground">
           Distillr
         </span>
-        <div className="flex gap-6">
+        <div className="flex flex-wrap gap-6">
+          <Link
+            href="#how-it-works"
+            className="transition-colors hover:text-foreground"
+          >
+            How it works
+          </Link>
+          <Link
+            href="#features"
+            className="transition-colors hover:text-foreground"
+          >
+            Features
+          </Link>
           <Link
             href="#pricing"
-            className="hover:text-foreground transition-colors"
+            className="transition-colors hover:text-foreground"
           >
             Pricing
           </Link>
           <Link
             href="/login"
-            className="hover:text-foreground transition-colors"
+            className="transition-colors hover:text-foreground"
           >
             Sign in
           </Link>

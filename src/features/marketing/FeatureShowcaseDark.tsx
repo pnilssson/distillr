@@ -1,7 +1,7 @@
 const exportFormats = ["Markdown", "PDF", "TXT", "Full chat log"];
 
 const exportPreview = [
-  { type: "heading", text: "## Summary — Transformer Architecture" },
+  { type: "heading", text: "## Summary - Transformer Architecture" },
   { type: "bold", text: "Key concepts:" },
   { type: "item", text: "- Self-attention: each token attends to all others" },
   {
@@ -15,7 +15,7 @@ const exportPreview = [
   { type: "spacer", text: "" },
   {
     type: "cite",
-    text: "Sources: [Karpathy 12:34] [Illustrated Transformer 8:21]",
+    text: "Sources: [Video 1] [Video 2]",
   },
 ];
 
@@ -54,8 +54,8 @@ export function FeatureShowcaseDark() {
             </h2>
             <p className="mb-6 leading-relaxed text-background/60">
               Get summaries, structured notes, full transcripts, and your entire
-              chat history — formatted and ready to paste into Notion, Obsidian,
-              or anywhere else you think.
+              chat history - formatted and ready to paste into Notion, Obsidian,
+              or anywhere else you work.
             </p>
             <div className="flex flex-wrap gap-2">
               {exportFormats.map((fmt) => (

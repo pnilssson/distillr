@@ -1,29 +1,29 @@
-import { PlusCircle, Cpu, MessageSquare } from "lucide-react";
+import { PlusCircle, BookOpen, MessageSquare } from "lucide-react";
 
 const steps = [
   {
     step: "01",
     icon: PlusCircle,
     title: "Add your content",
-    desc: "Paste a YouTube channel URL, playlist, or individual video. Distillr does the rest.",
+    desc: "Paste a YouTube channel, playlist, or video link. That is all - Distillr handles everything else automatically.",
   },
   {
     step: "02",
-    icon: Cpu,
-    title: "Distillr processes it",
-    desc: "Transcripts are extracted, chunked, and embedded. Your library is ready in minutes.",
+    icon: BookOpen,
+    title: "We read every video",
+    desc: "Distillr goes through the videos you added and builds a knowledge base from your content. Ready in minutes.",
   },
   {
     step: "03",
     icon: MessageSquare,
-    title: "Ask anything",
-    desc: "Chat across your entire library. Every answer comes with timestamp-linked citations.",
+    title: "Ask anything you want",
+    desc: "Type a question like you would ask a friend. Get a specific answer pulled directly from your videos and channels.",
   },
 ];
 
 export function HowItWorksSection() {
   return (
-    <section className="mx-auto w-full max-w-5xl px-6 py-24">
+    <section id="how-it-works" className="mx-auto w-full max-w-5xl px-6 py-24">
       <p className="mb-2 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
         How it works
       </p>

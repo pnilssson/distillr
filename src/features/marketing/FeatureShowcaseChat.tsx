@@ -1,9 +1,9 @@
 import { Check } from "lucide-react";
 
 const checkpoints = [
-  "Answers grounded in your content, not the internet",
-  "Timestamp-linked citations you can verify",
-  "Full conversation history saved automatically",
+  "Answers from your videos, not generic AI knowledge",
+  "Works with content published yesterday, not just years ago",
+  "Your full conversation history saved automatically",
 ];
 
 export function FeatureShowcaseChat() {
@@ -16,12 +16,13 @@ export function FeatureShowcaseChat() {
             Chat
           </p>
           <h2 className="mb-4 font-serif text-3xl leading-tight sm:text-4xl">
-            Ask questions across every video you&rsquo;ve ever watched.
+            Get answers from your content, not the whole internet.
           </h2>
           <p className="mb-6 leading-relaxed text-muted-foreground">
-            Distillr&rsquo;s AI answers from your library — not the internet.
-            Every answer links back to the exact timestamp so you can verify,
-            revisit, and go deeper.
+            ChatGPT is powerful but gives you generic answers based on
+            everything it knows. Distillr only answers from the videos and
+            channels you added. Ask about something your favorite creator
+            published last week - Distillr knows. ChatGPT does not.
           </p>
           <ul className="space-y-2">
             {checkpoints.map((item) => (
@@ -33,45 +34,20 @@ export function FeatureShowcaseChat() {
           </ul>
         </div>
 
-        {/* Chat UI Mockup */}
-        <div className="rounded-2xl border bg-card p-1 shadow-lg">
-          <div className="min-h-64 space-y-3 rounded-xl bg-muted/40 p-4">
-            {/* User message */}
-            <div className="flex gap-3">
-              <div className="h-6 w-6 shrink-0 rounded-full bg-muted" />
-              <div className="max-w-xs rounded-lg border bg-background p-2 text-xs text-muted-foreground">
-                What are the main concepts from the Transformer architecture
-                videos?
-              </div>
-            </div>
-            {/* Assistant message */}
-            <div className="flex flex-row-reverse gap-3">
-              <div className="h-6 w-6 shrink-0 rounded-full bg-foreground" />
-              <div className="max-w-xs space-y-2 rounded-lg bg-foreground p-3 text-xs text-background">
-                <p>
-                  The core concept is the attention mechanism, which lets the
-                  model weigh relationships between all tokens simultaneously
-                  rather than sequentially...
-                </p>
-                <p className="text-xs text-background/60">
-                  Sources: 3 videos · 5 timestamps
-                </p>
-              </div>
-            </div>
-            {/* Citation chips */}
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {[
-                "Karpathy 12:34",
-                "Illustrated Transformer 8:21",
-                "Attention Paper 5:44",
-              ].map((cite) => (
-                <span
-                  key={cite}
-                  className="rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground"
-                >
-                  {cite}
-                </span>
-              ))}
+        {/* PLACEHOLDER: Replace with actual chat screenshot */}
+        <div className="overflow-hidden rounded-2xl border bg-card shadow-lg">
+          <div className="border-b bg-muted/40 px-4 py-3">
+            <p className="text-xs font-medium">Chat with your library</p>
+          </div>
+          <div className="flex min-h-64 flex-col items-center justify-center gap-2 p-6 text-center">
+            <div className="rounded-lg border-2 border-dashed border-border bg-muted/20 px-6 py-5">
+              <p className="text-sm font-medium text-muted-foreground">
+                Chat screenshot placeholder
+              </p>
+              <p className="mt-1.5 max-w-xs text-xs text-muted-foreground/60">
+                Replace with: chat interface showing a question and answer from
+                a specific video
+              </p>
             </div>
           </div>
         </div>

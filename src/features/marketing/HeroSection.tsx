@@ -8,31 +8,32 @@ interface HeroSectionProps {
 
 export function HeroSection({ isAuthenticated }: HeroSectionProps) {
   const ctaHref = isAuthenticated ? "/dashboard" : "/login";
-  const ctaLabel = isAuthenticated ? "Go to dashboard" : "Build my first library →";
+  const ctaLabel = isAuthenticated ? "Go to dashboard" : "Try it free";
 
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 py-24 text-center">
       {/* Badge */}
       <div className="mb-6 inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium tracking-wide text-muted-foreground">
-        Second brain for video
+        Your AI. Your content.
       </div>
 
       {/* Headline */}
       <h1 className="mb-6 max-w-2xl font-serif text-5xl leading-tight tracking-tight sm:text-6xl lg:text-7xl">
-        Stop watching.
+        ChatGPT knows everything.
         <br />
-        Start knowing.
+        Distillr knows your library.
       </h1>
 
       {/* Subheadline */}
       <p className="mb-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
-        Distillr turns YouTube channels, playlists, and videos into a searchable
-        knowledge base you can chat with and export from.
+        Add the YouTube channels and videos you already follow. Ask questions in
+        plain language. Get specific answers from your content - not from the
+        entire internet.
       </p>
 
       {/* Social proof hint */}
       <p className="mb-10 text-sm text-muted-foreground">
-        Trusted by researchers, creators, and lifelong learners
+        Used by researchers, creators, and lifelong learners
       </p>
 
       {/* CTA */}
@@ -41,67 +42,29 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
       </Button>
       {!isAuthenticated && (
         <p className="text-xs text-muted-foreground">
-          Free to start · No credit card required
+          Free forever. No credit card needed.
         </p>
       )}
 
-      {/* Product UI Mockup */}
-      <div className="mt-16 w-full max-w-3xl overflow-hidden rounded-2xl border bg-card shadow-xl">
-        {/* Window chrome */}
+      {/* PLACEHOLDER: Replace with actual app screenshot */}
+      <div className="mt-16 w-full max-w-3xl overflow-hidden rounded-2xl border shadow-xl">
         <div className="flex items-center gap-1.5 border-b bg-muted px-4 py-3">
           <div className="h-3 w-3 rounded-full bg-border" />
           <div className="h-3 w-3 rounded-full bg-border" />
           <div className="h-3 w-3 rounded-full bg-border" />
           <span className="ml-2 text-xs text-muted-foreground">
-            distillr.app/library/ai-research
+            distillr.app
           </span>
         </div>
-        {/* Mockup body */}
-        <div className="flex min-h-64 divide-x">
-          {/* Sidebar */}
-          <div className="w-44 shrink-0 space-y-1 bg-muted/40 p-3">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Libraries
+        <div className="flex min-h-80 flex-col items-center justify-center bg-muted/20 p-8 text-center">
+          <div className="rounded-lg border-2 border-dashed border-border bg-background/50 px-8 py-6">
+            <p className="text-sm font-medium text-muted-foreground">
+              Screenshot placeholder
             </p>
-            {[
-              { name: "AI Research", active: true },
-              { name: "Marketing", active: false },
-              { name: "Dev Talks", active: false },
-            ].map(({ name, active }) => (
-              <div
-                key={name}
-                className={`rounded px-2 py-1.5 text-xs ${
-                  active
-                    ? "bg-accent font-medium"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {name}
-              </div>
-            ))}
-          </div>
-          {/* Main content */}
-          <div className="flex-1 space-y-2 p-4">
-            <p className="mb-3 text-xs font-medium">AI Research · 24 videos</p>
-            {[
-              "How GPT-4 Works — Andrej Karpathy",
-              "The Illustrated Transformer",
-              "Attention Is All You Need — Explained",
-            ].map((v) => (
-              <div
-                key={v}
-                className="flex items-center gap-3 rounded border bg-muted/30 p-2 text-xs"
-              >
-                <div className="h-8 w-12 shrink-0 rounded bg-muted" />
-                <span className="truncate text-muted-foreground">{v}</span>
-              </div>
-            ))}
-            {/* Chat hint */}
-            <div className="mt-3 rounded-lg border bg-primary/10 px-3 py-2 text-xs text-muted-foreground">
-              💬 &ldquo;What did Karpathy say about attention mechanisms?&rdquo;
-              &mdash;{" "}
-              <span className="font-medium text-foreground">3 sources found</span>
-            </div>
+            <p className="mt-1.5 max-w-xs text-xs text-muted-foreground/60">
+              Replace with: library view showing video list, search bar, and
+              sidebar with libraries
+            </p>
           </div>
         </div>
       </div>

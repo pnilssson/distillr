@@ -1,9 +1,18 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export function FooterSection() {
   return (
     <footer className="border-t">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-6 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+      <motion.div
+        className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-6 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-40px" }}
+        transition={{ duration: 0.5, ease: "easeOut" as const }}
+      >
         <span className="font-semibold tracking-tight text-foreground">
           Distillr
         </span>
@@ -33,7 +42,7 @@ export function FooterSection() {
             Sign in
           </Link>
         </div>
-      </div>
+      </motion.div>
     </footer>
   );
 }

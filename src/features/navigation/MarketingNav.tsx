@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 
@@ -12,7 +15,11 @@ export function MarketingNav({ isAuthenticated, children }: MarketingNavProps) {
 
   return (
     <div className="sticky top-0 z-50 px-4 pt-4">
-      <nav className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-xl border bg-card/80 px-5 py-3 backdrop-blur-md">
+      <motion.nav
+        className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-xl border bg-card/80 px-5 py-3 backdrop-blur-md"
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" as const }}
         <Link
           href="/"
           className="text-base font-semibold tracking-tight transition-opacity hover:opacity-80"
@@ -63,7 +70,7 @@ export function MarketingNav({ isAuthenticated, children }: MarketingNavProps) {
             )}
           </div>
         )}
-      </nav>
+      </motion.nav>
     </div>
   );
 }

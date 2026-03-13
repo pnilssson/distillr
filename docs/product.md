@@ -51,19 +51,42 @@ Key differentiators:
 
 ## Plans
 
-| Plan        | Price  | Videos   | Chat messages/mo | Export                            |
-| ----------- | ------ | -------- | ---------------- | --------------------------------- |
-| **Free**    | €0     | 15 total | 50               | TXT only                          |
-| **Builder** | €14/mo | 300      | 500              | All formats                       |
-| **Pro**     | €34/mo | 1,500    | 2,000            | All formats + priority processing |
+| Plan        | Price  | Monthly videos | Total video cap | Monthly credits | Chat models            |
+| ----------- | ------ | -------------- | --------------- | --------------- | ---------------------- |
+| **Free**    | €0     | 5              | 20              | 100             | Standard only          |
+| **Builder** | €17/mo | 50             | 500             | 1,000           | Standard + Advanced    |
+| **Pro**     | €39/mo | 150            | Unlimited       | 4,000           | Standard + Advanced    |
+
+## Credits
+
+Credits are the universal unit for chat. Users choose their model per message; credits are deducted accordingly.
+
+| Model                     | Credits per message | Notes                                  |
+| ------------------------- | ------------------- | -------------------------------------- |
+| Standard (`gpt-4.1-mini`) | 5                   | Fast, accurate, great for most queries |
+| Advanced (`gpt-4.1`)      | 25                  | Deeper reasoning, complex synthesis    |
+
+Monthly credit allowances reset on the billing cycle anniversary. Unused credits do not roll over. Top-up: 500 credits for €5, available to Builder and Pro via Polar one-time purchase.
+
+**Example usage at Builder (1,000 credits/mo):**
+- 200 Standard messages, or
+- 40 Advanced messages, or
+- Any mix in between
+
+## Monthly Video Cap
+
+The monthly video cap limits new ingestion per billing cycle and resets on the billing anniversary. The total video cap is a lifetime ceiling on videos in the account.
+
+**Deleting a video does not restore monthly or lifetime quota.** Ingestion is the cost event - transcript fetch, embedding, and insight generation are spent at ingest time regardless of later deletion.
 
 ## Principles
 
-- **Videos ingested** is the primary monetization lever - easy to understand, tied to real cost
-- **Chat messages** are metered, not unlimited - LLM cost is real and scales with usage
-- **Token guard:** internally track token spend per user; adjust context window for heavy users without changing visible limits
-- **Overages:** when Builder/Pro users hit chat limit, offer a top-up (500 messages for €5 via Polar) rather than hard-blocking - converts frustration into revenue
-- **Free plan** is generous enough to demonstrate value, tight enough to convert
+- **Credits, not message counts** - users choose their model; credit costs per model are calibrated with at least 2x margin over actual API cost. Recalibrate if OpenAI pricing changes significantly.
+- **Monthly video caps** - reset each billing cycle. Predictable costs for both the user and the platform. Pro users with unlimited total videos still face a monthly ingestion rate limit.
+- **Never lose money on a user** - credit deduction happens server-side before the LLM call. If credits are insufficient, the request is blocked with a top-up prompt.
+- **Top-ups convert frustration into revenue** - surface at the exact moment of limit-hit, never proactively. Builder and Pro only; Free users see an upgrade prompt instead.
+- **Free plan** demonstrates core value within tight but honest limits. Tight enough to convert, generous enough to show the product works.
+- **Annual billing** (post-MVP): offer 2 months free framing (~17% discount). Improves cash flow significantly and increases LTV. Builder annual = €170/yr (~€14.17/mo equivalent). Pro annual = €390/yr (~€32.50/mo equivalent).
 
 ---
 
@@ -73,5 +96,6 @@ Key differentiators:
 - Embedding: ~€0.0001-0.0003 per video (OpenAI `text-embedding-3-small`)
 - Insight generation: ~€0.003-0.013 per video (OpenAI `gpt-4.1-mini`, transcript length dependent)
 - Total ingestion cost: ~€0.008-0.030 per video (transcript + embedding + insights)
-- Chat message: ~€0.012-0.028 per message (OpenAI `gpt-4.1`, context and answer length dependent)
+- Standard chat message: ~€0.001-0.004 per message (OpenAI `gpt-4.1-mini`)
+- Advanced chat message: ~€0.012-0.028 per message (OpenAI `gpt-4.1`, context and answer length dependent)
 - Polar fees: base 4% + €0.40 per transaction, with +1.5% for international cards and +0.5% for subscriptions where applicable

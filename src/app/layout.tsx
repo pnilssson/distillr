@@ -7,9 +7,67 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
+function getMetadataBase() {
+  const defaultUrl = "https://distillr.co";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+  if (!appUrl) {
+    return new URL(defaultUrl);
+  }
+
+  const normalizedUrl = appUrl.startsWith("http") ? appUrl : `https://${appUrl}`;
+
+  try {
+    return new URL(normalizedUrl);
+  } catch {
+    return new URL(defaultUrl);
+  }
+}
+
+const siteName = "Distillr";
+const title = "Distillr - YouTube knowledge base";
+const description =
+  "Turn YouTube channels, playlists, and videos into a searchable knowledge base you can chat with and export.";
+
 export const metadata: Metadata = {
-  title: "Distillr",
-  description: "A second brain for YouTube knowledge.",
+  metadataBase: getMetadataBase(),
+  title: {
+    default: title,
+    template: "%s | Distillr",
+  },
+  description,
+  applicationName: siteName,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName,
+    title,
+    description,
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  referrer: "origin-when-cross-origin",
+  category: "productivity",
+  creator: siteName,
+  publisher: siteName,
 };
 
 export default function RootLayout({

@@ -54,15 +54,16 @@ Embeddings are stored in `pgvector` columns.
    - vector search over `video_chunks`
    - vector search over `video_insights`
    - full-text search over `video_chunks`
-4. Merge and rank candidates with a deterministic strategy (MVP: weighted score fusion).
+4. Merge and rank candidates with deterministic normalization and weighted score fusion.
 5. Build context block with source diversity and token budget limits.
-6. Generate answer with OpenAI (`gpt-4.1`).
+6. Generate answer with OpenAI using alias-based model selection (`chat.fast` or `chat.smart`).
+   - Retrieved evidence is injected as untrusted context only; instructions inside evidence must be ignored.
 7. Return a synthesized answer with a compact `Sources` block and persist chat messages + usage metrics.
 
 Model defaults (MVP):
 
 - Embeddings: OpenAI `text-embedding-3-small`
-- Chat generation: OpenAI `gpt-4.1`
+- Chat generation: OpenAI alias-based model (`gpt-5-mini` fast or `gpt-5.1` smart)
 
 ## Evidence and Citation Policy
 
@@ -95,7 +96,11 @@ Sources (showing top 3-5 videos)
 MVP:
 
 - Hybrid retrieval (chunks vector + insights vector + chunks FTS)
-- Deterministic merge/rank
+- Deterministic merge/rank with explicit normalization:
+  - `vec_norm = clamp(1 - cosine_distance, 0, 1)`
+  - `fts_norm = clamp(ts_rank_cd / 0.4, 0, 1)`
+  - `fused_score = 0.45 * chunk_vec + 0.35 * insight_vec + 0.20 * fts_norm`
+  - De-duplicate near-identical chunk text and cap chunks per video for diversity
 - Compact source rollup with timestamp links (top 3-5 videos)
 
 V2:

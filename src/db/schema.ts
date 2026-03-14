@@ -3,6 +3,7 @@ import {
   doublePrecision,
   index,
   integer,
+  jsonb,
   pgPolicy,
   pgRole,
   pgTable,
@@ -57,6 +58,112 @@ export const libraries = pgTable(
 ).enableRLS();
 
 export type Library = typeof libraries.$inferSelect;
+
+export const chatSessions = pgTable(
+  "chat_sessions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull(),
+    libraryId: uuid("library_id")
+      .notNull()
+      .references(() => libraries.id, { onDelete: "cascade" }),
+    title: text("title").notNull().default("New chat"),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("chat_sessions_library_id_idx").on(table.libraryId),
+    index("chat_sessions_user_id_idx").on(table.userId),
+    index("chat_sessions_last_message_at_idx").on(table.lastMessageAt.desc()),
+    pgPolicy("chat_sessions_select_own", {
+      for: "select",
+      to: authenticatedRole,
+      using: sql`auth.uid() = user_id`,
+    }),
+    pgPolicy("chat_sessions_insert_own", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: sql`auth.uid() = user_id`,
+    }),
+    pgPolicy("chat_sessions_update_own", {
+      for: "update",
+      to: authenticatedRole,
+      using: sql`auth.uid() = user_id`,
+      withCheck: sql`auth.uid() = user_id`,
+    }),
+    pgPolicy("chat_sessions_delete_own", {
+      for: "delete",
+      to: authenticatedRole,
+      using: sql`auth.uid() = user_id`,
+    }),
+  ],
+).enableRLS();
+
+export type ChatSession = typeof chatSessions.$inferSelect;
+
+export const chatMessages = pgTable(
+  "chat_messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull(),
+    libraryId: uuid("library_id")
+      .notNull()
+      .references(() => libraries.id, { onDelete: "cascade" }),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => chatSessions.id, { onDelete: "cascade" }),
+    role: text("role").notNull(), // 'user' | 'assistant'
+    content: text("content").notNull(),
+    model: text("model"),
+    status: text("status").notNull().default("completed"), // 'completed' | 'aborted' | 'failed'
+    requestedMode: text("requested_mode"), // 'auto' | 'library' | 'chat'
+    effectiveMode: text("effective_mode"), // 'library' | 'chat'
+    inputTokens: integer("input_tokens"),
+    outputTokens: integer("output_tokens"),
+    totalTokens: integer("total_tokens"),
+    sourcesJson: jsonb("sources_json").$type<unknown>(),
+    evidenceJson: jsonb("evidence_json").$type<unknown>(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("chat_messages_session_id_created_at_idx").on(table.sessionId, table.createdAt),
+    index("chat_messages_library_id_idx").on(table.libraryId),
+    index("chat_messages_user_id_idx").on(table.userId),
+    pgPolicy("chat_messages_select_own", {
+      for: "select",
+      to: authenticatedRole,
+      using: sql`auth.uid() = user_id`,
+    }),
+    pgPolicy("chat_messages_insert_own", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: sql`auth.uid() = user_id`,
+    }),
+    pgPolicy("chat_messages_update_own", {
+      for: "update",
+      to: authenticatedRole,
+      using: sql`auth.uid() = user_id`,
+      withCheck: sql`auth.uid() = user_id`,
+    }),
+    pgPolicy("chat_messages_delete_own", {
+      for: "delete",
+      to: authenticatedRole,
+      using: sql`auth.uid() = user_id`,
+    }),
+  ],
+).enableRLS();
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
 
 export const sources = pgTable(
   "sources",

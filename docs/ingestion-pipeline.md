@@ -31,7 +31,7 @@ If queueing fails when adding a source, the source insert is rolled back and the
 1. Fetch transcript from TranscriptAPI.com - stored as `transcript_raw`
 2. Chunk transcript (see Chunking Strategy below)
 3. Generate embeddings for chunks via OpenAI - upsert `video_chunks` rows
-4. Generate insight objects via OpenAI (`gpt-4.1-mini`) and embeddings via OpenAI (`text-embedding-3-small`) - upsert `video_insights` rows
+4. Generate insight objects via OpenAI (`gpt-5-mini`) and embeddings via OpenAI (`text-embedding-3-small`) - upsert `video_insights` rows
 5. Update `status: 'ready'`
 
 ### Artifacts Written

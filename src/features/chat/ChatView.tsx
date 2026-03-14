@@ -1,0 +1,123 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { type UIMessage, DefaultChatTransport } from "ai";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { ChatInput } from "@/features/chat/ChatInput";
+import { ChatMessageList } from "@/features/chat/ChatMessageList";
+import type { ChatMessageMetadata, ChatRequestMode } from "@/features/chat/types";
+
+type ChatViewProps = {
+  libraryId: string;
+  sessionId: string;
+  messages: UIMessage<ChatMessageMetadata>[];
+};
+
+export function ChatView({ libraryId, sessionId, messages: initialMessages }: ChatViewProps) {
+  const queryClient = useQueryClient();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const [input, setInput] = useState("");
+  const [mode, setMode] = useState<ChatRequestMode>("auto");
+  const [abortedMessageId, setAbortedMessageId] = useState<string | null>(null);
+  const [focusTick, setFocusTick] = useState(0);
+
+  const { messages, sendMessage, stop, regenerate, status, error, clearError } =
+    useChat<UIMessage<ChatMessageMetadata>>({
+      id: sessionId,
+      messages: initialMessages,
+      transport: new DefaultChatTransport({
+        api: `/api/libraries/${libraryId}/chat/sessions/${sessionId}/messages`,
+        prepareSendMessagesRequest: ({ messages: requestMessages, body, trigger }) => {
+          const latestMessage = requestMessages[requestMessages.length - 1];
+          const latestUserMessage = [...requestMessages].reverse().find((message) => message.role === "user");
+          const messageForContent =
+            trigger === "regenerate-message" ? latestUserMessage ?? latestMessage : latestMessage;
+
+          return {
+            body: {
+              content: extractTextContent(messageForContent),
+              mode: typeof body?.mode === "string" ? body.mode : "auto",
+            },
+          };
+        },
+      }),
+      onFinish: ({ message, isAbort }) => {
+        if (isAbort) {
+          setAbortedMessageId(message.id);
+        }
+
+        queryClient.invalidateQueries({ queryKey: ["chat-sessions", libraryId] });
+      },
+    });
+
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, [focusTick]);
+
+  function handleSubmit() {
+    if (!input.trim() || status !== "ready") {
+      return;
+    }
+
+    setAbortedMessageId(null);
+    sendMessage({ text: input }, { body: { mode } });
+    setInput("");
+    setFocusTick((tick) => tick + 1);
+  }
+
+  function handleSuggestion(text: string) {
+    setInput(text);
+    if (error) {
+      clearError();
+    }
+
+    setFocusTick((tick) => tick + 1);
+  }
+
+  return (
+    <main className="flex h-full flex-1 flex-col" aria-label="Chat">
+      <ChatMessageList
+        messages={messages}
+        status={status}
+        abortedMessageId={abortedMessageId}
+        onSuggestion={handleSuggestion}
+      />
+
+      <ChatInput
+        value={input}
+        onChange={(value) => {
+          setInput(value);
+          if (error) {
+            clearError();
+          }
+        }}
+        onSubmit={handleSubmit}
+        onStop={() => {
+          void stop();
+        }}
+        onRetry={() => {
+          void regenerate({ body: { mode } });
+        }}
+        mode={mode}
+        onModeChange={setMode}
+        status={status}
+        error={error ?? null}
+        textareaRef={textareaRef}
+      />
+    </main>
+  );
+}
+
+function extractTextContent(message: UIMessage<ChatMessageMetadata> | undefined): string {
+  if (!message) {
+    return "";
+  }
+
+  return message.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("");
+}

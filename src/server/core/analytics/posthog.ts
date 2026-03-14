@@ -4,6 +4,8 @@ import { PostHog } from "posthog-node";
 
 import { env } from "@/server/core/env";
 
+let posthogClient: PostHog | null = null;
+
 export async function captureServerEvent(
   distinctId: string,
   event: string,
@@ -13,11 +15,7 @@ export async function captureServerEvent(
     return;
   }
 
-  const client = new PostHog(env.NEXT_PUBLIC_POSTHOG_KEY, {
-    host: env.NEXT_PUBLIC_POSTHOG_HOST,
-    flushAt: 1,
-    flushInterval: 0,
-  });
+  const client = getPosthogClient();
 
   try {
     client.capture({
@@ -28,10 +26,16 @@ export async function captureServerEvent(
   } catch (error) {
     console.error("PostHog capture failed", { event, distinctId, error });
   }
+}
 
-  try {
-    await client.shutdown();
-  } catch (error) {
-    console.error("PostHog shutdown failed", { event, distinctId, error });
+function getPosthogClient(): PostHog {
+  if (!posthogClient) {
+    posthogClient = new PostHog(env.NEXT_PUBLIC_POSTHOG_KEY ?? "", {
+      host: env.NEXT_PUBLIC_POSTHOG_HOST,
+      flushAt: 20,
+      flushInterval: 10000,
+    });
   }
+
+  return posthogClient;
 }

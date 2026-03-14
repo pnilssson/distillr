@@ -39,6 +39,7 @@ import { SourceDetailsDialog } from "@/features/sources/SourceDetailsDialog";
 import { getSourceLabel, SourceSidebarItem } from "@/features/sources/SourceSidebarItem";
 import { SourceListItem } from "@/features/sources/types";
 import { useSources } from "@/features/sources/useSources";
+import { ChatSidebarSection } from "@/features/chat/ChatSidebarSection";
 import { VideoSidebarSection } from "@/features/videos/VideoSidebarSection";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
 
@@ -134,7 +135,10 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
                 libraries.map((library) => (
                   <SidebarMenuItem key={library.id}>
                     <SidebarMenuButton
-                      isActive={pathname === `/library/${library.id}`}
+                      isActive={
+                        pathname === `/library/${library.id}` ||
+                        pathname.startsWith(`/library/${library.id}/`)
+                      }
                       onClick={() => router.push(`/library/${library.id}`)}
                       className="group-data-[collapsible=icon]:hidden"
                     >
@@ -209,6 +213,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
               </SidebarMenu>
 
               <VideoSidebarSection libraryId={activeLibraryId} />
+              <ChatSidebarSection libraryId={activeLibraryId} />
             </SidebarGroup>
           )}
         </SidebarContent>

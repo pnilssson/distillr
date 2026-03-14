@@ -59,11 +59,11 @@ Key differentiators:
 
 ## Credits
 
-Credits are the universal unit for chat. Users choose their AI model per message; credit cost scales with model capability so margin is protected regardless of which model a user picks.
+Credits are the universal unit for chat. Users choose their AI model per request; credit usage scales with model capability so margin is protected regardless of which model a user picks.
 
 Monthly credit allowances reset on the billing cycle anniversary. Unused credits do not roll over. Top-up: 500 credits for €5, available to Builder and Pro via Polar one-time purchase. Free users see an upgrade prompt instead.
 
-Credits per model are set so the credit cost always covers actual LLM cost with margin. The ratio between models reflects their real cost ratio (gpt-4.1 costs ~5x gpt-4.1-mini, so it costs ~5x credits). Exact per-message credit costs to be finalised when model pricing is fully benchmarked.
+Credits per model are set so the credit cost always covers actual LLM cost with margin. The ratio between models reflects their real cost ratio (for example `gpt-5.1` vs `gpt-5-mini`), so credit pricing scales with capability. Exact credit burn by token usage will be finalized when model pricing is fully benchmarked.
 
 ## Monthly Video Cap
 
@@ -86,8 +86,9 @@ The monthly video cap limits new ingestion per billing cycle and resets on the b
 
 - Transcript fetch: ~€0.005-0.017 per video (TranscriptAPI, volume dependent)
 - Embedding: ~€0.0001-0.0003 per video (OpenAI `text-embedding-3-small`)
-- Insight generation: ~€0.003-0.013 per video (OpenAI `gpt-4.1-mini`, transcript length dependent)
+- Insight generation: ~€0.003-0.013 per video (OpenAI `gpt-5-mini`, transcript length dependent)
 - Total ingestion cost: ~€0.008-0.030 per video (transcript + embedding + insights)
-- Standard chat message: ~€0.001-0.004 per message (OpenAI `gpt-4.1-mini`)
-- Advanced chat message: ~€0.012-0.028 per message (OpenAI `gpt-4.1`, context and answer length dependent)
+- Chat (fast model): token-based at OpenAI `gpt-5-mini` rates (input + output tokens)
+- Chat (smart model): token-based at OpenAI `gpt-5.1` rates (input + output tokens)
+- Example only (not a fixed request cost): 3k input + 900 output tokens is about €0.0026 on `gpt-5-mini` and about €0.0128 on `gpt-5.1`
 - Polar fees: base 4% + €0.40 per transaction, with +1.5% for international cards and +0.5% for subscriptions where applicable

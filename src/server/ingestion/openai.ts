@@ -1,18 +1,11 @@
 import "server-only";
 
-import OpenAI from "openai";
+import { trackAIGeneration } from "@/server/core/analytics/ai-generation";
+import { getOpenAIClient } from "@/server/core/openai/client";
+import { getOpenAIModel } from "@/server/core/openai/models";
 
-import { captureServerEvent } from "@/server/core/analytics/posthog";
-import { env } from "@/server/core/env";
+export { embedTexts } from "@/server/core/openai/embeddings";
 
-const EMBEDDING_MODEL = "text-embedding-3-small";
-const INSIGHTS_MODEL = "gpt-4.1-mini";
-
-const EMBEDDING_PRICE_PER_MILLION_INPUT_TOKENS_USD = 0.02;
-const GPT_4_1_MINI_PRICE_PER_MILLION_INPUT_TOKENS_USD = 0.4;
-const GPT_4_1_MINI_PRICE_PER_MILLION_OUTPUT_TOKENS_USD = 1.6;
-
-const EMBEDDING_BATCH_SIZE = 100;
 const MAX_INSIGHTS_TRANSCRIPT_CHARS = 120_000;
 
 const INSIGHTS_SCHEMA = {
@@ -56,54 +49,12 @@ export type GeneratedInsights = {
   tools: string[];
 };
 
-let openaiClient: OpenAI | null = null;
-
-export async function embedTexts(
-  userId: string,
-  inputs: string[],
-  purpose: string,
-): Promise<number[][]> {
-  if (inputs.length === 0) {
-    return [];
-  }
-
-  const embeddings: number[][] = [];
-
-  for (let i = 0; i < inputs.length; i += EMBEDDING_BATCH_SIZE) {
-    const batch = inputs.slice(i, i + EMBEDDING_BATCH_SIZE);
-    const startedAt = Date.now();
-
-    const response = await getOpenAIClient().embeddings.create({
-      model: EMBEDDING_MODEL,
-      input: batch,
-    });
-
-    const latencyMs = Date.now() - startedAt;
-    const inputTokens = response.usage.total_tokens ?? 0;
-
-    await captureServerEvent(userId, "$ai_generation", {
-      provider: "openai",
-      model: EMBEDDING_MODEL,
-      operation: purpose,
-      tokens_in: inputTokens,
-      tokens_out: 0,
-      latency_ms: latencyMs,
-      cost_usd: roundCost((inputTokens / 1_000_000) * EMBEDDING_PRICE_PER_MILLION_INPUT_TOKENS_USD),
-    });
-
-    for (const item of response.data) {
-      embeddings.push(item.embedding);
-    }
-  }
-
-  return embeddings;
-}
-
 export async function generateInsights(
   userId: string,
   videoTitle: string,
   transcript: string,
 ): Promise<GeneratedInsights> {
+  const ingestionModel = getOpenAIModel("ingestion.default");
   const transcriptInput =
     transcript.length > MAX_INSIGHTS_TRANSCRIPT_CHARS
       ? transcript.slice(0, MAX_INSIGHTS_TRANSCRIPT_CHARS)
@@ -111,7 +62,7 @@ export async function generateInsights(
 
   const startedAt = Date.now();
   const completion = await getOpenAIClient().chat.completions.create({
-    model: INSIGHTS_MODEL,
+    model: ingestionModel.id,
     temperature: 0.2,
     response_format: {
       type: "json_schema",
@@ -129,31 +80,23 @@ export async function generateInsights(
       },
       {
         role: "user",
-        content: [
-          `Video title: ${videoTitle}`,
-          "Transcript:",
-          transcriptInput,
-        ].join("\n\n"),
+        content: [`Video title: ${videoTitle}`, "Transcript:", transcriptInput].join("\n\n"),
       },
     ],
   });
 
-  const latencyMs = Date.now() - startedAt;
   const inputTokens = completion.usage?.prompt_tokens ?? 0;
   const outputTokens = completion.usage?.completion_tokens ?? 0;
 
-  const estimatedCostUsd =
-    (inputTokens / 1_000_000) * GPT_4_1_MINI_PRICE_PER_MILLION_INPUT_TOKENS_USD +
-    (outputTokens / 1_000_000) * GPT_4_1_MINI_PRICE_PER_MILLION_OUTPUT_TOKENS_USD;
-
-  await captureServerEvent(userId, "$ai_generation", {
-    provider: "openai",
-    model: INSIGHTS_MODEL,
+  await trackAIGeneration({
+    userId,
     operation: "ingestion_insights",
-    tokens_in: inputTokens,
-    tokens_out: outputTokens,
-    latency_ms: latencyMs,
-    cost_usd: roundCost(estimatedCostUsd),
+    modelId: ingestionModel.id,
+    modelAlias: "ingestion.default",
+    startedAtMs: startedAt,
+    inputTokens,
+    outputTokens,
+    totalTokens: completion.usage?.total_tokens,
   });
 
   const content = completion.choices[0]?.message?.content ?? "{}";
@@ -198,22 +141,4 @@ function toStringArray(value: unknown): string[] {
   return value
     .map((item) => (typeof item === "string" ? item.trim() : ""))
     .filter((item) => item.length > 0);
-}
-
-function getOpenAIClient(): OpenAI {
-  if (!env.OPENAI_API_KEY) {
-    throw new Error("Missing OPENAI_API_KEY environment variable.");
-  }
-
-  if (!openaiClient) {
-    openaiClient = new OpenAI({
-      apiKey: env.OPENAI_API_KEY,
-    });
-  }
-
-  return openaiClient;
-}
-
-function roundCost(value: number): number {
-  return Number(value.toFixed(8));
 }

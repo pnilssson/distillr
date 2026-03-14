@@ -29,9 +29,11 @@ This file is the operational source of truth for agent behavior in this reposito
 - Forms and validation: React Hook Form + Zod
 - Client server-state: TanStack Query
 - Billing: Polar
+- Streaming: Vercel AI SDK v6 (`ai`, `@ai-sdk/react`)
+- AI provider SDK: `@ai-sdk/openai`
 - Transcript extraction: TranscriptAPI
 - Embeddings: OpenAI `text-embedding-3-small`
-- LLMs (MVP): OpenAI only - `gpt-4.1-mini` for ingestion summaries, `gpt-4.1` for chat
+- LLMs (MVP): OpenAI only - `gpt-5-mini` (fast) and `gpt-5.1` (smart) via alias-based config
 
 ## Next.js Best Practices
 

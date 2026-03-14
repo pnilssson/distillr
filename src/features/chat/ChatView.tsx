@@ -96,7 +96,7 @@ export function ChatView({
 
   return (
     <main
-      className="relative flex h-full flex-1 flex-col overflow-hidden"
+      className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden"
       aria-label="Chat"
     >
       <ChatMessageList

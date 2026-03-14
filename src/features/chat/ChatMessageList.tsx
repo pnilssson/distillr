@@ -56,7 +56,7 @@ export function ChatMessageList({
   return (
     <section
       ref={containerRef}
-      className="flex-1 overflow-y-auto"
+      className="min-h-0 flex-1 overflow-y-auto"
       aria-label="Messages"
       aria-live="polite"
       aria-atomic="false"

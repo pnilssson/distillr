@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { loginEmailSchema } from "@/lib/validation/auth";
+import { env } from "@/server/core/env";
 import { AppError } from "@/server/core/errors/app-error";
 import { createApiErrorResponse } from "@/server/core/http/api-errors";
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
@@ -28,13 +29,16 @@ export async function POST(request: Request) {
       });
     }
 
-    const { origin } = new URL(request.url);
+    const { origin: requestOrigin } = new URL(request.url);
+    const appOrigin = env.NEXT_PUBLIC_APP_URL
+      ? new URL(env.NEXT_PUBLIC_APP_URL).origin
+      : requestOrigin;
     const supabase = await createSupabaseServerClient();
 
     const { error } = await supabase.auth.signInWithOtp({
       email: parse.data.email,
       options: {
-        emailRedirectTo: `${origin}/auth/callback`,
+        emailRedirectTo: `${appOrigin}/auth/callback`,
       },
     });
 

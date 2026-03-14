@@ -5,6 +5,7 @@
 ### Core
 
 - [x] User authentication (Supabase Auth - email + magic link)
+- [ ] Custom domain auth email delivery and branded templates
 - [x] Create, name, and delete Libraries
 - [x] Set up `@tanstack/react-query` (QueryClient provider, devtools, standard query/mutation patterns)
 - [x] Add a YouTube source to a Library (channel URL, playlist URL, or video URL)
@@ -34,5 +35,4 @@
 - Auto-sync (watch a channel, ingest new videos automatically)
 - Dark mode
 - Chrome extension
-- Resend for custom domain email delivery and branded templates
 - Google OAuth (magic link only for MVP)

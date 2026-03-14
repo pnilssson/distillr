@@ -35,7 +35,13 @@ export function ChatMessageList({
     if (isAtBottomRef.current) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages.length, lastMessageParts]);
+  }, [messages.length]);
+
+  useEffect(() => {
+    if (isAtBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "auto" });
+    }
+  }, [lastMessageParts]);
 
   function handleScroll() {
     const element = containerRef.current;
@@ -56,7 +62,7 @@ export function ChatMessageList({
       aria-atomic="false"
       onScroll={handleScroll}
     >
-      <div className="mx-auto w-full max-w-2xl px-4 py-6">
+      <div className="mx-auto w-full max-w-2xl px-4 pt-6 pb-40">
         {messages.length === 0 && status === "ready" ? (
           <EmptyChatState onSuggestion={onSuggestion} />
         ) : null}

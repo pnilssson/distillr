@@ -7,7 +7,10 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { ChatInput } from "@/features/chat/ChatInput";
 import { ChatMessageList } from "@/features/chat/ChatMessageList";
-import type { ChatMessageMetadata, ChatRequestMode } from "@/features/chat/types";
+import type {
+  ChatMessageMetadata,
+  ChatRequestMode,
+} from "@/features/chat/types";
 
 type ChatViewProps = {
   libraryId: string;
@@ -15,7 +18,11 @@ type ChatViewProps = {
   messages: UIMessage<ChatMessageMetadata>[];
 };
 
-export function ChatView({ libraryId, sessionId, messages: initialMessages }: ChatViewProps) {
+export function ChatView({
+  libraryId,
+  sessionId,
+  messages: initialMessages,
+}: ChatViewProps) {
   const queryClient = useQueryClient();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -30,11 +37,19 @@ export function ChatView({ libraryId, sessionId, messages: initialMessages }: Ch
       messages: initialMessages,
       transport: new DefaultChatTransport({
         api: `/api/libraries/${libraryId}/chat/sessions/${sessionId}/messages`,
-        prepareSendMessagesRequest: ({ messages: requestMessages, body, trigger }) => {
+        prepareSendMessagesRequest: ({
+          messages: requestMessages,
+          body,
+          trigger,
+        }) => {
           const latestMessage = requestMessages[requestMessages.length - 1];
-          const latestUserMessage = [...requestMessages].reverse().find((message) => message.role === "user");
+          const latestUserMessage = [...requestMessages]
+            .reverse()
+            .find((message) => message.role === "user");
           const messageForContent =
-            trigger === "regenerate-message" ? latestUserMessage ?? latestMessage : latestMessage;
+            trigger === "regenerate-message"
+              ? (latestUserMessage ?? latestMessage)
+              : latestMessage;
 
           return {
             body: {
@@ -49,7 +64,9 @@ export function ChatView({ libraryId, sessionId, messages: initialMessages }: Ch
           setAbortedMessageId(message.id);
         }
 
-        queryClient.invalidateQueries({ queryKey: ["chat-sessions", libraryId] });
+        queryClient.invalidateQueries({
+          queryKey: ["chat-sessions", libraryId],
+        });
       },
     });
 
@@ -78,7 +95,10 @@ export function ChatView({ libraryId, sessionId, messages: initialMessages }: Ch
   }
 
   return (
-    <main className="flex h-full flex-1 flex-col" aria-label="Chat">
+    <main
+      className="relative flex h-full flex-1 flex-col overflow-hidden"
+      aria-label="Chat"
+    >
       <ChatMessageList
         messages={messages}
         status={status}
@@ -86,32 +106,44 @@ export function ChatView({ libraryId, sessionId, messages: initialMessages }: Ch
         onSuggestion={handleSuggestion}
       />
 
-      <ChatInput
-        value={input}
-        onChange={(value) => {
-          setInput(value);
-          if (error) {
-            clearError();
-          }
-        }}
-        onSubmit={handleSubmit}
-        onStop={() => {
-          void stop();
-        }}
-        onRetry={() => {
-          void regenerate({ body: { mode } });
-        }}
-        mode={mode}
-        onModeChange={setMode}
-        status={status}
-        error={error ?? null}
-        textareaRef={textareaRef}
-      />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col">
+        <div
+          className="h-12 bg-linear-to-t from-background to-transparent"
+          aria-hidden="true"
+        />
+        <div className="pointer-events-auto bg-background px-4 pb-4">
+          <div className="mx-auto w-full max-w-2xl">
+            <ChatInput
+              value={input}
+              onChange={(value) => {
+                setInput(value);
+                if (error) {
+                  clearError();
+                }
+              }}
+              onSubmit={handleSubmit}
+              onStop={() => {
+                void stop();
+              }}
+              onRetry={() => {
+                void regenerate({ body: { mode } });
+              }}
+              mode={mode}
+              onModeChange={setMode}
+              status={status}
+              error={error ?? null}
+              textareaRef={textareaRef}
+            />
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
 
-function extractTextContent(message: UIMessage<ChatMessageMetadata> | undefined): string {
+function extractTextContent(
+  message: UIMessage<ChatMessageMetadata> | undefined,
+): string {
   if (!message) {
     return "";
   }

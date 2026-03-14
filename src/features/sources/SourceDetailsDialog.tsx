@@ -102,41 +102,35 @@ export function SourceDetailsDialog({
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-lg" showCloseButton={false}>
         {source ? (
           <>
-            <SourceTypeHeader sourceType={source.sourceType} />
-
             <div className="space-y-4 p-5">
+              <SourceTypeIcon sourceType={source.sourceType} />
+
               <DialogHeader className="space-y-1">
                 <DialogTitle className="leading-snug">{getSourceTitle(source)}</DialogTitle>
                 <DialogDescription className="truncate">{getSourceSubtitle(source)}</DialogDescription>
               </DialogHeader>
 
-              <div
-                className={`flex flex-wrap items-center gap-2 ${
-                  source.status === "ready" ? "justify-end" : "justify-between"
-                }`}
-              >
-                {source.status !== "ready" ? (
-                  <Badge
-                    variant={STATUS_META[source.status].variant}
-                    className={STATUS_META[source.status].className}
-                  >
-                    {STATUS_META[source.status].label}
-                  </Badge>
-                ) : null}
+              {source.status !== "ready" ? (
+                <Badge
+                  variant={STATUS_META[source.status].variant}
+                  className={STATUS_META[source.status].className}
+                >
+                  {STATUS_META[source.status].label}
+                </Badge>
+              ) : null}
 
-                <div className="flex items-center gap-1.5">
-                  <Button variant="outline" size="sm" onClick={copyUrl}>
-                    {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-                    {copied ? "Copied!" : "Copy URL"}
-                  </Button>
+              <div className="grid grid-cols-2 gap-1.5">
+                <Button variant="outline" size="sm" className="w-full" onClick={copyUrl}>
+                  {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                  {copied ? "Copied!" : "Copy URL"}
+                </Button>
 
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={source.url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink aria-hidden="true" />
-                      {SOURCE_TYPE_META[source.sourceType].ctaLabel}
-                    </a>
-                  </Button>
-                </div>
+                <Button variant="outline" size="sm" className="w-full" asChild>
+                  <a href={source.url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink aria-hidden="true" />
+                    {SOURCE_TYPE_META[source.sourceType].ctaLabel}
+                  </a>
+                </Button>
               </div>
 
               <Separator />
@@ -169,7 +163,7 @@ export function SourceDetailsDialog({
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
-                  variant="destructive"
+                  variant="secondary"
                   className="w-full"
                   onClick={() => onDelete(source)}
                 >
@@ -191,14 +185,12 @@ export function SourceDetailsDialog({
   );
 }
 
-function SourceTypeHeader({ sourceType }: { sourceType: SourceListItem["sourceType"] }) {
+function SourceTypeIcon({ sourceType }: { sourceType: SourceListItem["sourceType"] }) {
   const Icon = SOURCE_TYPE_META[sourceType].icon;
 
   return (
-    <div className="flex h-20 items-center justify-center bg-muted/60">
-      <div className="flex size-11 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm">
-        <Icon size={18} aria-hidden="true" />
-      </div>
+    <div className="flex size-9 items-center justify-center rounded-full border border-border bg-muted/60 text-muted-foreground shadow-sm">
+      <Icon size={15} aria-hidden="true" />
     </div>
   );
 }

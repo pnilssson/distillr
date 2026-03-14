@@ -112,6 +112,13 @@ export function VideoDetailsDialog({
             </a>
 
             <div className="space-y-4 p-5">
+              <Badge
+                variant={STATUS_META[video.status].variant}
+                className={STATUS_META[video.status].className}
+              >
+                {STATUS_META[video.status].label}
+              </Badge>
+
               <DialogHeader className="space-y-1">
                 <DialogTitle className="leading-snug">
                   {video.title}
@@ -122,35 +129,26 @@ export function VideoDetailsDialog({
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <Badge
-                  variant={STATUS_META[video.status].variant}
-                  className={STATUS_META[video.status].className}
-                >
-                  {STATUS_META[video.status].label}
-                </Badge>
+              <div className="grid grid-cols-2 gap-1.5">
+                <Button variant="outline" size="sm" className="w-full" onClick={copyUrl}>
+                  {copied ? (
+                    <Check aria-hidden="true" />
+                  ) : (
+                    <Copy aria-hidden="true" />
+                  )}
+                  {copied ? "Copied!" : "Copy URL"}
+                </Button>
 
-                <div className="flex items-center gap-1.5">
-                  <Button variant="outline" size="sm" onClick={copyUrl}>
-                    {copied ? (
-                      <Check aria-hidden="true" />
-                    ) : (
-                      <Copy aria-hidden="true" />
-                    )}
-                    {copied ? "Copied!" : "Copy URL"}
-                  </Button>
-
-                  <Button variant="outline" size="sm" asChild>
-                    <a
-                      href={youtubeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink aria-hidden="true" />
-                      Watch on YouTube
-                    </a>
-                  </Button>
-                </div>
+                <Button variant="outline" size="sm" className="w-full" asChild>
+                  <a
+                    href={youtubeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink aria-hidden="true" />
+                    Watch on YouTube
+                  </a>
+                </Button>
               </div>
 
               <Separator />

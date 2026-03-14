@@ -53,15 +53,15 @@ Key differentiators:
 
 | Plan        | Price  | Monthly videos | Total video cap | Monthly credits |
 | ----------- | ------ | -------------- | --------------- | --------------- |
-| **Free**    | €0     | 10             | 50              | 100             |
-| **Builder** | €17/mo | 100            | 1,000           | 1,000           |
-| **Pro**     | €39/mo | 300            | Unlimited       | 4,000           |
+| **Free**    | $0     | 10             | 50              | 100             |
+| **Builder** | $17/mo | 100            | 1,000           | 1,000           |
+| **Pro**     | $39/mo | 300            | Unlimited       | 4,000           |
 
 ## Credits
 
 Credits are the universal unit for chat. Users choose their AI model per request; credit usage scales with model capability so margin is protected regardless of which model a user picks.
 
-Monthly credit allowances reset on the billing cycle anniversary. Unused credits do not roll over. Top-up: 500 credits for €5, available to Builder and Pro via Polar one-time purchase. Free users see an upgrade prompt instead.
+Monthly credit allowances reset on the billing cycle anniversary. Unused credits do not roll over. Top-up: 500 credits for $5, available to Builder and Pro via Polar one-time purchase. Free users see an upgrade prompt instead.
 
 Credits per model are set so the credit cost always covers actual LLM cost with margin. The ratio between models reflects their real cost ratio (for example `gpt-5.1` vs `gpt-5-mini`), so credit pricing scales with capability. Exact credit burn by token usage will be finalized when model pricing is fully benchmarked.
 
@@ -78,17 +78,17 @@ The monthly video cap limits new ingestion per billing cycle and resets on the b
 - **Never lose money on a user** - credit deduction happens server-side before the LLM call. If credits are insufficient, the request is blocked with a top-up prompt.
 - **Top-ups convert frustration into revenue** - surface at the exact moment of limit-hit, never proactively. Builder and Pro only; Free users see an upgrade prompt instead.
 - **Free plan** demonstrates core value within tight but honest limits. Tight enough to convert, generous enough to show the product works.
-- **Annual billing** (post-MVP): offer 2 months free framing (~17% discount). Improves cash flow significantly and increases LTV. Builder annual = €170/yr (~€14.17/mo equivalent). Pro annual = €390/yr (~€32.50/mo equivalent).
+- **Annual billing** (post-MVP): offer 2 months free framing (~17% discount). Improves cash flow significantly and increases LTV. Builder annual = $170/yr (~$14.17/mo equivalent). Pro annual = $390/yr (~$32.50/mo equivalent).
 
 ---
 
 ## Cost Basis (approximate, March 2026)
 
-- Transcript fetch: ~€0.005-0.017 per video (TranscriptAPI, volume dependent)
-- Embedding: ~€0.0001-0.0003 per video (OpenAI `text-embedding-3-small`)
-- Insight generation: ~€0.003-0.013 per video (OpenAI `gpt-5-mini`, transcript length dependent)
-- Total ingestion cost: ~€0.008-0.030 per video (transcript + embedding + insights)
+- Transcript fetch: ~$0.005-0.017 per video (TranscriptAPI, volume dependent)
+- Embedding: ~$0.0001-0.0003 per video (OpenAI `text-embedding-3-small`)
+- Insight generation: ~$0.003-0.013 per video (OpenAI `gpt-5-mini`, transcript length dependent)
+- Total ingestion cost: ~$0.008-0.030 per video (transcript + embedding + insights)
 - Chat (fast model): token-based at OpenAI `gpt-5-mini` rates (input + output tokens)
 - Chat (smart model): token-based at OpenAI `gpt-5.1` rates (input + output tokens)
-- Example only (not a fixed request cost): 3k input + 900 output tokens is about €0.0026 on `gpt-5-mini` and about €0.0128 on `gpt-5.1`
-- Polar fees: base 4% + €0.40 per transaction, with +1.5% for international cards and +0.5% for subscriptions where applicable
+- Example only (not a fixed request cost): 3k input + 900 output tokens is about $0.0026 on `gpt-5-mini` and about $0.0128 on `gpt-5.1`
+- Polar fees: base 4% + $0.40 per transaction, with +1.5% for international cards and +0.5% for subscriptions where applicable

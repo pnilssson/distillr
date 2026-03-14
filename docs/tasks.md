@@ -5,7 +5,7 @@
 ### Core
 
 - [x] User authentication (Supabase Auth - email + magic link)
-- [ ] Custom domain auth email delivery and branded templates
+- [x] Custom domain auth email delivery and branded templates
 - [x] Create, name, and delete Libraries
 - [x] Set up `@tanstack/react-query` (QueryClient provider, devtools, standard query/mutation patterns)
 - [x] Add a YouTube source to a Library (channel URL, playlist URL, or video URL)
@@ -17,7 +17,7 @@
 ### Monetization
 
 - [ ] Polar.sh subscription integration
-- [ ] Plan enforcement: video ingestion limits, chat message limits
+- [ ] Plan enforcement: video ingestion limits, chat credit limits
 - [ ] Upgrade prompt when limits are hit
 - [ ] Billing portal via Polar customer portal
 

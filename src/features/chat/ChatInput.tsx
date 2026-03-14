@@ -2,8 +2,16 @@
 
 import { useEffect } from "react";
 import type { ChangeEvent, KeyboardEvent, RefObject } from "react";
-import { ArrowUp, Square } from "lucide-react";
+import { ArrowUp, Info, Square } from "lucide-react";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -119,6 +127,47 @@ export function ChatInput({
               </SelectContent>
             </Select>
 
+            <Dialog>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted"
+                  aria-label="Learn about response modes"
+                >
+                  <Info size={16} />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Response modes</DialogTitle>
+                  <DialogDescription>
+                    Choose how Distillr answers your next message.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="font-medium">Auto</p>
+                    <p className="text-muted-foreground">
+                      Chooses between library-grounded answers and chat-only replies based on your message.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Use library</p>
+                    <p className="text-muted-foreground">
+                      Always searches ready videos in this library and uses that evidence for grounded answers.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Chat only</p>
+                    <p className="text-muted-foreground">
+                      Skips library retrieval, but still uses recent chat history. Best for brainstorming, drafting,
+                      and rewrites.
+                    </p>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             {value.length > 3500 ? (
               <span className="text-xs text-destructive">{4000 - value.length} remaining</span>
             ) : null}
@@ -138,7 +187,11 @@ export function ChatInput({
               type="button"
               onClick={onSubmit}
               disabled={!canSend}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border transition-colors disabled:pointer-events-none disabled:opacity-50 ${
+                canSend
+                  ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "text-muted-foreground hover:bg-muted"
+              }`}
               aria-label="Send message"
             >
               <ArrowUp size={16} />

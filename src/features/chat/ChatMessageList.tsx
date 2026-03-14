@@ -24,6 +24,7 @@ export function ChatMessageList({
   const bottomRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
   const lastMessageParts = messages[messages.length - 1]?.parts;
+  const isEmptyState = messages.length === 0 && status === "ready";
 
   useEffect(() => {
     if (status === "submitted") {
@@ -56,15 +57,17 @@ export function ChatMessageList({
   return (
     <section
       ref={containerRef}
-      className="min-h-0 flex-1 overflow-y-auto"
+      className="min-h-0 flex flex-1 flex-col overflow-y-auto"
       aria-label="Messages"
       aria-live="polite"
       aria-atomic="false"
       onScroll={handleScroll}
     >
-      <div className="mx-auto w-full max-w-2xl px-4 pt-6 pb-40">
-        {messages.length === 0 && status === "ready" ? (
-          <EmptyChatState onSuggestion={onSuggestion} />
+      <div className="mx-auto flex min-h-full w-full max-w-2xl flex-1 flex-col px-4 pt-6 pb-40">
+        {isEmptyState ? (
+          <div className="flex flex-1 items-center justify-center">
+            <EmptyChatState onSuggestion={onSuggestion} />
+          </div>
         ) : null}
 
         <div className="space-y-4">

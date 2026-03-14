@@ -115,106 +115,125 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroup>
 
-          <SidebarGroup>
-            <SidebarGroupLabel>Libraries</SidebarGroupLabel>
+          <SidebarGroup className="shrink-0">
+            <SidebarGroupLabel className="pr-8">
+              Libraries
+              {!librariesQuery.isPending ? (
+                <span className="ml-1.5 tabular-nums text-muted-foreground/60">
+                  {libraries.length}
+                </span>
+              ) : null}
+            </SidebarGroupLabel>
             <SidebarGroupAction
               onClick={() => setDialogOpen(true)}
               aria-label="New library"
             >
               <Plus size={16} />
             </SidebarGroupAction>
-
-            <SidebarMenu>
-              {librariesQuery.isPending ? (
-                <div className="space-y-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
-                  <Skeleton className="h-7 w-full" />
-                  <Skeleton className="h-7 w-full" />
-                  <Skeleton className="h-7 w-4/5" />
-                </div>
-              ) : (
-                libraries.map((library) => (
-                  <SidebarMenuItem key={library.id}>
-                    <SidebarMenuButton
-                      isActive={
-                        pathname === `/library/${library.id}` ||
-                        pathname.startsWith(`/library/${library.id}/`)
-                      }
-                      onClick={() => router.push(`/library/${library.id}`)}
-                      className="group-data-[collapsible=icon]:hidden"
-                    >
-                      <span className="truncate text-xs">{library.name}</span>
-                    </SidebarMenuButton>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <SidebarMenuAction
-                          showOnHover
-                          aria-label={`Options for ${library.name}`}
-                          className="group-data-[collapsible=icon]:hidden"
-                        >
-                          <MoreHorizontal size={16} />
-                        </SidebarMenuAction>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent side="right" align="start" className="min-w-40">
-                        <DropdownMenuItem className="cursor-pointer" onClick={() => setRenamingLibrary(library)}>
-                          <Pencil size={14} />
-                          Rename library
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="cursor-pointer text-destructive focus:text-destructive"
-                          onClick={() => setDeletingLibrary(library)}
-                        >
-                          <Trash2 size={14} />
-                          Delete library
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </SidebarMenuItem>
-                ))
-              )}
-
-              {!librariesQuery.isPending && libraries.length === 0 && (
-                <p className="px-2 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-                  No libraries yet
-                </p>
-              )}
-            </SidebarMenu>
-          </SidebarGroup>
-
-          {activeLibraryId && (
-            <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-              <SidebarGroupLabel>Sources</SidebarGroupLabel>
-              <SidebarGroupAction
-                onClick={() => setAddingSource(true)}
-                aria-label="Add source"
-              >
-                <Plus size={16} />
-              </SidebarGroupAction>
-
+            <div className="max-h-40 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
               <SidebarMenu>
-                {sourcesQuery.isPending ? (
-                  <div className="space-y-2 px-2 py-1">
-                    <Skeleton className="h-6 w-full" />
-                    <Skeleton className="h-6 w-full" />
-                    <Skeleton className="h-6 w-4/5" />
+                {librariesQuery.isPending ? (
+                  <div className="space-y-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
+                    <Skeleton className="h-7 w-full" />
+                    <Skeleton className="h-7 w-full" />
+                    <Skeleton className="h-7 w-4/5" />
                   </div>
                 ) : (
-                  sources.map((source) => (
-                    <SourceSidebarItem key={source.id} source={source} onSelect={setSelectedSourceId} />
+                  libraries.map((library) => (
+                    <SidebarMenuItem key={library.id}>
+                      <SidebarMenuButton
+                        isActive={
+                          pathname === `/library/${library.id}` ||
+                          pathname.startsWith(`/library/${library.id}/`)
+                        }
+                        onClick={() => router.push(`/library/${library.id}`)}
+                        className="group-data-[collapsible=icon]:hidden"
+                      >
+                        <span className="truncate text-xs">{library.name}</span>
+                      </SidebarMenuButton>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <SidebarMenuAction
+                            showOnHover
+                            aria-label={`Options for ${library.name}`}
+                            className="group-data-[collapsible=icon]:hidden"
+                          >
+                            <MoreHorizontal size={16} />
+                          </SidebarMenuAction>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent side="right" align="start" className="min-w-40">
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => setRenamingLibrary(library)}>
+                            <Pencil size={14} />
+                            Rename library
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="cursor-pointer text-destructive focus:text-destructive"
+                            onClick={() => setDeletingLibrary(library)}
+                          >
+                            <Trash2 size={14} />
+                            Delete library
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </SidebarMenuItem>
                   ))
                 )}
 
-                {!sourcesQuery.isPending && sources.length === 0 && (
-                  <p className="px-2 py-1 text-xs text-muted-foreground">
-                    No sources yet
+                {!librariesQuery.isPending && libraries.length === 0 && (
+                  <p className="px-2 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+                    No libraries yet
                   </p>
                 )}
               </SidebarMenu>
+            </div>
+          </SidebarGroup>
+
+          {activeLibraryId && (
+            <>
+              <SidebarGroup className="shrink-0 group-data-[collapsible=icon]:hidden">
+                <SidebarGroupLabel className="pr-8">
+                  Sources
+                  {!sourcesQuery.isPending ? (
+                    <span className="ml-1.5 tabular-nums text-muted-foreground/60">
+                      {sources.length}
+                    </span>
+                  ) : null}
+                </SidebarGroupLabel>
+                <SidebarGroupAction
+                  onClick={() => setAddingSource(true)}
+                  aria-label="Add source"
+                >
+                  <Plus size={16} />
+                </SidebarGroupAction>
+
+                <div className="max-h-32 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
+                  <SidebarMenu>
+                    {sourcesQuery.isPending ? (
+                      <div className="space-y-2 px-2 py-1">
+                        <Skeleton className="h-6 w-full" />
+                        <Skeleton className="h-6 w-full" />
+                        <Skeleton className="h-6 w-4/5" />
+                      </div>
+                    ) : (
+                      sources.map((source) => (
+                        <SourceSidebarItem key={source.id} source={source} onSelect={setSelectedSourceId} />
+                      ))
+                    )}
+
+                    {!sourcesQuery.isPending && sources.length === 0 && (
+                      <p className="px-2 py-1 text-xs text-muted-foreground">
+                        No sources yet
+                      </p>
+                    )}
+                  </SidebarMenu>
+                </div>
+              </SidebarGroup>
 
               <VideoSidebarSection libraryId={activeLibraryId} />
               <ChatSidebarSection libraryId={activeLibraryId} />
-            </SidebarGroup>
+            </>
           )}
         </SidebarContent>
 

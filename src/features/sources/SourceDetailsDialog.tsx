@@ -163,7 +163,7 @@ export function SourceDetailsDialog({
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
-                  variant="destructive"
+                  variant="secondary"
                   className="w-full"
                   onClick={() => onDelete(source)}
                 >

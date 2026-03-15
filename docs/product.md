@@ -16,28 +16,6 @@ Distillr turns video content into something durable: a personal knowledge base t
 
 ---
 
-# How It Differs from Transcribr
-
-> Transcribr is a file tool. Distillr is a knowledge tool.
-
-|              | Transcribr               | Distillr                        |
-| ------------ | ------------------------ | ------------------------------- |
-| Core product | Bulk transcript download | Persistent knowledge library    |
-| Organization | None                     | Named Libraries                 |
-| Chat scope   | Current batch            | Entire library, cross-video     |
-| Persistence  | Session-based            | Permanent, grows over time      |
-| Export       | Raw transcript files     | Structured knowledge artifacts  |
-| Target user  | Developers, power users  | Researchers, creators, learners |
-
-Key differentiators:
-
-- **Libraries as the primary object** - users curate named collections over time, not one-off queries
-- **Cross-video semantic search** - ask questions across hundreds of videos simultaneously via RAG
-- **Timestamp-linked sources** - every AI answer includes a compact source rollup with links to exact moments in source videos
-- **Knowledge exports** - export summaries, topic reports, and chat sessions, not raw transcripts
-
----
-
 # Target Users (MVP)
 
 - **Researchers and analysts** building a knowledge base from expert channels in their field

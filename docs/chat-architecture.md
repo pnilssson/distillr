@@ -43,7 +43,8 @@ Deterministic normalization and fusion:
 
 Weak evidence policy:
 
-- If evidence quality is weak, assistant must respond with uncertainty instead of guessing.
+- If evidence quality is weak, assistant must avoid guessing, give the strongest supported answer first, and use concise uncertainty language.
+- Assistant should not discuss retrieval mechanics in user-facing phrasing (for example, avoid terms like "patchy evidence").
 
 ## Source Rollup Contract
 

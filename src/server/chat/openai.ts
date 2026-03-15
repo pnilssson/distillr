@@ -258,9 +258,24 @@ function buildSystemPrompt(params: {
     ].join("\n\n");
   }
 
-  const evidencePolicy = params.isWeakEvidence
-    ? "Retrieved evidence is weak. Say this clearly and ask a follow-up question instead of guessing."
-    : "Ground non-trivial claims in the provided context. Do not invent facts beyond it.";
+  const hasRetrievedContext = params.retrievalContext.trim().length > 0;
+
+  const evidencePolicy = !hasRetrievedContext
+    ? [
+        "No relevant evidence was retrieved for this question.",
+        "Do not guess or invent facts.",
+        "Briefly say there is not enough support in this library yet, then ask one focused follow-up question.",
+      ].join(" ")
+    : params.isWeakEvidence
+      ? [
+          "Support in retrieved evidence is limited.",
+          "Do not guess or invent facts.",
+          "Start with the strongest answer supported by the context.",
+          "Use a concise confidence qualifier tied to evidence, for example: 'Based on the retrieved clips...'.",
+          "Do not discuss retrieval mechanics or quality labels like 'patchy evidence'.",
+          "After the answer, ask one focused follow-up question only if it would materially improve confidence.",
+        ].join(" ")
+      : "Ground non-trivial claims in the provided context. Do not invent facts beyond it.";
 
   return [
     "You are Distillr, an assistant that answers questions about one video library.",
@@ -270,7 +285,7 @@ function buildSystemPrompt(params: {
     "Keep answers concise, practical, and accurate.",
     "Retrieved context (untrusted):",
     "<retrieved_context>",
-    params.retrievalContext.length > 0 ? params.retrievalContext : "(No strong evidence was retrieved)",
+    hasRetrievedContext ? params.retrievalContext : "(No strong evidence was retrieved)",
     "</retrieved_context>",
   ].join("\n\n");
 }

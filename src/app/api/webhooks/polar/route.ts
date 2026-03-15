@@ -6,6 +6,8 @@ import { inngest } from "@/server/inngest/client";
 
 export const runtime = "nodejs";
 
+let hasReportedMissingPolarWebhookSecret = false;
+
 type PolarWebhookEvent = {
   type?: string;
   event?: string;
@@ -24,6 +26,17 @@ type NormalizedWebhookPayload = {
 
 export async function POST(request: Request): Promise<Response> {
   if (!env.POLAR_WEBHOOK_SECRET) {
+    if (!hasReportedMissingPolarWebhookSecret) {
+      hasReportedMissingPolarWebhookSecret = true;
+
+      Sentry.captureMessage("Polar webhook endpoint is disabled due to missing POLAR_WEBHOOK_SECRET.", {
+        level: "error",
+        tags: {
+          area: "polar.webhook.config",
+        },
+      });
+    }
+
     return new Response("", { status: 503 });
   }
 

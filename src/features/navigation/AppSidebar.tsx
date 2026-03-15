@@ -56,6 +56,7 @@ import {
 import { useBillingState } from "@/features/billing/useBillingState";
 import { ChatSidebarSection } from "@/features/chat/ChatSidebarSection";
 import { VideoSidebarSection } from "@/features/videos/VideoSidebarSection";
+import { hasPosthogClientConfig } from "@/lib/analytics/posthog-client-config";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
 
 type AppSidebarProps = {
@@ -94,7 +95,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
     : null;
 
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_POSTHOG_KEY || !process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+    if (!hasPosthogClientConfig()) {
       return;
     }
 
@@ -105,7 +106,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
 
-    if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+    if (hasPosthogClientConfig()) {
       posthog.reset();
     }
 

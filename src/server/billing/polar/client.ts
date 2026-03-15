@@ -21,8 +21,13 @@ type PolarRequestOptions = {
 };
 
 type PolarHttpErrorPayload = {
-  detail?: string;
-  error?: string;
+  detail?: unknown;
+  error?: unknown;
+};
+
+type PolarValidationIssue = {
+  loc?: Array<string | number>;
+  msg?: string;
 };
 
 export async function getPolarCustomerByExternalId(
@@ -244,13 +249,20 @@ async function polarRequest<T>(
       }
 
       const payload = (await parseJson<PolarHttpErrorPayload>(response)) ?? null;
-      const detail = payload?.detail ?? payload?.error ?? `HTTP ${response.status}`;
+      const detail = formatPolarErrorDetail(payload, response.status);
+      const requestId =
+        response.headers.get("x-request-id") ??
+        response.headers.get("x-polar-request-id") ??
+        response.headers.get("request-id");
+      const requestSuffix = requestId ? ` (request ${requestId})` : "";
 
       throw createPolarIntegrationError({
         code: "POLAR_REQUEST_FAILED",
         message: "Could not process billing right now. Please try again.",
         retryable: RETRYABLE_STATUSES.has(response.status),
-        cause: new Error(`Polar API ${method} ${path} failed: ${detail}`),
+        cause: new Error(
+          `Polar API ${method} ${path} failed with HTTP ${response.status}${requestSuffix}: ${detail}`,
+        ),
       });
     } catch (error) {
       if (attempt < retryCount) {
@@ -287,6 +299,93 @@ async function parseJson<T>(response: Response): Promise<T | null> {
 
   try {
     return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
+}
+
+function formatPolarErrorDetail(payload: PolarHttpErrorPayload | null, status: number): string {
+  if (!payload) {
+    return `HTTP ${status}`;
+  }
+
+  const detailMessage = formatUnknownErrorValue(payload.detail);
+  if (detailMessage) {
+    return detailMessage;
+  }
+
+  const errorMessage = formatUnknownErrorValue(payload.error);
+  if (errorMessage) {
+    return errorMessage;
+  }
+
+  return `HTTP ${status}`;
+}
+
+function formatUnknownErrorValue(value: unknown): string | null {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  if (Array.isArray(value)) {
+    const issues = value
+      .map((entry) => formatValidationIssue(entry))
+      .filter((entry): entry is string => Boolean(entry));
+
+    if (issues.length > 0) {
+      return issues.join("; ");
+    }
+
+    return stringifyErrorValue(value);
+  }
+
+  if (typeof value === "object") {
+    const maybeRecord = value as Record<string, unknown>;
+
+    const preferredKeys = ["message", "msg", "detail", "error"];
+    for (const key of preferredKeys) {
+      const entry = maybeRecord[key];
+      if (typeof entry === "string" && entry.trim().length > 0) {
+        return entry.trim();
+      }
+    }
+
+    return stringifyErrorValue(value);
+  }
+
+  return String(value);
+}
+
+function formatValidationIssue(issue: unknown): string | null {
+  if (!issue || typeof issue !== "object") {
+    return null;
+  }
+
+  const parsedIssue = issue as PolarValidationIssue;
+  const message =
+    typeof parsedIssue.msg === "string" && parsedIssue.msg.trim().length > 0
+      ? parsedIssue.msg.trim()
+      : null;
+  const location =
+    Array.isArray(parsedIssue.loc) && parsedIssue.loc.length > 0
+      ? parsedIssue.loc.map((segment) => String(segment)).join(".")
+      : null;
+
+  if (location && message) {
+    return `${location}: ${message}`;
+  }
+
+  return message ?? location;
+}
+
+function stringifyErrorValue(value: unknown): string | null {
+  try {
+    return JSON.stringify(value);
   } catch {
     return null;
   }

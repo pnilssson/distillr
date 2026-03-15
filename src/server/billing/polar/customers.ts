@@ -34,12 +34,20 @@ export async function ensurePolarCustomerState(
       });
     }
 
-    await createPolarCustomer({
-      externalCustomerId: input.userId,
-      email: input.email,
-      name: input.name,
-      idempotencyKey: `distillr-customer-${input.userId}`,
-    });
+    try {
+      await createPolarCustomer({
+        externalCustomerId: input.userId,
+        email: input.email,
+        name: input.name,
+        idempotencyKey: `distillr-customer-${input.userId}`,
+      });
+    } catch (error) {
+      const customerAfterCreateFailure = await getPolarCustomerByExternalId(input.userId);
+
+      if (!customerAfterCreateFailure) {
+        throw error;
+      }
+    }
   }
 
   let state = await getPolarCustomerStateByExternalId(input.userId);

@@ -33,10 +33,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NewLibraryDialog } from "@/features/libraries/NewLibraryDialog";
 import { DeleteLibraryDialog } from "@/features/libraries/DeleteLibraryDialog";
@@ -144,6 +144,66 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
     } finally {
       setBillingAction(null);
     }
+  }
+
+  const billingActionBlocked = billingAction !== null || !billingReady;
+  const manageBillingLabel = billingAction === "portal" ? "Opening..." : "Manage billing";
+  const upgradeBillingLabel = !billingReady
+    ? "Billing..."
+    : billingAction === "upgrade" || billingAction === "topup"
+      ? "Opening..."
+      : canTopUp
+        ? "Top up credits"
+        : "Upgrade plan";
+
+  function renderAccountMenuItems() {
+    return (
+      <>
+        <DropdownMenuLabel className="px-2 py-1.5">
+          <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
+          <p className="text-xs font-medium">{activePlanLabel}</p>
+          {typeof billing?.chatCreditsBalance === "number" ? (
+            <p className="text-xs text-muted-foreground">{billing.chatCreditsBalance} chat credits left</p>
+          ) : null}
+        </DropdownMenuLabel>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => {
+            void handleManageBilling();
+          }}
+          disabled={billingActionBlocked}
+        >
+          <CreditCard size={14} />
+          <span>{manageBillingLabel}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => {
+            void handleUpgradeOrTopUp();
+          }}
+          disabled={billingActionBlocked}
+        >
+          <Plus size={14} />
+          <span>{upgradeBillingLabel}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => {
+            void handleSignOut();
+          }}
+        >
+          <LogOut size={14} />
+          <span>Sign out</span>
+        </DropdownMenuItem>
+      </>
+    );
   }
 
   return (
@@ -307,52 +367,44 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
 
         <SidebarFooter className="px-3 py-3">
           <div className="space-y-2 group-data-[collapsible=icon]:space-y-0">
-            <div className="min-w-0 px-1 group-data-[collapsible=icon]:hidden">
-              <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
-              <p className="text-xs font-medium">{activePlanLabel}</p>
-              {typeof billing?.chatCreditsBalance === "number" ? (
-                <p className="text-xs text-muted-foreground">
-                  {billing.chatCreditsBalance} chat credits left
-                </p>
-              ) : null}
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Open account menu"
+                  className="flex w-full items-center gap-2 rounded-md border px-2 py-1.5 text-left transition-colors hover:bg-accent group-data-[collapsible=icon]:hidden"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
+                    <p className="text-xs font-medium">{activePlanLabel}</p>
+                    {typeof billing?.chatCreditsBalance === "number" ? (
+                      <p className="text-xs text-muted-foreground">
+                        {billing.chatCreditsBalance} chat credits left
+                      </p>
+                    ) : null}
+                  </div>
+                  <MoreHorizontal size={16} className="shrink-0 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="end" className="min-w-56">
+                {renderAccountMenuItems()}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-            <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  void handleManageBilling();
-                }}
-                disabled={billingAction !== null || !billingReady}
-                className="h-8 px-2 text-xs group-data-[collapsible=icon]:hidden"
-              >
-                <CreditCard size={14} />
-                Manage
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  void handleUpgradeOrTopUp();
-                }}
-                disabled={billingAction !== null || !billingReady}
-                className="h-8 px-2 text-xs group-data-[collapsible=icon]:hidden"
-              >
-                {!billingReady ? "Billing..." : canTopUp ? "Top up" : "Upgrade"}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Sign out"
-                onClick={handleSignOut}
-                className="shrink-0 text-muted-foreground hover:text-foreground"
-              >
-                <LogOut size={16} />
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Open account menu"
+                  className="hidden h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground group-data-[collapsible=icon]:inline-flex"
+                >
+                  <MoreHorizontal size={16} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="end" className="min-w-56">
+                {renderAccountMenuItems()}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </SidebarFooter>
       </Sidebar>

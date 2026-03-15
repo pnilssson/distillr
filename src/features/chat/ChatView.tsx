@@ -31,14 +31,12 @@ export function ChatView({
 }: ChatViewProps) {
   const queryClient = useQueryClient();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const composerRef = useRef<HTMLDivElement>(null);
   const billingQuery = useBillingState();
 
   const [input, setInput] = useState("");
   const [mode, setMode] = useState<ChatRequestMode>("auto");
   const [abortedMessageId, setAbortedMessageId] = useState<string | null>(null);
   const [focusTick, setFocusTick] = useState(0);
-  const [composerHeight, setComposerHeight] = useState(160);
 
   const checkoutTarget = billingQuery.data?.hasTopUpAccess ? "top_up_500" : "builder";
   const upgradeLabel = checkoutTarget === "top_up_500" ? "Top up" : "Upgrade";
@@ -85,30 +83,6 @@ export function ChatView({
   useEffect(() => {
     textareaRef.current?.focus();
   }, [focusTick]);
-
-  useEffect(() => {
-    const element = composerRef.current;
-    if (!element) {
-      return;
-    }
-
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) {
-        return;
-      }
-
-      const nextHeight = Math.ceil(entry.contentRect.height);
-      setComposerHeight((previousHeight) =>
-        previousHeight === nextHeight ? previousHeight : nextHeight,
-      );
-    });
-
-    observer.observe(element);
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
 
   function handleSubmit() {
     if (!input.trim() || status !== "ready") {
@@ -164,13 +138,9 @@ export function ChatView({
         status={status}
         abortedMessageId={abortedMessageId}
         onSuggestion={handleSuggestion}
-        composerHeight={composerHeight}
       />
 
-      <div
-        ref={composerRef}
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col"
-      >
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col">
         <div
           className="h-12 bg-linear-to-t from-background to-transparent"
           aria-hidden="true"

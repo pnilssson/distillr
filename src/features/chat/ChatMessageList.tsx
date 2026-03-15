@@ -12,7 +12,6 @@ type ChatMessageListProps = {
   status: "ready" | "submitted" | "streaming" | "error";
   abortedMessageId: string | null;
   onSuggestion: (text: string) => void;
-  composerHeight: number;
 };
 
 export function ChatMessageList({
@@ -20,7 +19,6 @@ export function ChatMessageList({
   status,
   abortedMessageId,
   onSuggestion,
-  composerHeight,
 }: ChatMessageListProps) {
   const containerRef = useRef<HTMLElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -65,10 +63,7 @@ export function ChatMessageList({
       aria-atomic="false"
       onScroll={handleScroll}
     >
-      <div
-        className="mx-auto flex min-h-full w-full max-w-2xl flex-1 flex-col px-4 pt-6"
-        style={{ paddingBottom: composerHeight + 24 }}
-      >
+      <div className="mx-auto flex min-h-full w-full max-w-2xl flex-1 flex-col px-4 pt-6 pb-56">
         {isEmptyState ? (
           <div className="flex flex-1 items-center justify-center">
             <EmptyChatState onSuggestion={onSuggestion} />
@@ -99,7 +94,7 @@ export function ChatMessageList({
           ) : null}
         </div>
 
-        <div ref={bottomRef} aria-hidden="true" style={{ scrollMarginBottom: composerHeight + 24 }} />
+        <div ref={bottomRef} aria-hidden="true" className="scroll-mb-56" />
       </div>
     </section>
   );

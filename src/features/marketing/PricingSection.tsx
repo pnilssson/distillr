@@ -15,13 +15,13 @@ interface PricingSectionProps {
 const plans = [
   {
     name: "Pro",
-    price: "$39",
+    price: "$49",
     period: "/mo",
     tagline: "For researchers and power users",
     features: [
       "300 videos per month",
       "Unlimited videos saved",
-      "4,000 credits / month",
+      "2,500 credits / month",
       "Unlimited libraries",
       "All export formats",
       "Priority processing",
@@ -34,13 +34,13 @@ const plans = [
   },
   {
     name: "Builder",
-    price: "$17",
+    price: "$19",
     period: "/mo",
     tagline: "Your personal research stack",
     features: [
       "100 videos per month",
       "Up to 1,000 videos saved",
-      "1,000 credits / month",
+      "900 credits / month",
       "Unlimited libraries",
       "All export formats",
       "Credit top-ups available",

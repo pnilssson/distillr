@@ -54,14 +54,14 @@ Key differentiators:
 | Plan        | Price  | Monthly videos | Total video cap | Monthly credits |
 | ----------- | ------ | -------------- | --------------- | --------------- |
 | **Free**    | $0     | 10             | 50              | 100             |
-| **Builder** | $17/mo | 100            | 1,000           | 1,000           |
-| **Pro**     | $39/mo | 300            | Unlimited       | 4,000           |
+| **Builder** | $19/mo | 100            | 1,000           | 900             |
+| **Pro**     | $49/mo | 300            | Unlimited       | 2,500           |
 
 ## Credits
 
 Credits are the universal unit for chat. Users choose their AI model per request; credit usage scales with model capability so margin is protected regardless of which model a user picks.
 
-Monthly credit allowances reset on the billing cycle anniversary. Unused credits do not roll over. Top-up: 500 credits for $5, available to Builder and Pro via Polar one-time purchase. Free users see an upgrade prompt instead.
+Monthly credit allowances reset on the billing cycle anniversary. Unused credits do not roll over. Top-up: 500 credits for $9, available to Builder and Pro via Polar one-time purchase. Free users see an upgrade prompt instead.
 
 Credits per model are set so the credit cost always covers actual LLM cost with margin. The ratio between models reflects their real cost ratio (for example `gpt-5.1` vs `gpt-5-mini`), so credit pricing scales with capability. Exact credit burn is controlled server-side by model pricing config and is reviewed whenever provider pricing changes.
 
@@ -75,20 +75,17 @@ The monthly video cap limits new ingestion per billing cycle and resets on the b
 
 - **Credits, not message counts** - users choose their model; credit costs per model are calibrated with at least 2x margin over actual API cost. Recalibrate if OpenAI pricing changes significantly.
 - **Monthly video caps** - reset each billing cycle. Predictable costs for both the user and the platform. Pro users with unlimited total videos still face a monthly ingestion rate limit.
-- **Never lose money on a user** - credit deduction happens server-side before the LLM call. If credits are insufficient, the request is blocked with a top-up prompt.
+- **Balance safety over strict reservation** - chat requests are blocked when account balance is below 1 credit, and displayed balances are clamped to 0 so users cannot continue once depleted.
 - **Top-ups convert frustration into revenue** - surface at the exact moment of limit-hit, never proactively. Builder and Pro only; Free users see an upgrade prompt instead.
 - **Free plan** demonstrates core value within tight but honest limits. Tight enough to convert, generous enough to show the product works.
-- **Annual billing** (post-MVP): offer 2 months free framing (~17% discount). Improves cash flow significantly and increases LTV. Builder annual = $170/yr (~$14.17/mo equivalent). Pro annual = $390/yr (~$32.50/mo equivalent).
+- **Annual billing** (post-MVP): offer 2 months free framing (~17% discount). Improves cash flow significantly and increases LTV. Builder annual = $190/yr (~$15.83/mo equivalent). Pro annual = $490/yr (~$40.83/mo equivalent).
 
 ---
 
-## Cost Basis (March 2026 benchmarks)
+## Cost Governance (March 2026)
 
-- Transcript fetch: ~$0.005-0.017 per video (TranscriptAPI, volume dependent)
-- Embedding: ~$0.0001-0.0003 per video (OpenAI `text-embedding-3-small`)
-- Insight generation: ~$0.003-0.013 per video (OpenAI `gpt-5-mini`, transcript length dependent)
-- Total ingestion cost: ~$0.008-0.030 per video (transcript + embedding + insights)
-- Chat (fast model): token-based at OpenAI `gpt-5-mini` rates (input + output tokens)
-- Chat (smart model): token-based at OpenAI `gpt-5.1` rates (input + output tokens)
-- Example only (not a fixed request cost): 3k input + 900 output tokens is about $0.0026 on `gpt-5-mini` and about $0.0128 on `gpt-5.1`
-- Polar fees: base 4% + $0.40 per transaction, with +1.5% for international cards and +0.5% for subscriptions where applicable
+- Ingestion cost is variable by transcript length, token volume, and downstream processing. Distillr does not treat ingestion as a fixed per-video cost.
+- Chat cost is token-based at OpenAI rates (`gpt-5-mini` and `gpt-5.1`) using input, cached input, and output token pricing.
+- Credit burn is controlled server-side with `POLAR_CHAT_CREDITS_PER_USD=100` and model-specific cost mapping.
+- Top-up pricing is calibrated for positive unit margin after tax and payment fees.
+- Pricing and limits are reviewed monthly against observed `$ai_generation` token/cost telemetry and billing fee data.

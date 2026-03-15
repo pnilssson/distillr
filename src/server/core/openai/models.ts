@@ -24,13 +24,13 @@ const OPENAI_MODEL_CATALOG: Record<OpenAIModelId, OpenAIModelConfig> = {
   "gpt-5-mini": {
     id: "gpt-5-mini",
     inputPricePerMillionUsd: 0.25,
-    cachedInputPricePerMillionUsd: 0.025,
+    cachedInputPricePerMillionUsd: 0.03,
     outputPricePerMillionUsd: 2,
   },
   "gpt-5.1": {
     id: "gpt-5.1",
     inputPricePerMillionUsd: 1.25,
-    cachedInputPricePerMillionUsd: 0.125,
+    cachedInputPricePerMillionUsd: 0.13,
     outputPricePerMillionUsd: 10,
   },
 };

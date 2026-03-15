@@ -8,6 +8,7 @@ This file is the operational source of truth for agent behavior in this reposito
 - Canonical domain is `distillr.co`. Do not use alternate domains in docs, links, examples, or product copy.
 - Never hard-code app URLs in code paths. Use `NEXT_PUBLIC_APP_URL` (or a centralized helper derived from it) for redirects, callback links, and metadata base URLs.
 - Keep docs lean: product overview plus feature architecture docs for ingestion, chat, and billing.
+- When pricing, credit limits, or top-up economics change, update `docs/product.md`, `docs/billing-architecture.md`, and `src/features/marketing/PricingSection.tsx` in the same PR.
 - When behavior or decisions change, update this file and any impacted feature doc in the same PR.
 - Remove outdated guidance instead of keeping historical notes.
 

@@ -21,12 +21,12 @@ Plan limits:
 | Plan | Monthly chat credits | Monthly videos | Lifetime videos |
 | --- | --- | --- | --- |
 | Free | 100 | 10 | 50 |
-| Builder | 1000 | 100 | 1000 |
-| Pro | 4000 | 300 | Unlimited |
+| Builder | 900 | 100 | 1000 |
+| Pro | 2500 | 300 | Unlimited |
 
 Top-up:
 
-- `top_up_500` adds 500 chat credits.
+- `top_up_500` adds 500 chat credits for $9.
 - Top-ups are available only to paid plans (`builder`, `pro`).
 
 ## Customer State and Provisioning
@@ -43,6 +43,7 @@ Top-up:
 ## Enforcement Points
 
 - Chat preflight: `checkAndDeductCredits()` blocks when `chatCreditsBalance < 1`.
+- Snapshot normalization clamps negative balances to `0` before app enforcement.
 - Source planning: ingestion queue is clipped by monthly and lifetime remaining allowances.
 - Overflow videos are marked failed with provider-agnostic limit reasons.
 

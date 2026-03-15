@@ -1,7 +1,5 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteSource } from "@/features/sources/api";
+import { useDeleteSource } from "@/features/sources/useDeleteSource";
 
 type DeleteSourceDialogProps = {
   libraryId: string;
@@ -29,16 +27,7 @@ export function DeleteSourceDialog({
   open,
   onOpenChange,
 }: DeleteSourceDialogProps) {
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation({
-    mutationFn: () => deleteSource(libraryId, sourceId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sources", libraryId] });
-      queryClient.invalidateQueries({ queryKey: ["videos", libraryId] });
-      onOpenChange(false);
-    },
-  });
+  const mutation = useDeleteSource();
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -63,7 +52,16 @@ export function DeleteSourceDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={mutation.isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={() => mutation.mutate()}
+            onClick={() => {
+              mutation.mutate(
+                { libraryId, sourceId },
+                {
+                  onSuccess: () => {
+                    onOpenChange(false);
+                  },
+                },
+              );
+            }}
             disabled={mutation.isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >

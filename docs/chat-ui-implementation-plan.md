@@ -236,6 +236,7 @@ export function useCreateChatSession(libraryId: string) {
 - `SidebarGroupAction` "+ New chat" button: calls `useCreateChatSession`, navigates to the new session URL on mutation success (`router.push(\`/library/${libraryId}/chat/${session.id}\`)`).
 - `useChatSessions` to list sessions sorted by `lastMessageAt` desc (sort client-side if not already sorted by API).
 - Each session: `SidebarMenuButton` navigating to `/library/[libraryId]/chat/[sessionId]`, `isActive={pathname === ...}`.
+- Each session has an overflow menu with a destructive "Delete chat" action and confirmation dialog.
 - Session title: single line, `truncate`.
 - Loading: 3 skeleton placeholders (`<Skeleton className="h-6 w-full" />`).
 - Empty: `<p className="px-2 py-1 text-xs text-muted-foreground">No chats yet</p>`.
@@ -244,7 +245,9 @@ export function useCreateChatSession(libraryId: string) {
 ### Update `AppSidebar.tsx`
 
 - Import `ChatSidebarSection`.
-- Render `<ChatSidebarSection libraryId={activeLibraryId} />` immediately after `<VideoSidebarSection />` inside the active library `SidebarGroup`.
+- Render `<ChatSidebarSection libraryId={activeLibraryId} />` above sources and videos inside the active library area.
+- Close the mobile sidebar sheet when the Home nav item is clicked.
+- Close the mobile sidebar sheet when a chat session is selected.
 
 ### Completion check
 

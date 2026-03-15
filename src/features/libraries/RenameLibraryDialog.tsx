@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,7 @@ import {
   createLibrarySchema,
   type CreateLibraryInput,
 } from "@/lib/validation/libraries";
-import { renameLibrary } from "@/features/libraries/api";
+import { useRenameLibrary } from "@/features/libraries/useRenameLibrary";
 
 type RenameLibraryDialogProps = {
   libraryId: string;
@@ -31,22 +30,22 @@ export function RenameLibraryDialog({
   open,
   onOpenChange,
 }: RenameLibraryDialogProps) {
-  const queryClient = useQueryClient();
   const form = useForm<CreateLibraryInput>({
     resolver: zodResolver(createLibrarySchema),
     defaultValues: { name: libraryName },
   });
 
-  const mutation = useMutation({
-    mutationFn: (values: CreateLibraryInput) => renameLibrary(libraryId, values.name),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["libraries"] });
-      onOpenChange(false);
-    },
-  });
+  const mutation = useRenameLibrary();
 
   function onSubmit(values: CreateLibraryInput) {
-    mutation.mutate(values);
+    mutation.mutate(
+      { libraryId, name: values.name },
+      {
+        onSuccess: () => {
+          onOpenChange(false);
+        },
+      },
+    );
   }
 
   function handleOpenChange(open: boolean) {

@@ -18,6 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -51,6 +52,7 @@ type AppSidebarProps = {
 export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { isMobile, setOpenMobile } = useSidebar();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addingSource, setAddingSource] = useState(false);
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
@@ -89,6 +91,12 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
     router.push("/");
   }
 
+  function closeMobileSidebar() {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }
+
   return (
     <>
       <Sidebar collapsible="icon">
@@ -106,7 +114,12 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === "/dashboard"}>
-                  <Link href="/dashboard">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => {
+                      closeMobileSidebar();
+                    }}
+                  >
                     <Home size={16} />
                     <span>Home</span>
                   </Link>
@@ -192,6 +205,13 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
 
           {activeLibraryId && (
             <>
+              <ChatSidebarSection
+                libraryId={activeLibraryId}
+                onSessionSelect={() => {
+                  closeMobileSidebar();
+                }}
+              />
+
               <SidebarGroup className="shrink-0 group-data-[collapsible=icon]:hidden">
                 <SidebarGroupLabel className="pr-8">
                   Sources
@@ -232,7 +252,6 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
               </SidebarGroup>
 
               <VideoSidebarSection libraryId={activeLibraryId} />
-              <ChatSidebarSection libraryId={activeLibraryId} />
             </>
           )}
         </SidebarContent>

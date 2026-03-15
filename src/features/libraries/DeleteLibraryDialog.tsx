@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
   AlertDialog,
@@ -13,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteLibrary } from "@/features/libraries/api";
+import { useDeleteLibrary } from "@/features/libraries/useDeleteLibrary";
 
 type DeleteLibraryDialogProps = {
   libraryId: string;
@@ -30,18 +29,7 @@ export function DeleteLibraryDialog({
 }: DeleteLibraryDialogProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation({
-    mutationFn: () => deleteLibrary(libraryId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["libraries"] });
-      onOpenChange(false);
-      if (pathname === `/library/${libraryId}`) {
-        router.push("/dashboard");
-      }
-    },
-  });
+  const mutation = useDeleteLibrary();
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -56,7 +44,19 @@ export function DeleteLibraryDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={mutation.isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={() => mutation.mutate()}
+            onClick={() => {
+              mutation.mutate(
+                { libraryId },
+                {
+                  onSuccess: () => {
+                    onOpenChange(false);
+                    if (pathname === `/library/${libraryId}`) {
+                      router.push("/dashboard");
+                    }
+                  },
+                },
+              );
+            }}
             disabled={mutation.isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >

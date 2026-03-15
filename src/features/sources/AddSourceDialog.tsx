@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -13,8 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useAddSource } from "@/features/sources/useAddSource";
 import { addSourceSchema, type AddSourceInput } from "@/lib/validation/sources";
-import { addSource } from "@/features/sources/api";
 
 type AddSourceDialogProps = {
   libraryId: string;
@@ -23,25 +22,24 @@ type AddSourceDialogProps = {
 };
 
 export function AddSourceDialog({ libraryId, open, onOpenChange }: AddSourceDialogProps) {
-  const queryClient = useQueryClient();
   const form = useForm<AddSourceInput>({
     resolver: zodResolver(addSourceSchema),
     defaultValues: { url: "" },
   });
 
-  const mutation = useMutation({
-    mutationFn: (values: AddSourceInput) => addSource(libraryId, values.url),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sources", libraryId] });
-      queryClient.invalidateQueries({ queryKey: ["videos", libraryId] });
-      form.reset();
-      onOpenChange(false);
-      toast.success("Source added.");
-    },
-  });
+  const mutation = useAddSource();
 
   function onSubmit(values: AddSourceInput) {
-    mutation.mutate(values);
+    mutation.mutate(
+      { libraryId, url: values.url },
+      {
+        onSuccess: () => {
+          form.reset();
+          onOpenChange(false);
+          toast.success("Source added.");
+        },
+      },
+    );
   }
 
   return (

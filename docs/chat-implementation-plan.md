@@ -335,6 +335,7 @@ return result.toUIMessageStreamResponse({
 ### Add
 
 - `src/app/api/libraries/[libraryId]/chat/sessions/route.ts`
+- `src/app/api/libraries/[libraryId]/chat/sessions/[sessionId]/route.ts`
 - `src/app/api/libraries/[libraryId]/chat/sessions/[sessionId]/messages/route.ts`
 
 ### Route contracts
@@ -379,6 +380,21 @@ Response `201`:
   }
 }
 ```
+
+#### `DELETE /api/libraries/:libraryId/chat/sessions/:sessionId`
+
+Response `200`:
+
+```json
+{
+  "ok": true
+}
+```
+
+Response `404`:
+
+- `{ "error": "Library not found." }` when the library does not exist for the user.
+- `{ "error": "Chat session not found." }` when the session id is missing for that library.
 
 #### `GET /api/libraries/:libraryId/chat/sessions/:sessionId/messages?limit=50&cursor=...`
 

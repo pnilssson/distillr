@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +9,8 @@ import {
   createLibrarySchema,
   type CreateLibraryInput,
 } from "@/lib/validation/libraries";
-import { createLibrary } from "@/features/libraries/api";
 import type { LibraryListItem } from "@/features/libraries/types";
+import { useCreateLibrary } from "@/features/libraries/useCreateLibrary";
 
 type CreateLibraryFormProps = {
   onCreated: (library: LibraryListItem) => void;
@@ -19,7 +18,6 @@ type CreateLibraryFormProps = {
 };
 
 export function CreateLibraryForm({ onCreated, submitLabel = "Create library" }: CreateLibraryFormProps) {
-  const queryClient = useQueryClient();
   const form = useForm<CreateLibraryInput>({
     resolver: zodResolver(createLibrarySchema),
     defaultValues: {
@@ -27,17 +25,18 @@ export function CreateLibraryForm({ onCreated, submitLabel = "Create library" }:
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: (values: CreateLibraryInput) => createLibrary(values.name),
-    onSuccess: (library) => {
-      queryClient.invalidateQueries({ queryKey: ["libraries"] });
-      form.reset();
-      onCreated(library);
-    },
-  });
+  const mutation = useCreateLibrary();
 
   function onSubmit(values: CreateLibraryInput) {
-    mutation.mutate(values);
+    mutation.mutate(
+      { name: values.name },
+      {
+        onSuccess: (library) => {
+          form.reset();
+          onCreated(library);
+        },
+      },
+    );
   }
 
   return (

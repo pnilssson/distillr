@@ -71,3 +71,15 @@ export async function fetchChatMessages(
 
   return payload.messages;
 }
+
+export async function deleteChatSession(libraryId: string, sessionId: string): Promise<void> {
+  const response = await fetch(`/api/libraries/${libraryId}/chat/sessions/${sessionId}`, {
+    method: "DELETE",
+  });
+
+  const payload = await parseJsonResponse<{ ok: true } | { error: string }>(response);
+
+  if (!response.ok) {
+    throw new Error(getApiErrorMessage(payload, "Could not delete chat. Please try again."));
+  }
+}

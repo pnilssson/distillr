@@ -112,6 +112,25 @@ export async function getChatSessionById(userId: string, libraryId: string, sess
   return session ?? null;
 }
 
+export async function deleteChatSession(
+  userId: string,
+  libraryId: string,
+  sessionId: string,
+): Promise<boolean> {
+  const [deletedSession] = await db
+    .delete(chatSessions)
+    .where(
+      and(
+        eq(chatSessions.id, sessionId),
+        eq(chatSessions.userId, userId),
+        eq(chatSessions.libraryId, libraryId),
+      ),
+    )
+    .returning({ id: chatSessions.id });
+
+  return Boolean(deletedSession);
+}
+
 export async function listChatMessages(
   userId: string,
   libraryId: string,

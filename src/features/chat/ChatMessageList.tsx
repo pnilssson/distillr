@@ -58,12 +58,13 @@ export function ChatMessageList({
     <section
       ref={containerRef}
       className="min-h-0 flex flex-1 flex-col overflow-y-auto"
+      style={{ scrollPaddingBottom: "13rem" }}
       aria-label="Messages"
       aria-live="polite"
       aria-atomic="false"
       onScroll={handleScroll}
     >
-      <div className="mx-auto flex min-h-full w-full max-w-2xl flex-1 flex-col px-4 pt-6 pb-56">
+      <div className="mx-auto flex min-h-full w-full max-w-2xl flex-1 flex-col px-4 pt-6 pb-8">
         {isEmptyState ? (
           <div className="flex flex-1 items-center justify-center">
             <EmptyChatState onSuggestion={onSuggestion} />
@@ -82,7 +83,7 @@ export function ChatMessageList({
           ))}
 
           {status === "submitted" ? (
-            <div role="status" aria-label="Generating response" className="flex gap-1 py-4">
+            <div role="status" aria-label="Generating response" className="mb-[13rem] flex gap-1 py-4">
               {[0, 1, 2].map((index) => (
                 <span
                   key={index}
@@ -94,7 +95,7 @@ export function ChatMessageList({
           ) : null}
         </div>
 
-        <div ref={bottomRef} aria-hidden="true" className="scroll-mb-56" />
+        <div ref={bottomRef} aria-hidden="true" className="scroll-mb-[13rem]" />
       </div>
     </section>
   );

@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 
 import { ChatSources } from "@/features/chat/ChatSources";
 import type { ChatMessageMetadata } from "@/features/chat/types";
+import { cn } from "@/lib/utils";
 
 type ChatMessageProps = {
   message: UIMessage<ChatMessageMetadata>;
@@ -25,7 +26,7 @@ export function ChatMessage({ message, isLastMessage, isStreaming, isAborted }: 
 
   if (message.role === "user") {
     return (
-      <div className="flex justify-end">
+      <div className={cn("flex justify-end", isLastMessage && "mb-[13rem]")}>
         <div className="max-w-[80%] break-words rounded-2xl bg-muted px-4 py-2 text-sm">{textContent}</div>
       </div>
     );
@@ -44,7 +45,7 @@ export function ChatMessage({ message, isLastMessage, isStreaming, isAborted }: 
   }
 
   return (
-    <div className="group relative py-4">
+    <div className={cn("group relative py-4", isLastMessage && "mb-[13rem]")}>
       {message.metadata?.effectiveMode ? (
         <p className="mb-2 text-xs text-muted-foreground">
           {message.metadata.effectiveMode === "library"

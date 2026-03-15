@@ -25,12 +25,20 @@ const exportPreview = [
 
 const slideLeft = {
   hidden: { opacity: 0, x: -24 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: "easeOut" as const } },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.55, ease: "easeOut" as const },
+  },
 };
 
 const slideRight = {
   hidden: { opacity: 0, x: 24 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: "easeOut" as const } },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.55, ease: "easeOut" as const },
+  },
 };
 
 export function FeatureShowcaseDark() {
@@ -60,7 +68,7 @@ export function FeatureShowcaseDark() {
                 >
                   {text}
                 </p>
-              )
+              ),
             )}
           </motion.div>
 
@@ -74,15 +82,15 @@ export function FeatureShowcaseDark() {
             <p className="mb-3 text-xs font-medium uppercase tracking-widest text-background/50">
               Export
             </p>
-            <h2 className="mb-4 font-serif text-3xl leading-tight text-background sm:text-4xl">
+            <h2 className="mb-6 font-serif text-3xl leading-tight text-background sm:text-4xl">
               Export structured knowledge, not raw transcripts.
             </h2>
-            <p className="mb-6 leading-relaxed text-background/60">
+            <p className="leading-relaxed text-background/60">
               Summaries, structured notes, full transcripts, and chat history.
               Formatted and ready for Notion, Obsidian, or wherever you take
               notes.
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="mt-6 flex flex-wrap gap-2">
               {exportFormats.map((fmt) => (
                 <span
                   key={fmt}

@@ -111,19 +111,19 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
         viewport={{ once: true, margin: "-80px" }}
         variants={fadeUp}
       >
-        <p className="mb-2 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
+        <p className="mb-3 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
           Pricing
         </p>
-        <h2 className="mb-4 text-center font-serif text-3xl sm:text-4xl">
+        <h2 className="mb-6 text-center font-serif text-3xl sm:text-4xl">
           Simple pricing. Start free.
         </h2>
-        <p className="mb-16 text-center text-muted-foreground">
+        <p className="text-center leading-relaxed text-muted-foreground">
           No contracts. No credit card required. Cancel anytime.
         </p>
       </motion.div>
 
       <motion.div
-        className="grid gap-4 sm:grid-cols-3"
+        className="mt-16 grid gap-4 pt-3 sm:grid-cols-3"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-80px" }}
@@ -134,13 +134,13 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
             key={plan.name}
             className={`relative flex flex-col rounded-xl p-6 ${
               plan.highlighted
-                ? "border-2 border-foreground bg-card"
+                ? "border-2 border-foreground bg-card pt-10"
                 : "border bg-card"
             }`}
             variants={fadeUp}
           >
             {plan.highlighted && (
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-foreground px-3 py-0.5 text-xs font-medium text-background">
+              <span className="absolute top-3 left-1/2 -translate-x-1/2 rounded-full bg-foreground px-3 py-0.5 text-xs font-medium text-background">
                 Most popular
               </span>
             )}

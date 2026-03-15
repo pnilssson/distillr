@@ -7,7 +7,7 @@ const steps = [
   {
     step: "01",
     icon: PlusCircle,
-    title: "Add your content",
+    title: "Add your sources",
     desc: "Paste a channel, playlist, or video link. Distillr does the rest.",
   },
   {
@@ -43,16 +43,19 @@ export function HowItWorksSection() {
         viewport={{ once: true, margin: "-80px" }}
         variants={fadeUp}
       >
-        <p className="mb-2 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
+        <p className="mb-3 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
           How it works
         </p>
-        <h2 className="mb-16 text-center font-serif text-3xl sm:text-4xl">
+        <h2 className="mb-6 text-center font-serif text-3xl sm:text-4xl">
           Three steps to your knowledge base
         </h2>
+        <p className="mx-auto max-w-2xl text-center leading-relaxed text-muted-foreground">
+          From channels you follow to grounded answers, Distillr keeps each step simple.
+        </p>
       </motion.div>
 
       <motion.div
-        className="grid gap-10 sm:grid-cols-3"
+        className="mt-16 grid gap-10 sm:grid-cols-3"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-80px" }}

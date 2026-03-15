@@ -62,16 +62,19 @@ export function FeaturesGridSection() {
         viewport={{ once: true, margin: "-80px" }}
         variants={fadeUp}
       >
-        <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+        <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">
           Features
         </p>
-        <h2 className="mb-16 max-w-md font-serif text-3xl sm:text-4xl">
+        <h2 className="mb-6 max-w-md font-serif text-3xl sm:text-4xl">
           Built for knowledge that compounds
         </h2>
+        <p className="max-w-2xl leading-relaxed text-muted-foreground">
+          Everything you need to collect, search, and reuse insights from the creators you track.
+        </p>
       </motion.div>
 
       <motion.div
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-80px" }}

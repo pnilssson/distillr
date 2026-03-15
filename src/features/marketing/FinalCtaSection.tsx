@@ -28,7 +28,7 @@ export function FinalCtaSection({ isAuthenticated }: FinalCtaSectionProps) {
           Add your first channel or video and start asking questions. Free, no
           credit card.
         </p>
-        <Button asChild size="lg">
+        <Button asChild size="lg" className="h-12 px-10 text-base">
           <Link href={ctaHref}>{ctaLabel}</Link>
         </Button>
       </motion.div>

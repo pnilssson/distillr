@@ -26,7 +26,7 @@ export function ChatMessage({ message, isLastMessage, isStreaming, isAborted }: 
 
   if (message.role === "user") {
     return (
-      <div className={cn("flex justify-end", isLastMessage && "mb-[13rem]")}>
+      <div className={cn("flex justify-end", isLastMessage && "mb-[8rem]")}>
         <div className="max-w-[80%] break-words rounded-2xl bg-muted px-4 py-2 text-sm">{textContent}</div>
       </div>
     );
@@ -45,7 +45,7 @@ export function ChatMessage({ message, isLastMessage, isStreaming, isAborted }: 
   }
 
   return (
-    <div className={cn("group relative py-4", isLastMessage && "mb-[13rem]")}>
+    <div className={cn("group relative py-4", isLastMessage && "mb-[8rem]")}>
       {message.metadata?.effectiveMode ? (
         <p className="mb-2 text-xs text-muted-foreground">
           {message.metadata.effectiveMode === "library"

@@ -58,7 +58,7 @@ export function ChatMessageList({
     <section
       ref={containerRef}
       className="min-h-0 flex flex-1 flex-col overflow-y-auto"
-      style={{ scrollPaddingBottom: "13rem" }}
+      style={{ scrollPaddingBottom: "8rem" }}
       aria-label="Messages"
       aria-live="polite"
       aria-atomic="false"
@@ -83,7 +83,7 @@ export function ChatMessageList({
           ))}
 
           {status === "submitted" ? (
-            <div role="status" aria-label="Generating response" className="mb-[13rem] flex gap-1 py-4">
+            <div role="status" aria-label="Generating response" className="mb-[8rem] flex gap-1 py-4">
               {[0, 1, 2].map((index) => (
                 <span
                   key={index}
@@ -95,7 +95,7 @@ export function ChatMessageList({
           ) : null}
         </div>
 
-        <div ref={bottomRef} aria-hidden="true" className="scroll-mb-[13rem]" />
+        <div ref={bottomRef} aria-hidden="true" className="scroll-mb-[8rem]" />
       </div>
     </section>
   );

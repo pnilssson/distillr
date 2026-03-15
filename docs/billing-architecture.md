@@ -33,6 +33,7 @@ Top-up:
 
 - Identity bridge: `external_customer_id = app user id`.
 - `ensurePolarCustomerState()` lazily ensures customer + free subscription baseline.
+- Polar API requests are authenticated with organization access tokens and should not send `organization_id` in payloads.
 - Snapshot builder resolves:
   - effective plan
   - chat balance

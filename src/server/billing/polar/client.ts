@@ -49,8 +49,6 @@ export async function createPolarCustomer(input: {
   name?: string | null;
   idempotencyKey?: string;
 }): Promise<PolarCustomer> {
-  const organizationId = env.POLAR_ORG_ID ?? undefined;
-
   return polarRequest<PolarCustomer>(
     "POST",
     "/v1/customers/",
@@ -58,7 +56,6 @@ export async function createPolarCustomer(input: {
       external_id: input.externalCustomerId,
       email: input.email,
       name: input.name ?? undefined,
-      organization_id: organizationId,
     },
     {
       idempotencyKey: input.idempotencyKey,
@@ -121,7 +118,6 @@ export async function createPolarCheckoutSession(input: {
       products: [input.productId],
       success_url: input.successUrl,
       return_url: input.returnUrl,
-      organization_id: env.POLAR_ORG_ID ?? undefined,
     },
     {
       idempotencyKey: input.idempotencyKey,
@@ -186,7 +182,6 @@ export async function ingestPolarEvents(
         external_id: event.externalId,
         parent_id: event.parentId,
         metadata: event.metadata,
-        organization_id: env.POLAR_ORG_ID ?? undefined,
         timestamp: event.timestamp,
       })),
     },

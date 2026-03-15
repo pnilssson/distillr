@@ -81,6 +81,8 @@ export const POST = withApiAuth<ChatMessagesRouteProps>(async (request, { params
 
   return streamChatMessage({
     userId: user.id,
+    userEmail: user.email ?? null,
+    userName: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
     libraryId,
     sessionId,
     content: parsedBody.data.content,

@@ -31,6 +31,7 @@ import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { isAppError, AppError } from "@/server/core/errors/app-error";
 import { embedTexts } from "@/server/core/openai/embeddings";
 import { getDefaultChatModel, getDefaultChatModelAlias } from "@/server/core/openai/models";
+import { inngest } from "@/server/inngest/client";
 
 const encoder = getEncoding("cl100k_base");
 
@@ -46,6 +47,8 @@ type ChatMessageMetadata = {
 
 type StreamChatMessageParams = {
   userId: string;
+  userEmail: string | null;
+  userName?: string | null;
   libraryId: string;
   sessionId: string;
   content: string;
@@ -74,6 +77,8 @@ export async function streamChatMessage(params: StreamChatMessageParams): Promis
   try {
     await checkAndDeductCredits({
       userId: params.userId,
+      userEmail: params.userEmail,
+      userName: params.userName,
       modelId: generationModel.id,
       modelAlias: generationModelAlias,
       operation: "chat_message",
@@ -208,6 +213,43 @@ export async function streamChatMessage(params: StreamChatMessageParams): Promis
           undefined,
           lastMessageAt,
         );
+
+        const totalTokens = totalUsage.totalTokens ?? 0;
+
+        if (
+          insertedAssistantMessage &&
+          totalTokens > 0 &&
+          (status === "completed" || status === "aborted")
+        ) {
+          try {
+            await inngest.send({
+              name: "billing.usage.chat.record",
+              data: {
+                userId: params.userId,
+                libraryId: params.libraryId,
+                sessionId: params.sessionId,
+                assistantMessageId: insertedAssistantMessage.id,
+                modelId: generationModel.id,
+                inputTokens: totalUsage.inputTokens ?? 0,
+                outputTokens: totalUsage.outputTokens ?? 0,
+                totalTokens,
+                cachedInputTokens: totalUsage.cachedInputTokens,
+              },
+            });
+          } catch (billingDispatchError) {
+            Sentry.captureException(billingDispatchError, {
+              tags: {
+                area: "chat.billing_usage_dispatch",
+              },
+              extra: {
+                userId: params.userId,
+                libraryId: params.libraryId,
+                sessionId: params.sessionId,
+                messageId: insertedAssistantMessage.id,
+              },
+            });
+          }
+        }
 
         if (status === "completed" && insertedAssistantMessage) {
           await captureServerEvent(params.userId, "chat_message_sent", {

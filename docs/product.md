@@ -63,7 +63,7 @@ Credits are the universal unit for chat. Users choose their AI model per request
 
 Monthly credit allowances reset on the billing cycle anniversary. Unused credits do not roll over. Top-up: 500 credits for $5, available to Builder and Pro via Polar one-time purchase. Free users see an upgrade prompt instead.
 
-Credits per model are set so the credit cost always covers actual LLM cost with margin. The ratio between models reflects their real cost ratio (for example `gpt-5.1` vs `gpt-5-mini`), so credit pricing scales with capability. Exact credit burn by token usage will be finalized when model pricing is fully benchmarked.
+Credits per model are set so the credit cost always covers actual LLM cost with margin. The ratio between models reflects their real cost ratio (for example `gpt-5.1` vs `gpt-5-mini`), so credit pricing scales with capability. Exact credit burn is controlled server-side by model pricing config and is reviewed whenever provider pricing changes.
 
 ## Monthly Video Cap
 
@@ -82,7 +82,7 @@ The monthly video cap limits new ingestion per billing cycle and resets on the b
 
 ---
 
-## Cost Basis (approximate, March 2026)
+## Cost Basis (March 2026 benchmarks)
 
 - Transcript fetch: ~$0.005-0.017 per video (TranscriptAPI, volume dependent)
 - Embedding: ~$0.0001-0.0003 per video (OpenAI `text-embedding-3-small`)

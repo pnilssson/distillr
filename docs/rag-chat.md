@@ -45,7 +45,7 @@ Sources (showing top 3-5 videos)
 - UI shows top 3-5 videos only. Full evidence is retained internally.
 - Chat-only responses do not include sources.
 
-If evidence is insufficient, the assistant should say that directly and avoid fabricated claims.
+If evidence is insufficient, the assistant must say that directly and avoid fabricated claims.
 
 ---
 

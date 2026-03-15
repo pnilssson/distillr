@@ -55,7 +55,7 @@ Refactor shared OpenAI client and embedding utility before writing chat modules.
 2. Create `src/server/core/openai/embeddings.ts`
    - Move `embedTexts` here with existing `$ai_generation` tracking.
 3. Update ingestion imports:
-   - `src/server/ingestion/openai.ts` should import shared OpenAI/embedding helpers.
+   - `src/server/ingestion/openai.ts` must import shared OpenAI/embedding helpers.
 4. Keep behavior unchanged for ingestion.
 
 ### Completion check
@@ -553,7 +553,7 @@ That document covers: package installation (AI SDK v6), feature types and API cl
 Key integration points between this plan and the UI plan:
 
 - The UI plan's Phase 14 (package install) must run before backend Phase 9 can be compiled.
-- The UI plan's package install should use `react-markdown@^10` and `remark-gfm@^4` (current maintained majors) with safe defaults (`skipHtml`, no `rehype-raw`).
+- The UI plan's package install must use `react-markdown@^10` and `remark-gfm@^4` (current maintained majors) with safe defaults (`skipHtml`, no `rehype-raw`).
 - The streaming route (Phase 10 here) must return `result.toUIMessageStreamResponse()` with `messageMetadata` for sources - this is what `useChat`'s `DefaultChatTransport` consumes on the client.
 - The GET messages route (Phase 10 here) must return `inputTokens`/`outputTokens` - the UI plan's `ChatMessageItem.usage` type reflects this.
 - The session auto-title (Phase 9 here, step 4) is what the UI's `onFinish` query invalidation picks up to refresh the sidebar.

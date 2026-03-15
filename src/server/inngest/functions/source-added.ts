@@ -1,12 +1,15 @@
 import "server-only";
 
 import * as Sentry from "@sentry/nextjs";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { NonRetriableError } from "inngest";
 
 import { db } from "@/db";
 import { sources, videos } from "@/db/schema";
 import type { YouTubeSourceType } from "@/lib/validation/sources";
+import { getPolarCustomerState } from "@/server/billing/polar/customers";
+import { isPolarBillingEnabled } from "@/server/billing/polar/config";
+import { buildBillingSnapshot } from "@/server/billing/polar/state";
 import { classifyIngestionError } from "@/server/ingestion/errors";
 import { discoverVideosFromSource } from "@/server/ingestion/youtube-discovery";
 import { inngest } from "@/server/inngest/client";
@@ -22,10 +25,19 @@ type VideoRow = {
   status: string;
 };
 
+type IngestionAllowance = {
+  monthlyRemaining: number;
+  lifetimeRemaining: number;
+};
+
 export const sourceAdded = inngest.createFunction(
   {
     id: "source-added",
     retries: 3,
+    concurrency: {
+      limit: 1,
+      key: "event.data.userId",
+    },
   },
   { event: "source.added" },
   async ({ event, step, attempt, maxAttempts }) => {
@@ -178,9 +190,54 @@ export const sourceAdded = inngest.createFunction(
         upsertedRows.push(...rows);
       }
 
-      const rowsToQueue = upsertedRows.filter(
-        (row) => row.status === "pending" || row.status === "failed",
+      const rowsByYoutubeId = new Map(
+        upsertedRows.map((row) => [row.youtubeVideoId, row] as const),
       );
+
+      const queueCandidates = dedupedVideos
+        .map((video) => rowsByYoutubeId.get(video.youtubeVideoId))
+        .filter((row): row is VideoRow => Boolean(row))
+        .filter((row) => row.status === "pending" || row.status === "failed");
+
+      const allowance = await step.run("resolve-ingestion-allowance", async () => {
+        return getIngestionAllowanceForUser(source.userId);
+      });
+
+      const allowedCount = Math.max(
+        0,
+        Math.min(
+          queueCandidates.length,
+          allowance.monthlyRemaining,
+          allowance.lifetimeRemaining,
+        ),
+      );
+
+      const rowsToQueue = queueCandidates.slice(0, allowedCount);
+      const overflowRows = queueCandidates.slice(allowedCount);
+
+      if (overflowRows.length > 0) {
+        const overflowReason = getOverflowReason(allowance);
+
+        await step.run("mark-overflow-videos-failed", async () => {
+          await db
+            .update(videos)
+            .set({
+              status: "failed",
+              failureReason: overflowReason,
+              updatedAt: sql`now()`,
+            })
+            .where(
+              and(
+                eq(videos.userId, source.userId),
+                eq(videos.libraryId, source.libraryId),
+                inArray(
+                  videos.id,
+                  overflowRows.map((row) => row.id),
+                ),
+              ),
+            );
+        });
+      }
 
       for (let i = 0; i < rowsToQueue.length; i += VIDEO_EVENT_BATCH_SIZE) {
         const batch = rowsToQueue.slice(i, i + VIDEO_EVENT_BATCH_SIZE);
@@ -221,6 +278,7 @@ export const sourceAdded = inngest.createFunction(
         sourceId: source.id,
         discovered: dedupedVideos.length,
         queued: rowsToQueue.length,
+        overflow: overflowRows.length,
       };
     } catch (error) {
       const decision = classifyIngestionError(error);
@@ -262,3 +320,37 @@ export const sourceAdded = inngest.createFunction(
     }
   },
 );
+
+async function getIngestionAllowanceForUser(userId: string): Promise<IngestionAllowance> {
+  if (!isPolarBillingEnabled()) {
+    return {
+      monthlyRemaining: Number.POSITIVE_INFINITY,
+      lifetimeRemaining: Number.POSITIVE_INFINITY,
+    };
+  }
+
+  const state = await getPolarCustomerState(userId);
+
+  if (!state) {
+    throw new Error("Could not verify video ingestion limits right now.");
+  }
+
+  const billing = buildBillingSnapshot(state);
+
+  return {
+    monthlyRemaining: billing.monthlyVideoBalance,
+    lifetimeRemaining: billing.lifetimeVideoRemaining,
+  };
+}
+
+function getOverflowReason(allowance: IngestionAllowance): string {
+  if (allowance.monthlyRemaining <= 0) {
+    return "You have reached your monthly video ingestion limit.";
+  }
+
+  if (allowance.lifetimeRemaining <= 0) {
+    return "You have reached your total video limit for this plan.";
+  }
+
+  return "You have reached your video ingestion limit for this plan.";
+}

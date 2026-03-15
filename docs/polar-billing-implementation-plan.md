@@ -15,11 +15,11 @@ Integrate Polar.sh for Distillr monetization with a Polar-first approach:
 - Entitlements and meter balances live in Polar.
 - The app enforces usage by reading Polar customer state before expensive work.
 - Chat cost/usage events are ingested into Polar meters after completion.
-- Webhooks trigger sync and cache invalidation, without mirroring full entitlement state.
+- Webhooks are validated and forwarded to Inngest for replay-safe async processing, without mirroring full entitlement state.
 
 ## User Actions (Polar Dashboard / Account)
 
-- Create products/prices for `Free`, `Builder`, and `Pro` monthly subscriptions.
+- Create products for `Free`, `Builder`, and `Pro` monthly subscriptions.
 - Configure benefits per tier, including monthly chat credits and monthly video ingestion allowances.
 - Configure one-time top-up products that grant chat meter credits.
 - Configure meter(s) for chat and video usage tracking.
@@ -171,11 +171,9 @@ Create these products in Polar:
   - Price: `USD 5`
   - Attach benefit: `Top-up credits pack (500)`
 
-Free users should have an actual Polar subscription on `Distillr Free`.
+Free users must have an actual Polar subscription on `Distillr Free`.
 
-### 5) Lifetime cap grant policy (50/1000/unlimited)
-
-Polar does not expose a simple public "grant this meter credit now" endpoint. For one-off grants, use `events.ingest` with idempotency.
+### 5) Lifetime cap enforcement policy (50/1000/unlimited)
 
 - Free lifetime cap target: 50 videos
 - Builder lifetime cap target: 1000 videos
@@ -183,30 +181,33 @@ Polar does not expose a simple public "grant this meter credit now" endpoint. Fo
 
 Recommended implementation:
 
-- Keep a single lifetime usage meter (`Distillr Videos Ingested Lifetime`) for all non-Pro tiers.
-- On first free provisioning, emit an idempotent lifetime credit grant event.
-- On free -> builder upgrade, emit only the delta grant to reach 1000 total.
-- Use deterministic `external_id` values on ingest events to avoid duplicate grants on retries.
-- Validate sign convention in sandbox before production because Polar docs contain conflicting examples around negative value grants.
+- Keep a single lifetime usage meter (`Distillr Videos Ingested Lifetime`) for all tiers.
+- Ingest `distillr.video.ingested` events with `units=1` only after successful video ingest completion.
+- Read `consumed_units` from lifetime meter in customer state.
+- Enforce remaining lifetime allowance as `tier_cap - consumed_units` for Free and Builder.
+- Treat Pro as unlimited lifetime cap.
 
 ### 6) IDs to save after creation
 
 Record these from Polar and map them into env vars during implementation:
 
-- Free product/price IDs
-- Builder product/price IDs
-- Pro product/price IDs
-- Top-up product/price IDs
+- Free product ID
+- Builder product ID
+- Pro product ID
+- Top-up product ID
 - Meter ID for `Distillr Chat Credits Used`
 - Meter ID for `Distillr Videos Ingested Monthly`
 - Meter ID for `Distillr Videos Ingested Lifetime`
+
+Current implementation uses product IDs for free provisioning and checkout flows.
+Price IDs are not required.
 
 ### 7) Webhook URL and event permissions
 
 Create one webhook endpoint with these values:
 
+- Name: `Distillr Billing Webhook (Production)`
 - URL (production): `https://distillr.co/api/webhooks/polar`
-- If your live app is on `distillr.app`, use `https://distillr.app/api/webhooks/polar` instead.
 - Format: `Raw`
 - Secret: generate and store as `POLAR_WEBHOOK_SECRET`
 - Delivery: keep retries enabled (default)
@@ -233,6 +234,7 @@ Webhook handling notes:
 
 Create one server-side token with these scopes:
 
+- Name: `Distillr Server API Token (Production)`
 - `checkouts:write`
 - `customer_sessions:write`
 - `customers:write`
@@ -288,7 +290,7 @@ Currently using:
 Expected annual revenue:
 
 - Enter a truthful estimate in USD.
-- Recommended conservative startup placeholder if you need one now: `50000 USD`.
+- If you need an initial conservative estimate, use `50000 USD`.
 
 ## DOER Actions (Codebase)
 
@@ -301,6 +303,7 @@ Expected annual revenue:
   - `POLAR_ENV`
   - Free/Builder/Pro/top-up product IDs
   - Meter IDs and event identifiers
+  - `POLAR_CHAT_CREDITS_PER_USD` (default `100`)
 
 ### Polar Client
 
@@ -324,6 +327,7 @@ Expected annual revenue:
 - Add authenticated API routes for:
   - Checkout session creation (plan upgrade and top-up)
   - Customer portal session creation
+- Build success/return URLs from `NEXT_PUBLIC_APP_URL` (no hard-coded app domains in route handlers).
 - Reuse auth utilities from `src/server/core/auth/api.ts`.
 
 ### Entitlement and Credit Enforcement
@@ -344,35 +348,40 @@ Expected annual revenue:
   - enqueue only allowed count
   - mark overflow items failed with provider-agnostic limit reasons
 - Keep limits enforced server-side only.
+- Serialize source planning per user in Inngest (`source.added` concurrency key on `userId`) so allowance snapshots are not evaluated concurrently.
 
 ### Usage Ingestion
 
-- After successful model call and cost calculation, ingest a usage event to Polar with an idempotency key.
-- Wire this in `src/server/chat/service.ts` where cost already exists.
-- Ingest video usage events after successful video ingest completion.
-- Add idempotent reserve/refund behavior for ingestion retries/failures.
+- Emit usage events from hot paths to Inngest workers:
+  - `billing.usage.chat.record`
+  - `billing.usage.video.record`
+- Perform Polar `events.ingest` calls only inside Inngest billing workers.
+- Use deterministic idempotency keys (`external_id`) so retries and replays do not double-count usage.
+- Add a scheduled reconciliation worker to replay recent chat/video usage events in case event dispatch fails.
+- Reconciliation should page deterministically by timestamp + id cursor until a run budget is reached, instead of a single fixed top-N query.
+- Reconciliation should derive `totalTokens` as `inputTokens + outputTokens` when `totalTokens` is null.
 
-### Lifetime Grant Handling
+### Lifetime Cap Handling
 
-- Implement idempotent lifetime-cap grants via events ingestion:
-  - first free provisioning grant to lifetime meter
-  - free -> builder delta grant
-- Verify event-sign convention in sandbox before production rollout.
+- Enforce lifetime caps from meter `consumed_units` and tier constants (50/1000/unlimited).
+- Do not require separate lifetime credit-grant events.
 
 ### Webhooks
 
 - Add `/api/webhooks/polar` route:
   - Verify signatures
-  - Handle `customer.state_changed` and relevant billing events
-  - Fast ACK
-  - Idempotent processing
-  - Cache invalidation where applicable
+  - Extract and forward Standard Webhooks event id as webhook identity
+  - Fast ACK after enqueue to Inngest, return non-2xx if enqueue fails so Polar retries
+  - Dispatch one internal event (`billing.webhook.received`) and process side effects in an Inngest worker
+  - Handle `customer.state_changed`, `subscription.*`, and `order.paid` centrally
+  - Keep processing replay-safe with Inngest idempotency keyed by webhook id
+  - Emit `plan_upgraded` only for real paid-plan transitions (exclude `subscription_cycle` renewals)
 
 ### Local Persistence
 
 - Do not mirror subscription state in local DB.
-- Optionally persist only operational records for webhook/event idempotency and audit.
-- If schema changes are needed, define in Drizzle and generate migrations.
+- For MVP reliability, use Inngest retry + reconciliation before adding operational idempotency tables.
+- Add DB-backed outbox/audit tables later only if stricter audit/compliance guarantees are required.
 
 ### UI Wiring
 
@@ -405,6 +414,7 @@ Expected annual revenue:
 - Source/video ingestion is blocked when monthly or lifetime limits are exhausted.
 - Successful chat usage is ingested into Polar exactly once (idempotent retries).
 - Successful video ingestion updates Polar usage exactly once (idempotent retries).
+- If dispatch to Inngest fails, scheduled reconciliation replays missing usage safely.
 - Tier upgrades and top-ups are purchasable via in-app checkout flow.
 - Customer portal access is available from the app.
 - No local subscription-state mirror exists, aside from optional operational idempotency logs.
@@ -420,8 +430,8 @@ Expected annual revenue:
 - [ ] Implement checkout and customer portal routes
 - [ ] Replace `src/server/billing/credits.ts` stub with Polar state enforcement
 - [ ] Enforce monthly and lifetime video limits in ingestion flow
-- [ ] Wire usage ingestion from `src/server/chat/service.ts`
-- [ ] Wire video usage ingestion and idempotent reserve/refund handling
+- [ ] Emit chat/video usage events to Inngest workers with deterministic idempotency keys
+- [ ] Add scheduled usage reconciliation worker (chat + video)
 - [ ] Add webhook route with signature verification and idempotent processing
 - [ ] Wire UI CTAs to billing endpoints
 - [ ] Add/update PostHog and Sentry instrumentation

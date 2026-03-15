@@ -31,6 +31,9 @@ type ChatInputProps = {
   onModeChange: (mode: ChatRequestMode) => void;
   status: "ready" | "submitted" | "streaming" | "error";
   error: Error | null;
+  canUpgrade: boolean;
+  upgradeLabel: string;
+  onUpgrade: () => void;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
 };
 
@@ -44,6 +47,9 @@ export function ChatInput({
   onModeChange,
   status,
   error,
+  canUpgrade,
+  upgradeLabel,
+  onUpgrade,
   textareaRef,
 }: ChatInputProps) {
   useEffect(() => {
@@ -74,6 +80,7 @@ export function ChatInput({
   const canSend = status === "ready" && value.trim().length > 0;
   const canStop = status === "submitted" || status === "streaming";
   const inputErrorId = "chat-input-error";
+  const errorMessage = getErrorMessage(error);
 
   return (
     <div>
@@ -83,10 +90,17 @@ export function ChatInput({
           role="alert"
           className="mb-2 flex items-center justify-between rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
         >
-          <span>Something went wrong.</span>
-          <button type="button" onClick={onRetry} className="font-medium underline">
-            Try again
-          </button>
+          <span>{errorMessage}</span>
+          <div className="flex items-center gap-3">
+            {canUpgrade ? (
+              <button type="button" onClick={onUpgrade} className="font-medium underline">
+                {upgradeLabel}
+              </button>
+            ) : null}
+            <button type="button" onClick={onRetry} className="font-medium underline">
+              Try again
+            </button>
+          </div>
         </div>
       ) : null}
 
@@ -201,4 +215,21 @@ export function ChatInput({
       </div>
     </div>
   );
+}
+
+function getErrorMessage(error: Error | null): string {
+  if (!error?.message) {
+    return "Something went wrong.";
+  }
+
+  try {
+    const parsed = JSON.parse(error.message) as { error?: unknown };
+    if (typeof parsed.error === "string" && parsed.error.length > 0) {
+      return parsed.error;
+    }
+  } catch {
+    // Ignore parse failures and fallback to raw message.
+  }
+
+  return error.message;
 }

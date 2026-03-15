@@ -2,17 +2,38 @@ import "server-only";
 
 import type { OpenAIModelAlias } from "@/server/core/openai/models";
 import { AppError } from "@/server/core/errors/app-error";
+import { ensurePolarCustomerState } from "@/server/billing/polar/customers";
+import { buildBillingSnapshot } from "@/server/billing/polar/state";
 
 type CheckAndDeductCreditsParams = {
   userId: string;
+  userEmail: string | null;
+  userName?: string | null;
   modelId: string;
   modelAlias: OpenAIModelAlias;
   operation: "chat_message";
 };
 
-export async function checkAndDeductCredits(_params: CheckAndDeductCreditsParams): Promise<void> {
-  void _params;
-  // Billing is intentionally stubbed for MVP chat rollout.
+export async function checkAndDeductCredits(params: CheckAndDeductCreditsParams): Promise<void> {
+  void params.modelId;
+  void params.modelAlias;
+  void params.operation;
+
+  const state = await ensurePolarCustomerState({
+    userId: params.userId,
+    email: params.userEmail,
+    name: params.userName,
+  });
+
+  if (!state) {
+    return;
+  }
+
+  const billing = buildBillingSnapshot(state);
+
+  if (billing.chatCreditsBalance < 1) {
+    throw createInsufficientCreditsError();
+  }
 }
 
 export function createInsufficientCreditsError(): AppError {

@@ -3,8 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LogOut, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  CreditCard,
+  Home,
+  LogOut,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import posthog from "posthog-js";
+import { toast } from "sonner";
 import {
   Sidebar,
   SidebarContent,
@@ -40,6 +49,11 @@ import { SourceDetailsDialog } from "@/features/sources/SourceDetailsDialog";
 import { getSourceLabel, SourceSidebarItem } from "@/features/sources/SourceSidebarItem";
 import { SourceListItem } from "@/features/sources/types";
 import { useSources } from "@/features/sources/useSources";
+import {
+  createCheckoutSession,
+  createCustomerPortalSession,
+} from "@/features/billing/api";
+import { useBillingState } from "@/features/billing/useBillingState";
 import { ChatSidebarSection } from "@/features/chat/ChatSidebarSection";
 import { VideoSidebarSection } from "@/features/videos/VideoSidebarSection";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
@@ -59,6 +73,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   const [deletingSource, setDeletingSource] = useState<SourceListItem | null>(null);
   const [deletingLibrary, setDeletingLibrary] = useState<LibraryListItem | null>(null);
   const [renamingLibrary, setRenamingLibrary] = useState<LibraryListItem | null>(null);
+  const [billingAction, setBillingAction] = useState<"upgrade" | "topup" | "portal" | null>(null);
 
   const librariesQuery = useLibraries();
   const libraries = librariesQuery.data ?? [];
@@ -68,6 +83,12 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
 
   const sourcesQuery = useSources(activeLibraryId);
   const sources = sourcesQuery.data ?? [];
+  const billingQuery = useBillingState();
+  const billing = billingQuery.data;
+  const billingReady = !billingQuery.isPending;
+  const activePlanLabel =
+    billing?.plan === "pro" ? "Pro" : billing?.plan === "builder" ? "Builder" : "Free";
+  const canTopUp = Boolean(billing?.hasTopUpAccess);
   const selectedSource = selectedSourceId
     ? (sources.find((source) => source.id === selectedSourceId) ?? null)
     : null;
@@ -94,6 +115,33 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   function closeMobileSidebar() {
     if (isMobile) {
       setOpenMobile(false);
+    }
+  }
+
+  async function handleManageBilling() {
+    setBillingAction("portal");
+
+    try {
+      const url = await createCustomerPortalSession(pathname);
+      window.location.assign(url);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not open billing settings right now.");
+    } finally {
+      setBillingAction(null);
+    }
+  }
+
+  async function handleUpgradeOrTopUp() {
+    const target = canTopUp ? "top_up_500" : "builder";
+    setBillingAction(canTopUp ? "topup" : "upgrade");
+
+    try {
+      const url = await createCheckoutSession(target, pathname);
+      window.location.assign(url);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not start checkout right now.");
+    } finally {
+      setBillingAction(null);
     }
   }
 
@@ -257,20 +305,53 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
         </SidebarContent>
 
         <SidebarFooter className="px-3 py-3">
-          <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center">
-            <div className="min-w-0 group-data-[collapsible=icon]:hidden">
+          <div className="space-y-2 group-data-[collapsible=icon]:space-y-0">
+            <div className="min-w-0 px-1 group-data-[collapsible=icon]:hidden">
               <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
-              <p className="text-xs font-medium">Free</p>
+              <p className="text-xs font-medium">{activePlanLabel}</p>
+              {typeof billing?.chatCreditsBalance === "number" ? (
+                <p className="text-xs text-muted-foreground">
+                  {billing.chatCreditsBalance} chat credits left
+                </p>
+              ) : null}
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Sign out"
-              onClick={handleSignOut}
-              className="shrink-0 text-muted-foreground hover:text-foreground"
-            >
-              <LogOut size={16} />
-            </Button>
+
+            <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void handleManageBilling();
+                }}
+                disabled={billingAction !== null || !billingReady}
+                className="h-8 px-2 text-xs group-data-[collapsible=icon]:hidden"
+              >
+                <CreditCard size={14} />
+                Manage
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void handleUpgradeOrTopUp();
+                }}
+                disabled={billingAction !== null || !billingReady}
+                className="h-8 px-2 text-xs group-data-[collapsible=icon]:hidden"
+              >
+                {!billingReady ? "Billing..." : canTopUp ? "Top up" : "Upgrade"}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Sign out"
+                onClick={handleSignOut}
+                className="shrink-0 text-muted-foreground hover:text-foreground"
+              >
+                <LogOut size={16} />
+              </Button>
+            </div>
           </div>
         </SidebarFooter>
       </Sidebar>

@@ -8,11 +8,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 function getMetadataBase() {
-  const defaultUrl = "https://distillr.co";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
   if (!appUrl) {
-    return new URL(defaultUrl);
+    throw new Error("NEXT_PUBLIC_APP_URL must be set.");
   }
 
   const normalizedUrl = appUrl.startsWith("http") ? appUrl : `https://${appUrl}`;
@@ -20,7 +19,7 @@ function getMetadataBase() {
   try {
     return new URL(normalizedUrl);
   } catch {
-    return new URL(defaultUrl);
+    throw new Error("NEXT_PUBLIC_APP_URL must be a valid URL.");
   }
 }
 

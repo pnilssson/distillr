@@ -43,5 +43,17 @@ export function sanitizeVideoFailureReasonForUser(reason: string | null): string
     return "Processing is temporarily busy. Please try again.";
   }
 
+  if (normalized.includes("monthly video ingestion limit")) {
+    return "You have reached your monthly video ingestion limit.";
+  }
+
+  if (normalized.includes("total video limit")) {
+    return "You have reached your total video limit for this plan.";
+  }
+
+  if (normalized.includes("video ingestion limit for this plan")) {
+    return "You have reached your video ingestion limit for this plan.";
+  }
+
   return "This video could not be processed. Please try again.";
 }

@@ -242,6 +242,31 @@ export const videoIngest = inngest.createFunction(
           .where(eq(videos.id, video.id));
       });
 
+      try {
+        await step.sendEvent("enqueue-video-billing-usage", {
+          name: "billing.usage.video.record",
+          data: {
+            userId: video.userId,
+            libraryId: video.libraryId,
+            sourceId: event.data.sourceId,
+            videoId: video.id,
+            units: 1,
+          },
+        });
+      } catch (error) {
+        Sentry.captureException(error, {
+          tags: {
+            area: "video.ingest.billing_usage_dispatch",
+          },
+          extra: {
+            userId: video.userId,
+            libraryId: video.libraryId,
+            sourceId: event.data.sourceId,
+            videoId: video.id,
+          },
+        });
+      }
+
       await step.run("track-video-ready", async () => {
         await captureServerEvent(video.userId, "video_ready", {
           library_id: video.libraryId,

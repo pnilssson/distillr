@@ -301,7 +301,7 @@ export default async function ChatSessionPage({ params }: Props) {
 }
 ```
 
-`toUIMessages` is a pure utility function (can live in `src/features/chat/transform.ts`):
+`toUIMessages` is a pure utility function in `src/features/chat/transform.ts`:
 
 ```ts
 import type { UIMessage } from 'ai';

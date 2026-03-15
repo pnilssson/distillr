@@ -4,7 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { type UIMessage, DefaultChatTransport } from "ai";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
+import {
+  createCheckoutSession,
+  fetchBillingState,
+} from "@/features/billing/api";
+import { useBillingState } from "@/features/billing/useBillingState";
 import { ChatInput } from "@/features/chat/ChatInput";
 import { ChatMessageList } from "@/features/chat/ChatMessageList";
 import type {
@@ -25,11 +31,15 @@ export function ChatView({
 }: ChatViewProps) {
   const queryClient = useQueryClient();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const billingQuery = useBillingState();
 
   const [input, setInput] = useState("");
   const [mode, setMode] = useState<ChatRequestMode>("auto");
   const [abortedMessageId, setAbortedMessageId] = useState<string | null>(null);
   const [focusTick, setFocusTick] = useState(0);
+
+  const checkoutTarget = billingQuery.data?.hasTopUpAccess ? "top_up_500" : "builder";
+  const upgradeLabel = checkoutTarget === "top_up_500" ? "Top up" : "Upgrade";
 
   const { messages, sendMessage, stop, regenerate, status, error, clearError } =
     useChat<UIMessage<ChatMessageMetadata>>({
@@ -94,6 +104,30 @@ export function ChatView({
     setFocusTick((tick) => tick + 1);
   }
 
+  async function handleUpgrade() {
+    try {
+      const billingState = await queryClient.ensureQueryData({
+        queryKey: ["billing", "state"],
+        queryFn: fetchBillingState,
+      });
+      const target = billingState.hasTopUpAccess ? "top_up_500" : "builder";
+
+      const url = await createCheckoutSession(
+        target,
+        `/library/${libraryId}/chat/${sessionId}`,
+      );
+      window.location.assign(url);
+    } catch (upgradeError) {
+      toast.error(
+        upgradeError instanceof Error
+          ? upgradeError.message
+          : "Could not start checkout right now.",
+      );
+    }
+  }
+
+  const canUpgrade = isInsufficientCreditsError(error);
+
   return (
     <main
       className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden"
@@ -132,6 +166,11 @@ export function ChatView({
               onModeChange={setMode}
               status={status}
               error={error ?? null}
+              canUpgrade={canUpgrade}
+              upgradeLabel={upgradeLabel}
+              onUpgrade={() => {
+                void handleUpgrade();
+              }}
               textareaRef={textareaRef}
             />
           </div>
@@ -152,4 +191,12 @@ function extractTextContent(
     .filter((part) => part.type === "text")
     .map((part) => part.text)
     .join("");
+}
+
+function isInsufficientCreditsError(error: Error | undefined | null): boolean {
+  if (!error?.message) {
+    return false;
+  }
+
+  return error.message.toLowerCase().includes("enough credits");
 }

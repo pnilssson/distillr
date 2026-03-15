@@ -67,7 +67,7 @@ Model defaults (MVP):
 
 ## Evidence and Citation Policy
 
-- Every non-trivial claim in the final answer should be grounded in retrieved context.
+- Every non-trivial claim in the final answer must be grounded in retrieved context.
 
 - MVP response format:
 

@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
 import { addSourceSchema, parseYouTubeUrl } from "@/lib/validation/sources";
+import { ensurePolarCustomerState } from "@/server/billing/polar/customers";
 import { inngest } from "@/server/inngest/client";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { withApiAuth } from "@/server/core/auth/api";
@@ -49,6 +50,12 @@ export const POST = withApiAuth<SourcesRouteProps>(async (request, { params, use
   if (!library) {
     return NextResponse.json({ error: "Library not found." }, { status: 404 });
   }
+
+  await ensurePolarCustomerState({
+    userId: user.id,
+    email: user.email ?? null,
+    name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
+  });
 
   const parsedUrl = parseYouTubeUrl(parsed.data.url);
   if (!parsedUrl) {

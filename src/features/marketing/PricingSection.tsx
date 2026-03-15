@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { createCheckoutSession } from "@/features/billing/api";
 
 interface PricingSectionProps {
   isAuthenticated?: boolean;
@@ -12,7 +15,7 @@ interface PricingSectionProps {
 const plans = [
   {
     name: "Pro",
-    price: "€39",
+    price: "$39",
     period: "/mo",
     tagline: "For researchers and power users",
     features: [
@@ -31,7 +34,7 @@ const plans = [
   },
   {
     name: "Builder",
-    price: "€17",
+    price: "$17",
     period: "/mo",
     tagline: "Your personal research stack",
     features: [
@@ -52,7 +55,7 @@ const plans = [
   },
   {
     name: "Free",
-    price: "€0",
+    price: "$0",
     period: null,
     tagline: "Try it out",
     features: [
@@ -84,7 +87,21 @@ const staggerContainer = {
 };
 
 export function PricingSection({ isAuthenticated }: PricingSectionProps) {
+  const [pendingCheckoutPlan, setPendingCheckoutPlan] = useState<string | null>(null);
   const ctaHref = isAuthenticated ? "/dashboard" : "/login";
+
+  async function handlePlanCheckout(planName: "Builder" | "Pro") {
+    setPendingCheckoutPlan(planName);
+
+    try {
+      const target = planName === "Pro" ? "pro" : "builder";
+      const url = await createCheckoutSession(target, "/dashboard");
+      window.location.assign(url);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not start checkout right now.");
+      setPendingCheckoutPlan(null);
+    }
+  }
 
   return (
     <section id="pricing" className="mx-auto w-full max-w-5xl px-6 py-24 lg:py-36">
@@ -158,13 +175,22 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
                 </li>
               ))}
             </ul>
-            <Button
-              asChild
-              variant={plan.variant}
-              className="mt-6 w-full"
-            >
-              <Link href={ctaHref}>{plan.cta}</Link>
-            </Button>
+            {isAuthenticated && (plan.name === "Builder" || plan.name === "Pro") ? (
+              <Button
+                variant={plan.variant}
+                className="mt-6 w-full"
+                onClick={() => {
+                  void handlePlanCheckout(plan.name as "Builder" | "Pro");
+                }}
+                disabled={pendingCheckoutPlan !== null && pendingCheckoutPlan !== plan.name}
+              >
+                {pendingCheckoutPlan === plan.name ? "Opening checkout..." : plan.cta}
+              </Button>
+            ) : (
+              <Button asChild variant={plan.variant} className="mt-6 w-full">
+                <Link href={ctaHref}>{plan.cta}</Link>
+              </Button>
+            )}
           </motion.div>
         ))}
       </motion.div>

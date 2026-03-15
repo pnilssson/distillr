@@ -7,7 +7,7 @@ This file is the operational source of truth for agent behavior in this reposito
 - `docs/` is for agents.
 - Canonical domain is `distillr.co`. Do not use alternate domains in docs, links, examples, or product copy.
 - Never hard-code app URLs in code paths. Use `NEXT_PUBLIC_APP_URL` (or a centralized helper derived from it) for redirects, callback links, and metadata base URLs.
-- Keep docs lean: product overview and feature-specific implementation plans.
+- Keep docs lean: product overview plus feature architecture docs for ingestion, chat, and billing.
 - When behavior or decisions change, update this file and any impacted feature doc in the same PR.
 - Remove outdated guidance instead of keeping historical notes.
 

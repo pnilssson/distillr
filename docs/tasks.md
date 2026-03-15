@@ -16,10 +16,10 @@
 
 ### Monetization
 
-- [ ] Polar.sh subscription integration
-- [ ] Plan enforcement: video ingestion limits, chat credit limits
-- [ ] Upgrade prompt when limits are hit
-- [ ] Billing portal via Polar customer portal
+- [x] Polar.sh subscription integration
+- [x] Plan enforcement: video ingestion limits, chat credit limits
+- [x] Upgrade prompt when limits are hit
+- [x] Billing portal via Polar customer portal
 
 ---
 

@@ -43,3 +43,15 @@ export async function deleteSource(libraryId: string, sourceId: string): Promise
     throw new Error(getApiErrorMessage(payload, "Could not delete source. Please try again."));
   }
 }
+
+export async function refreshSource(libraryId: string, sourceId: string): Promise<void> {
+  const response = await fetch(`/api/libraries/${libraryId}/sources/${sourceId}/retry`, {
+    method: "POST",
+  });
+
+  const payload = await parseJsonResponse<{ ok: true } | { error: string }>(response);
+
+  if (!response.ok) {
+    throw new Error(getApiErrorMessage(payload, "Could not refresh source. Please try again."));
+  }
+}

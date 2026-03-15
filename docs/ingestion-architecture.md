@@ -64,6 +64,7 @@ Distillr ingests YouTube sources into retrieval-ready artifacts (`video_chunks`,
 - Video statuses exposed via `GET /api/libraries/[libraryId]/videos`.
 - Status values: `pending`, `processing`, `ready`, `failed`.
 - Counts and settled/in-flight flags drive sidebar polling and progress display.
+- Source refresh is available via `POST /api/libraries/[libraryId]/sources/[sourceId]/retry`, which reuses `source.added` to re-discover videos and re-queue `failed` or `pending` items.
 
 ## Key Invariants
 

@@ -421,6 +421,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
 
       {activeLibraryId && (
         <SourceDetailsDialog
+          libraryId={activeLibraryId}
           source={selectedSource}
           open={Boolean(selectedSourceId && selectedSource)}
           onOpenChange={(open) => {

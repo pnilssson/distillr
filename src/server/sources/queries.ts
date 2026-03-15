@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { sources } from "@/db/schema";
@@ -47,6 +47,25 @@ export async function getSourceBySourceKey(userId: string, libraryId: string, so
   return source ?? null;
 }
 
+export async function getSourceById(userId: string, libraryId: string, sourceId: string) {
+  const [source] = await db
+    .select({
+      id: sources.id,
+      url: sources.url,
+      sourceType: sources.sourceType,
+      status: sources.status,
+      channelName: sources.channelName,
+      title: sources.title,
+      createdAt: sources.createdAt,
+    })
+    .from(sources)
+    .where(
+      and(eq(sources.id, sourceId), eq(sources.userId, userId), eq(sources.libraryId, libraryId)),
+    );
+
+  return source ?? null;
+}
+
 export async function createSource(
   userId: string,
   libraryId: string,
@@ -85,4 +104,30 @@ export async function deleteSource(userId: string, libraryId: string, sourceId: 
     });
 
   return deleted ?? null;
+}
+
+export async function updateSourceStatus(
+  userId: string,
+  libraryId: string,
+  sourceId: string,
+  status: SourceStatus,
+) {
+  const [source] = await db
+    .update(sources)
+    .set({
+      status,
+      updatedAt: sql`now()`,
+    })
+    .where(and(eq(sources.id, sourceId), eq(sources.userId, userId), eq(sources.libraryId, libraryId)))
+    .returning({
+      id: sources.id,
+      url: sources.url,
+      sourceType: sources.sourceType,
+      status: sources.status,
+      channelName: sources.channelName,
+      title: sources.title,
+      createdAt: sources.createdAt,
+    });
+
+  return source ?? null;
 }

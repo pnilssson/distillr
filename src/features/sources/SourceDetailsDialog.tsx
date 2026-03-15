@@ -11,6 +11,7 @@ import {
   User,
   Video,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,8 +25,10 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import type { SourceListItem } from "@/features/sources/types";
+import { useRefreshSource } from "@/features/sources/useRefreshSource";
 
 type SourceDetailsDialogProps = {
+  libraryId: string;
   source: SourceListItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -79,12 +82,16 @@ const SOURCE_TYPE_META: Record<
 };
 
 export function SourceDetailsDialog({
+  libraryId,
   source,
   open,
   onOpenChange,
   onDelete,
 }: SourceDetailsDialogProps) {
   const [copied, setCopied] = useState(false);
+  const refreshMutation = useRefreshSource();
+
+  const refreshDisabled = !source || source.status === "processing" || refreshMutation.isPending;
 
   function copyUrl() {
     if (!source) {
@@ -153,12 +160,55 @@ export function SourceDetailsDialog({
                     Processing failed
                   </p>
                   <p className="mt-1 text-xs text-destructive/90">
-                    This source could not be ingested. You can remove it and add it again.
+                    This source could not be ingested. Try refreshing first, or remove it and add
+                    it again.
                   </p>
                 </div>
               ) : null}
 
               <Separator />
+
+              <div className="space-y-2.5 rounded-lg border border-border/70 bg-muted/30 px-3 py-3">
+                <p className="text-sm font-medium">Refresh source</p>
+                <p className="text-xs text-muted-foreground">
+                  Retry previously failed videos and check for newly available videos from this source.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled={refreshDisabled}
+                  onClick={() => {
+                    if (!source) {
+                      return;
+                    }
+
+                    refreshMutation.mutate(
+                      {
+                        libraryId,
+                        sourceId: source.id,
+                      },
+                      {
+                        onSuccess: () => {
+                          toast.success("Source refresh started.");
+                        },
+                      },
+                    );
+                  }}
+                >
+                  {refreshMutation.isPending
+                    ? "Refreshing..."
+                    : source.status === "processing"
+                      ? "Refresh in progress"
+                      : "Refresh source"}
+                </Button>
+                {refreshMutation.isError ? (
+                  <p className="text-sm text-destructive" role="alert">
+                    {refreshMutation.error.message}
+                  </p>
+                ) : null}
+              </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <Button

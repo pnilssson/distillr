@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { libraries } from "@/db/schema";
@@ -38,7 +38,7 @@ export async function getLibraryById(userId: string, libraryId: string) {
 export async function updateLibrary(userId: string, libraryId: string, name: string) {
   const [library] = await db
     .update(libraries)
-    .set({ name })
+    .set({ name, updatedAt: sql`now()` })
     .where(and(eq(libraries.id, libraryId), eq(libraries.userId, userId)))
     .returning({ id: libraries.id, name: libraries.name });
   return library ?? null;

@@ -4,11 +4,14 @@ import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
   generateText,
+  NoObjectGeneratedError,
+  Output,
   streamText,
   type FinishReason,
   type LanguageModelUsage,
   type UIMessage,
 } from "ai";
+import { z } from "zod";
 
 import { trackAIGeneration } from "@/server/core/analytics/ai-generation";
 import { env } from "@/server/core/env";
@@ -21,6 +24,16 @@ type ChatMessageMetadata = {
 };
 
 export type ChatIntentRoute = "retrieval" | "chat_only" | "hybrid";
+
+const chatIntentRouteDecisionSchema = z.object({
+  route: z.enum(["retrieval", "chat_only", "hybrid"]),
+  confidence: z.number().min(0).max(1),
+  reason: z
+    .string()
+    .trim()
+    .min(1)
+    .refine((value) => value.split(/\s+/).length <= 20, "Reason must be 20 words or fewer."),
+}).strict();
 
 type ClassifyChatIntentParams = {
   userId: string;
@@ -64,25 +77,57 @@ export async function classifyChatIntentRoute({
     .map((message) => `${message.role}: ${message.content}`)
     .join("\n");
 
-  const result = await generateText({
-    model: openai(model.id),
-    temperature: 0,
-    maxOutputTokens: 16,
-    system: [
-      "Classify the user message intent for a RAG chat system.",
-      "Return exactly one label: retrieval, chat_only, or hybrid.",
-      "retrieval = asks for factual info from videos or source-grounded claims.",
-      "chat_only = brainstorming, rewriting, planning, or discussing prior assistant output without requiring new video evidence.",
-      "hybrid = both retrieval and conversational synthesis are needed.",
-      "Return label only.",
-    ].join("\n"),
-    prompt: [
-      historySnippet.length > 0 ? `Recent conversation:\n${historySnippet}` : "Recent conversation: (none)",
-      `Latest user message:\n${question}`,
-    ].join("\n\n"),
-  });
+  let result: Awaited<ReturnType<typeof generateText>>;
+  try {
+    result = await generateText({
+      model: openai(model.id),
+      temperature: 0,
+      maxOutputTokens: 120,
+      output: Output.object({
+        name: "ChatIntentRoutingDecision",
+        description: "Decision for routing Distillr chat between retrieval, chat-only, or hybrid behavior.",
+        schema: chatIntentRouteDecisionSchema,
+      }),
+      system: [
+        "You are an intent router for Distillr chat.",
+        "Choose exactly one route: retrieval | chat_only | hybrid.",
+        "Goal:",
+        "- Minimize unnecessary retrieval calls.",
+        "- Only use retrieval when the user likely needs facts grounded in their video library.",
+        "Definitions:",
+        "- retrieval: user asks for factual/library-grounded info from videos, transcript details, summaries of video content, evidence, timestamps, sources, comparisons across videos.",
+        "- chat_only: greeting, small talk, thanks, acknowledgement, brainstorming, writing help, planning, opinions, generic advice, or discussion that can be handled from conversation context alone.",
+        "- hybrid: user asks for both library evidence and substantial conversational transformation/synthesis.",
+        "Decision rules:",
+        "1) If uncertain, prefer chat_only.",
+        "2) retrieval requires positive evidence that library content is needed.",
+        "3) Short social turns are chat_only even in an existing library chat.",
+        '4) Follow-up requests like "expand that" are chat_only unless user explicitly asks for new evidence.',
+        "5) If user asks for citations/timestamps/sources from videos, choose retrieval.",
+      ].join("\n"),
+      prompt: [
+        historySnippet.length > 0 ? `Recent conversation:\n${historySnippet}` : "Recent conversation: (none)",
+        `Latest user message:\n${question}`,
+      ].join("\n\n"),
+    });
+  } catch (error) {
+    const usage = NoObjectGeneratedError.isInstance(error) ? error.usage : undefined;
 
-  const route = normalizeIntentRoute(result.text);
+    await trackAIGeneration({
+      userId,
+      operation: "chat_mode_classification",
+      modelId: model.id,
+      modelAlias: "chat.fast",
+      startedAtMs: startedAt,
+      inputTokens: usage?.inputTokens ?? 0,
+      outputTokens: usage?.outputTokens ?? 0,
+      totalTokens: usage?.totalTokens,
+      status: "failed",
+    });
+
+    throw error;
+  }
+
   const inputTokens = result.totalUsage.inputTokens ?? 0;
   const outputTokens = result.totalUsage.outputTokens ?? 0;
 
@@ -98,7 +143,7 @@ export async function classifyChatIntentRoute({
     status: "completed",
   });
 
-  return route;
+  return result.output.route;
 }
 
 export async function rewriteChatQueryForRetrieval({
@@ -248,18 +293,4 @@ function mapFinishReasonToStatus(finishReason: FinishReason): "completed" | "abo
   }
 
   return "aborted";
-}
-
-function normalizeIntentRoute(raw: string): ChatIntentRoute {
-  const normalized = raw.trim().toLowerCase();
-
-  if (normalized === "chat_only") {
-    return "chat_only";
-  }
-
-  if (normalized === "hybrid") {
-    return "hybrid";
-  }
-
-  return "retrieval";
 }

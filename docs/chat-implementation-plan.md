@@ -253,6 +253,7 @@ Add persistent chat schema with RLS, indexes, and JSONB evidence fields.
 
 ### `openai.ts` responsibilities
 
+- auto-mode intent router with schema-validated structured output (`route`, `confidence`, `reason`) via AI SDK `Output.object`
 - query rewrite helper (retrieval-friendly rewrite)
 - stream generation helper using Vercel AI SDK
 - reuse shared OpenAI core utilities where applicable
@@ -278,20 +279,25 @@ const result = streamText({
 2. Call `checkAndDeductCredits` before embedding/generation.
 3. Persist user message.
 4. If first user message and session title is default, set title to truncated first message (60 chars).
-5. Generate retrieval rewrite.
-6. Embed question/rewrite using shared embedding util.
-7. Run retrieval channels in parallel.
-8. Fuse and select context.
-9. Fetch conversation history inside service.
-10. Token budget policy:
+5. Resolve effective mode (`auto | library | chat`).
+   - In `auto`, classify intent and require schema-validated structured output with route metadata.
+   - Map `retrieval`/`hybrid` to library mode and `chat_only` to chat mode.
+6. If effective mode is library, generate retrieval rewrite.
+7. If effective mode is library, embed question/rewrite using shared embedding util.
+8. If effective mode is library, run retrieval channels in parallel.
+9. If effective mode is library, fuse and select context.
+10. Fetch conversation history inside service.
+11. Token budget policy:
     - max 12 prior messages
     - history budget cap: 3000 input tokens
     - retrieval context budget cap: 7000 input tokens
     - output cap: configurable by env per tier (`OPENAI_CHAT_MAX_OUTPUT_TOKENS_FAST` / `OPENAI_CHAT_MAX_OUTPUT_TOKENS_SMART`)
     - trim history first if over budget
-11. Build prompt with context + instruction to return compact `Sources` block.
-12. Start stream to client.
-13. On stream finish (inside `toUIMessageStreamResponse({ onFinish })`):
+12. Build prompt for effective mode:
+    - library mode includes retrieval context + compact `Sources` metadata
+    - chat mode uses conversation context only and does not include sources
+13. Start stream to client.
+14. On stream finish (inside `toUIMessageStreamResponse({ onFinish })`):
     - persist assistant message using `totalUsage.inputTokens`, `totalUsage.outputTokens`, `totalUsage.totalTokens`
     - persist `sources_json` + `evidence_json`
     - set message status using `finishReason`:

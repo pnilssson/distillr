@@ -7,26 +7,30 @@ MVP model policy: OpenAI-only for generation and embeddings.
 ## Query Flow
 
 1. User submits a question in the library chat
-2. System normalizes the question and generates a retrieval-friendly rewrite
-3. Question is embedded via OpenAI (`text-embedding-3-small`)
-4. Retrieval runs in parallel, scoped to one library and `ready` videos:
+2. System resolves effective mode (`auto | library | chat`)
+   - In `auto`, the intent router returns schema-validated structured output (`route`, `confidence`, `reason`) via AI SDK `Output.object`
+   - If `route` is `retrieval` or `hybrid`, effective mode is `library`
+   - If `route` is `chat_only`, effective mode is `chat`
+3. In library mode, system normalizes the question and generates a retrieval-friendly rewrite
+4. In library mode, question is embedded via OpenAI (`text-embedding-3-small`)
+5. In library mode, retrieval runs in parallel, scoped to one library and `ready` videos:
    - `match_chunks_vector()` over `video_chunks`
    - `match_insights_vector()` over `video_insights`
    - `match_chunks_fts()` over `video_chunks`
-5. Candidates are merged and ranked into one evidence set (MVP: deterministic weighted fusion)
-6. Top evidence is assembled into context and source candidates (video title + timestamp links)
-7. Prompt is sent to OpenAI (alias-based chat model config - `chat.fast`/`chat.smart`) with context + conversation history
+6. In library mode, candidates are merged and ranked into one evidence set (MVP: deterministic weighted fusion)
+7. In library mode, top evidence is assembled into context and source candidates (video title + timestamp links)
+8. Prompt is sent to OpenAI (alias-based chat model config - `chat.fast`/`chat.smart`) with context + conversation history
    - Retrieved context is treated as untrusted data and never as instructions
    - Generation enforces an explicit max output token cap per chat tier
    - Caps are configurable with `OPENAI_CHAT_MAX_OUTPUT_TOKENS_FAST` and `OPENAI_CHAT_MAX_OUTPUT_TOKENS_SMART`
-8. Response streams back via Vercel AI SDK v6 using `toUIMessageStreamResponse()`
-9. Assistant message persistence happens in the stream finish callback with usage fields (`inputTokens`, `outputTokens`, `totalTokens`)
+9. Response streams back via Vercel AI SDK v6 using `toUIMessageStreamResponse()`
+10. Assistant message persistence happens in the stream finish callback with usage fields (`inputTokens`, `outputTokens`, `totalTokens`)
 
 ---
 
 ## Sources Format
 
-Every answer ends with one compact `Sources` block:
+Library-grounded answers include one compact `Sources` block:
 
 ```
 Sources (showing top 3-5 videos)
@@ -39,6 +43,7 @@ Sources (showing top 3-5 videos)
 - Timestamps are grouped by video title.
 - Source links use `youtube.com/watch?v=ID&t=SECONDS`.
 - UI shows top 3-5 videos only. Full evidence is retained internally.
+- Chat-only responses do not include sources.
 
 If evidence is insufficient, the assistant should say that directly and avoid fabricated claims.
 

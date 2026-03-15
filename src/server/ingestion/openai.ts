@@ -1,45 +1,27 @@
 import "server-only";
 
+import { openai } from "@ai-sdk/openai";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
 import { trackAIGeneration } from "@/server/core/analytics/ai-generation";
-import { getOpenAIClient } from "@/server/core/openai/client";
 import { getOpenAIModel } from "@/server/core/openai/models";
 
 export { embedTexts } from "@/server/core/openai/embeddings";
 
 const MAX_INSIGHTS_TRANSCRIPT_CHARS = 120_000;
 
-const INSIGHTS_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["summary", "key_points", "tactics", "objections", "tools"],
-  properties: {
-    summary: { type: "string" },
-    key_points: {
-      type: "array",
-      items: { type: "string" },
-    },
-    tactics: {
-      type: "array",
-      items: { type: "string" },
-    },
-    objections: {
-      type: "array",
-      items: { type: "string" },
-    },
-    tools: {
-      type: "array",
-      items: { type: "string" },
-    },
-  },
-} as const;
+const insightsOutputSchema = z
+  .object({
+    summary: z.string(),
+    key_points: z.array(z.string()),
+    tactics: z.array(z.string()),
+    objections: z.array(z.string()),
+    tools: z.array(z.string()),
+  })
+  .strict();
 
-type InsightOutput = {
-  summary: string;
-  key_points: string[];
-  tactics: string[];
-  objections: string[];
-  tools: string[];
-};
+type InsightOutput = z.infer<typeof insightsOutputSchema>;
 
 export type GeneratedInsights = {
   summary: string;
@@ -61,32 +43,21 @@ export async function generateInsights(
       : transcript;
 
   const startedAt = Date.now();
-  const completion = await getOpenAIClient().chat.completions.create({
-    model: ingestionModel.id,
+  const result = await generateText({
+    model: openai(ingestionModel.id),
     temperature: 0.2,
-    response_format: {
-      type: "json_schema",
-      json_schema: {
-        name: "video_ingestion_insights",
-        strict: true,
-        schema: INSIGHTS_SCHEMA,
-      },
-    },
-    messages: [
-      {
-        role: "system",
-        content:
-          "You extract structured insights from video transcripts. Return strict JSON with keys: summary (string), key_points (string[]), tactics (string[]), objections (string[]), tools (string[]). Keep items concise and factual.",
-      },
-      {
-        role: "user",
-        content: [`Video title: ${videoTitle}`, "Transcript:", transcriptInput].join("\n\n"),
-      },
-    ],
+    output: Output.object({
+      name: "VideoIngestionInsights",
+      description: "Structured extraction of key insights from a video transcript.",
+      schema: insightsOutputSchema,
+    }),
+    system:
+      "Extract structured insights from the provided video transcript. Keep the summary and list items concise, factual, and grounded in transcript content.",
+    prompt: [`Video title: ${videoTitle}`, "Transcript:", transcriptInput].join("\n\n"),
   });
 
-  const inputTokens = completion.usage?.prompt_tokens ?? 0;
-  const outputTokens = completion.usage?.completion_tokens ?? 0;
+  const inputTokens = result.totalUsage.inputTokens ?? 0;
+  const outputTokens = result.totalUsage.outputTokens ?? 0;
 
   await trackAIGeneration({
     userId,
@@ -96,11 +67,16 @@ export async function generateInsights(
     startedAtMs: startedAt,
     inputTokens,
     outputTokens,
-    totalTokens: completion.usage?.total_tokens,
+    totalTokens: result.totalUsage.totalTokens,
   });
 
-  const content = completion.choices[0]?.message?.content ?? "{}";
-  const parsed = safelyParseInsights(content);
+  const parsed: InsightOutput = {
+    summary: result.output.summary.trim(),
+    key_points: cleanStringArray(result.output.key_points),
+    tactics: cleanStringArray(result.output.tactics),
+    objections: cleanStringArray(result.output.objections),
+    tools: cleanStringArray(result.output.tools),
+  };
 
   return {
     summary: parsed.summary,
@@ -111,34 +87,8 @@ export async function generateInsights(
   };
 }
 
-function safelyParseInsights(raw: string): InsightOutput {
-  try {
-    const data = JSON.parse(raw) as Partial<InsightOutput>;
-
-    return {
-      summary: typeof data.summary === "string" ? data.summary.trim() : "",
-      key_points: toStringArray(data.key_points),
-      tactics: toStringArray(data.tactics),
-      objections: toStringArray(data.objections),
-      tools: toStringArray(data.tools),
-    };
-  } catch {
-    return {
-      summary: "",
-      key_points: [],
-      tactics: [],
-      objections: [],
-      tools: [],
-    };
-  }
-}
-
-function toStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
+function cleanStringArray(value: string[]): string[] {
   return value
-    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .map((item) => item.trim())
     .filter((item) => item.length > 0);
 }

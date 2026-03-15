@@ -22,6 +22,7 @@ const RECONCILIATION_SEND_BATCH_SIZE = 300;
 const RECONCILIATION_MAX_CHAT_RECORDS = 3000;
 const RECONCILIATION_MAX_VIDEO_RECORDS = 3000;
 const RECONCILIATION_TIME_BUDGET_MS = 25_000;
+const BILLING_USAGE_CONCURRENCY_LIMIT = 5;
 
 type ChatReconciliationRow = {
   userId: string;
@@ -48,7 +49,7 @@ export const billingUsageChatRecord = inngest.createFunction(
     id: "billing-usage-chat-record",
     retries: 6,
     concurrency: {
-      limit: 10,
+      limit: BILLING_USAGE_CONCURRENCY_LIMIT,
       key: "event.data.userId",
     },
   },
@@ -105,7 +106,7 @@ export const billingUsageVideoRecord = inngest.createFunction(
     id: "billing-usage-video-record",
     retries: 6,
     concurrency: {
-      limit: 10,
+      limit: BILLING_USAGE_CONCURRENCY_LIMIT,
       key: "event.data.userId",
     },
   },

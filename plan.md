@@ -261,14 +261,12 @@ export type ChatSourcesRollup = {
 
 ## DB-migrationsplan
 
-Drizzle-migration genereras för:
-1. `ALTER TABLE videos RENAME COLUMN youtube_video_id TO external_id`
-2. `ALTER TABLE videos ADD COLUMN content_type text` (nullable initialt)
-3. `UPDATE videos SET content_type = 'youtube_video' WHERE content_type IS NULL` (backfyll befintliga rader)
-4. `ALTER TABLE videos ALTER COLUMN content_type SET NOT NULL` (skärp constraint)
-5. `DROP CONSTRAINT videos_library_video_uniq; ADD CONSTRAINT videos_library_external_uniq UNIQUE(library_id, external_id)`
+Inga migrationer skrivs för hand. Schemaändringar definieras i `src/db/schema.ts` och migration genereras via `npm run db:generate`.
 
-Befintlig data hanteras via explicit backfyll i step 3 - inget DB-default lämnas kvar.
+Schemaändringar:
+- Döp om fält: `youtubeVideoId` → `externalId` (Drizzle genererar RENAME COLUMN)
+- Lägg till fält: `contentType` med `.notNull().default('youtube_video')` - Drizzle inkluderar DEFAULT i generated migration vilket hanterar befintliga rader utan backfill
+- Uppdatera unique index till `(libraryId, externalId)`
 
 ---
 

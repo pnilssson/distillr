@@ -19,6 +19,53 @@ No new sources are implemented in this PR - only the abstraction that makes it p
 
 ---
 
+## Existing Architecture Patterns (must be followed)
+
+All new code must conform to the patterns already established in the codebase.
+
+### `server-only`
+Every file under `src/server/` starts with `import "server-only"`. All new provider files follow this without exception.
+
+### Custom error classes
+Provider errors use a custom class with a `terminal: boolean` property:
+```typescript
+export class SomeProviderError extends Error {
+  readonly terminal: boolean
+  constructor(message: string, terminal: boolean) {
+    super(message)
+    this.name = "SomeProviderError"
+    this.terminal = terminal
+  }
+}
+```
+`terminal: true` means no retry is warranted (e.g. content not found, no transcript available).
+`terminal: false` means the error may be transient and should retry.
+
+### `classifyIngestionError` - central error classifier
+`src/server/ingestion/errors.ts` is the single place that maps thrown errors to `IngestionErrorDecision` (`reason`, `retryable`, `captureException`). It currently does `instanceof` checks on `YouTubeDiscoveryError` and `TranscriptUnavailableError` directly - this is a coupling that must be resolved as part of this plan (see Step 2 below). After the refactor, all provider errors extend a shared `IngestionError` base class so `errors.ts` never needs updating when a new provider is added.
+
+### Inngest step pattern
+Each discrete unit of work in an Inngest function is wrapped in `step.run("step-name", async () => { ... })`. Steps that perform network I/O during ingestion use the `runIngestionStep` wrapper from `src/server/inngest/ingestion-step.ts` instead of raw `step.run`, as it applies ingestion-specific retry/error semantics:
+```typescript
+const result = await runIngestionStep(step, "fetch-content", async () => {
+  return fetcher.fetch(externalId)
+})
+```
+
+### Failure context pattern
+Inngest functions declare a `failureContext` object upfront, then overwrite it with confirmed DB values after the load step. The catch block uses `failureContext` for all DB writes and analytics - never `event.data` directly. This pattern is already in both `source-added.ts` and `video-ingest.ts` and must be preserved.
+
+### Drizzle query style
+- All DB writes go through server boundaries (Route Handlers or Inngest functions).
+- Upserts use `.onConflictDoUpdate` with `sql\`excluded.column_name\`` for all updated fields.
+- Stale rows are cleaned up with a `.delete()` call after upserts (e.g. removing old chunks when a re-ingest produces fewer).
+- Never hand-write migrations - define schema in `src/db/schema.ts`, generate via `npm run db:generate`.
+
+### Analytics tracking
+PostHog events are emitted inside `step.run()` calls at the end of the happy path, and in the catch block for failures. Event names and properties follow the snake_case convention defined in AGENTS.md.
+
+---
+
 ## Step 1 - DB schema migration
 
 **File:** `src/db/schema.ts` + generated migration
@@ -81,9 +128,24 @@ export interface ContentFetcher {
 }
 ```
 
+### `src/server/ingestion/providers/types.ts` - shared base error
+
+Add a base error class that all provider errors extend:
+```typescript
+export class IngestionError extends Error {
+  readonly terminal: boolean
+  constructor(message: string, terminal: boolean) {
+    super(message)
+    this.name = "IngestionError"
+    this.terminal = terminal
+  }
+}
+```
+
 ### `src/server/ingestion/providers/youtube.ts`
 
 - Move all logic from `youtube-discovery.ts` (discovery) and `transcript.ts` (fetching) here
+- `YouTubeDiscoveryError` and `TranscriptUnavailableError` both extend `IngestionError` instead of `Error`
 - Export `youtubeDiscovery: ContentDiscovery` and `youtubeFetcher: ContentFetcher`
 - Delete `youtube-discovery.ts` and `transcript.ts`
 
@@ -95,6 +157,21 @@ export function getFetcher(contentType: ContentType): ContentFetcher
 ```
 
 Maps sourceType → discovery instance and contentType → fetcher instance.
+
+### `src/server/ingestion/errors.ts`
+
+Update `classifyIngestionError` to check `instanceof IngestionError` instead of the two
+YouTube-specific error classes. This is what decouples the error classifier from providers:
+```typescript
+if (error instanceof IngestionError) {
+  return {
+    reason: normalizeFailureReason(error.message),
+    retryable: !error.terminal,
+    captureException: !error.terminal,
+  }
+}
+```
+Remove imports of `YouTubeDiscoveryError` and `TranscriptUnavailableError`.
 
 ---
 
@@ -133,7 +210,12 @@ Maps sourceType → discovery instance and contentType → fetcher instance.
 **File:** `src/server/ingestion/chunking.ts`
 
 - Replace `TranscriptSegment` import with `ContentSegment` from `providers/types`
-- Handle null `startSeconds`/`endSeconds` for non-time-based content
+- Rename exported type `TranscriptChunk` → `ContentChunk`
+- Rename exported function `chunkTranscriptSegments` → `chunkContentSegments`
+- `ContentChunk.startSeconds` and `ContentChunk.endSeconds` become `number | null` (currently required `number`)
+  - Fallback: when a segment has `null` time values, treat as `0` for chunk boundary calculation - chunk boundaries are best-effort for non-time-based content
+- Update `video-ingest.ts` to use `chunkContentSegments` and `ContentChunk`
+- The upsert in `video-ingest.ts` already writes `startSeconds`/`endSeconds` to `video_chunks` - verify the DB schema columns allow null and update the upsert values accordingly
 
 ---
 
@@ -170,17 +252,21 @@ export type ChatSourcesRollup = {
 ```
 
 `src/server/chat/sources.ts`:
-- Remove all timestamp logic
+- Remove `GroupedVideo`, `MAX_SOURCE_VIDEOS`, `MAX_TIMESTAMPS_PER_VIDEO`, `formatTimestampLabel`, and all timestamp logic
+- New grouping: one `ChatSourceItem` per unique `videoId`, count how many evidence items reference it (`referenceCount`)
 - Build `url` per item based on `contentType`:
   - `youtube_video`: `https://www.youtube.com/watch?v={externalId}`
   - `article`: `{externalId}` (externalId is the URL)
-- Return all sources sorted by `referenceCount`
-- Remove `MAX_SOURCES` constant - the UI layer handles truncation
+- Sort by `referenceCount` desc, tie-break by `videoId` for determinism (same pattern as current `bestScore` sort)
+- Return all items - no slicing. Current `extraVideos` field is removed.
+- `buildSourcesRollup` no longer accepts an `options` argument
+
+Current return shape `{ videos: ChatSourceVideo[], extraVideos: number }` → new shape `{ items: ChatSourceItem[] }`.
 
 `src/features/chat/` (UI):
-- Show top 4-5 sources with a "Show all X sources" button to expand
+- Show top 4-5 items, render a "Show all X sources" button when `items.length > 4`
 - No per-source timestamp listing
-- Frontend consumes `ChatSourcesRollup.items` and truncates at render time
+- No change to how sources are passed from the server - the component reads `items`
 
 `evidence_json` in `chat_messages` still stores full retrieval data (including chunk positions) for debugging - not exposed in the UI.
 

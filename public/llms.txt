@@ -1,0 +1,40 @@
+# Distillr
+
+> AI-powered YouTube knowledge base. Turn YouTube channels, playlists, and videos into searchable libraries you can chat with using natural language.
+
+## What is Distillr?
+
+Distillr is a SaaS product that extracts transcripts from YouTube videos, indexes them with AI embeddings, and lets users build personal knowledge bases they can search and chat with. Every answer is cited with timestamp-linked sources from the original videos.
+
+## Key features
+
+- Add YouTube channels, playlists, or individual videos as sources
+- Transcripts are automatically extracted and indexed for AI search
+- Chat with your entire video library using natural language
+- Answers include citations linked to specific timestamps in videos
+- New uploads from channels and playlists are indexed automatically
+- Export knowledge as Markdown, PDF, TXT, or full chat logs
+- Libraries are private by default
+
+## Use cases
+
+- Researchers building knowledge bases from expert YouTube channels
+- Content creators analyzing competitor or inspiration content
+- Lifelong learners who want to retain and reference what they watch
+- Consultants and writers who need cited expert opinions
+- Teams that share and search video knowledge collectively
+
+## Pricing
+
+- Free: $0/month — 10 videos/month, up to 50 saved, 100 credits, 1 library
+- Builder: $19/month — 100 videos/month, up to 1,000 saved, 900 credits, unlimited libraries
+- Pro: $49/month — 300 videos/month, unlimited saved, 2,500 credits, unlimited libraries, priority processing
+
+## Technology
+
+Built with Next.js, Supabase, OpenAI embeddings, and the Vercel AI SDK. Uses hybrid retrieval (vector + full-text search) for accurate answers.
+
+## Contact
+
+- Website: https://distillr.co
+- Email: hello@distillr.co

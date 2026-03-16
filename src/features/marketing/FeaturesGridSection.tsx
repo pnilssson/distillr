@@ -14,32 +14,32 @@ const features = [
   {
     icon: Library,
     title: "Persistent libraries",
-    desc: "Add once, search forever. Your libraries grow as you add more channels and videos.",
+    desc: "Add once, search forever. Your libraries grow as you add more channels, playlists, and videos.",
   },
   {
     icon: MessageSquare,
     title: "Cross-video chat",
-    desc: "Ask questions across your entire library. Answers come from your videos, not generic AI knowledge.",
+    desc: "Chat with your entire video library using AI. Answers come directly from your video transcripts, not generic internet knowledge.",
   },
   {
     icon: Search,
-    title: "Semantic search",
-    desc: "Find content by meaning, not just keywords. Surface ideas you forgot you saved.",
+    title: "Semantic transcript search",
+    desc: "Search YouTube video transcripts by meaning, not just keywords. Surface insights you forgot you saved.",
   },
   {
     icon: Download,
     title: "Structured exports",
-    desc: "Summaries, transcripts, and chat logs ready for Notion, Obsidian, or wherever you work.",
+    desc: "Export summaries, transcripts, and chat logs to Markdown, PDF, or TXT — ready for Notion, Obsidian, or wherever you work.",
   },
   {
     icon: Youtube,
     title: "Channels and playlists",
-    desc: "Add entire channels or playlists. New uploads are picked up automatically.",
+    desc: "Add entire YouTube channels or playlists. New uploads are indexed automatically to keep your knowledge base current.",
   },
   {
     icon: Shield,
     title: "Private by default",
-    desc: "Your libraries are private to your account. Nothing is shared or public.",
+    desc: "Your libraries are private to your account. Nothing you add is shared or publicly accessible.",
   },
 ];
 
@@ -87,7 +87,7 @@ export function FeaturesGridSection() {
             variants={fadeUp}
           >
             <Icon size={18} className="mb-1 text-muted-foreground" />
-            <p className="text-sm font-medium">{title}</p>
+            <h3 className="text-sm font-medium">{title}</h3>
             <p className="text-sm leading-relaxed text-muted-foreground">
               {desc}
             </p>

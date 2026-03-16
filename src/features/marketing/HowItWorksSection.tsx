@@ -8,19 +8,19 @@ const steps = [
     step: "01",
     icon: PlusCircle,
     title: "Add your sources",
-    desc: "Paste a channel, playlist, or video link. Distillr does the rest.",
+    desc: "Paste a YouTube channel, playlist, or video URL. Distillr does the rest.",
   },
   {
     step: "02",
     icon: BookOpen,
     title: "We process every video",
-    desc: "Every video is transcribed and turned into a searchable knowledge base. Ready in minutes.",
+    desc: "Every video transcript is extracted and indexed into a searchable AI knowledge base. Ready in minutes.",
   },
   {
     step: "03",
     icon: MessageSquare,
     title: "Ask anything",
-    desc: "Ask a question in plain language. Get answers pulled directly from your videos, with sources.",
+    desc: "Chat with your videos in plain language. Get answers pulled directly from video transcripts, with timestamp-linked sources.",
   },
 ];
 
@@ -68,7 +68,7 @@ export function HowItWorksSection() {
             </span>
             <div className="flex items-center gap-2">
               <Icon size={20} className="shrink-0 text-foreground" />
-              <p className="font-medium">{title}</p>
+              <h3 className="font-medium">{title}</h3>
             </div>
             <p className="text-sm leading-relaxed text-muted-foreground">
               {desc}

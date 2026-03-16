@@ -8,7 +8,7 @@ const faqs = [
   {
     question: "What is Distillr?",
     answer:
-      "Distillr is an AI-powered YouTube knowledge base. It extracts and indexes transcripts from YouTube channels, playlists, and individual videos so you can search across them and chat with the content using natural language — with cited, timestamp-linked answers.",
+      "Distillr is an AI-powered YouTube knowledge base. It extracts and indexes transcripts from YouTube channels, playlists, and individual videos so you can search across them and chat with the content using natural language, with cited, timestamp-linked answers.",
   },
   {
     question: "How does Distillr work with YouTube?",

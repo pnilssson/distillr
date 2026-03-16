@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -54,10 +54,15 @@ export function CookiePreferencesDialog() {
     consent?.analytics ?? false,
   );
 
-  function handleOpenChange(open: boolean) {
-    if (open) {
+  useEffect(() => {
+    if (isPreferencesOpen) {
       setAnalyticsEnabled(consent?.analytics ?? false);
     }
+    // Sync from consent only when dialog opens, not on every consent change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPreferencesOpen]);
+
+  function handleOpenChange(open: boolean) {
     setIsPreferencesOpen(open);
   }
 

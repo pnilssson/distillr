@@ -2,7 +2,7 @@
 
 ## Mål
 
-Gå från en YouTube-hårdkodad kodbas till en som stödjer flera källtyper.
+Gå från en YouTube-hårdkodad kodbas till en som stödjer flera källtyper likvärdigt.
 Inga nya källor implementeras i denna PR - bara abstraktionen som gör det möjligt.
 
 ---
@@ -12,8 +12,10 @@ Inga nya källor implementeras i denna PR - bara abstraktionen som gör det möj
 - Forward-only. Inga legacy-shims.
 - Minimal ytyta som måste röras per ny källa framöver.
 - `externalId` som universell identifierare för ett content item (var: `youtubeVideoId`).
+- Alla källtyper är lika värda - ingen källa är "default" eller "primär".
 - Plattformsspecifik logik kapslas in i providers.
 - Befintlig pipeline (chunking → embedding → insights) rörs inte.
+- Chat-sources exponerar källreferenser på item-nivå, inte tidsstämpelnivå.
 
 ---
 
@@ -23,9 +25,10 @@ Inga nya källor implementeras i denna PR - bara abstraktionen som gör det möj
 
 - Döp om kolumn: `videos.youtube_video_id` → `videos.external_id`
 - Uppdatera unique constraint: `(library_id, external_id)` (semantiken är identisk)
-- Lägg till kolumn: `videos.content_type` enum `("youtube_video" | "article")` default `"youtube_video"`
+- Lägg till kolumn: `videos.content_type` text NOT NULL
   - Används för att avgöra vilken provider + länkformat som ska användas
-  - `"youtube_video"` backfillas automatiskt av default-värdet på befintliga rader
+  - Migrationen backfylls med `UPDATE videos SET content_type = 'youtube_video'` innan NOT NULL sätts
+  - Applikationskoden sätter alltid `content_type` explicit vid ingest - inget DB-default
 
 Inga övriga tabeller (video_chunks, video_insights) behöver schema-ändring - de är redan källagnostiska.
 
@@ -58,9 +61,11 @@ export type DiscoveryResult = {
 }
 
 export type ContentSegment = {
-  startSeconds: number | null   // null för icke-tidsbaserat innehåll
+  startSeconds: number | null   // null för icke-tidsbaserat innehåll (t.ex. artikel)
   endSeconds: number | null
   text: string
+  // Obs: startSeconds/endSeconds används bara internt för chunking-gränser,
+  // de exponeras aldrig i chat-sources mot användaren
 }
 
 export type FetchedContent = {
@@ -140,12 +145,49 @@ Alla `youtubeVideoId` → `externalId` i:
 
 - `src/server/chat/retrieval.ts` (4 platser)
 - `src/server/chat/fusion.ts` (3 platser)
-- `src/server/chat/types.ts` (1 plats i `ChatSourceVideo`)
-- `src/server/chat/sources.ts`:
-  - Importera och använd `contentType` för att avgöra länkformat
-  - YouTube: `https://youtube.com/watch?v={externalId}&t={seconds}` (befintlig logik)
-  - Article (framtida): `{externalId}` (URL direkt, inga timestamps)
-  - Extrahera `buildItemUrl(externalId, contentType, seconds)` hjälpfunktion
+- `src/server/chat/types.ts`
+
+### Förenkling av source-rollup (bryter ut tidsstämpellogiken helt)
+
+**Nuläge:** `ChatSourceVideo` innehåller en lista av tidsstämplar (`timestamps`) med
+YouTube-länkade `watch?v=X&t=Y` per sekund. Detta är hårt knutet till YouTube.
+
+**Ny design:** Sources exponeras på item-nivå, inte tidsstämpelnivå.
+
+`src/server/chat/types.ts`:
+```typescript
+// Tas bort:
+// ChatSourceTimestamp, timestamps-array i ChatSourceVideo
+
+export type ChatSourceItem = {
+  itemId: string
+  externalId: string
+  contentType: ContentType
+  title: string
+  url: string            // externalId → URL, per contentType (byggs vid rollup)
+  referenceCount: number // hur många chunks som refererar till detta item
+}
+
+export type ChatSourcesRollup = {
+  items: ChatSourceItem[]   // sorterade efter referenceCount, desc
+}
+```
+
+`src/server/chat/sources.ts`:
+- Ta bort all tidsstämpellogik
+- Bygg `url` per item baserat på `contentType`:
+  - `youtube_video`: `https://www.youtube.com/watch?v={externalId}`
+  - `article`: `{externalId}` (externalId är URL:en)
+- Returnera alla sources sorterade efter `referenceCount`
+- MAX_SOURCES-konstant tas bort - returnera alla, UI-skiktet hanterar "visa mer"
+
+`src/features/chat/` (UI):
+- Visa topp 4-5 sources med "Visa alla X källor"-knapp för att expandera
+- Ingen timestamp-listning per källa
+- Frontenden konsumerar `ChatSourcesRollup.items` och trunkerar vid rendering
+
+**Konsekvens:** `evidence_json` i `chat_messages` lagras fortfarande med full retrieval-data
+(inklusive chunk-positioner) för debugging - men exponeras inte i UI.
 
 ---
 
@@ -185,7 +227,7 @@ Alla `youtubeVideoId` → `externalId` i:
 
 ### `docs/product.md`
 
-- Beskrivning: "YouTube knowledge base SaaS" → "knowledge base SaaS" med YouTube som primär källa
+- Beskrivning: "YouTube knowledge base SaaS" → "multi-source knowledge base SaaS" - YouTube är en källa bland flera, inte ett primärt fokus
 - Target Users: bredda från YouTube-specifik formulering
 - Pricing: "videos ingested" → "items ingested" i tabellerna
 
@@ -221,10 +263,12 @@ Alla `youtubeVideoId` → `externalId` i:
 
 Drizzle-migration genereras för:
 1. `ALTER TABLE videos RENAME COLUMN youtube_video_id TO external_id`
-2. `ALTER TABLE videos ADD COLUMN content_type text NOT NULL DEFAULT 'youtube_video'`
-3. `DROP CONSTRAINT videos_library_video_uniq; ADD CONSTRAINT videos_library_external_uniq UNIQUE(library_id, external_id)`
+2. `ALTER TABLE videos ADD COLUMN content_type text` (nullable initialt)
+3. `UPDATE videos SET content_type = 'youtube_video' WHERE content_type IS NULL` (backfyll befintliga rader)
+4. `ALTER TABLE videos ALTER COLUMN content_type SET NOT NULL` (skärp constraint)
+5. `DROP CONSTRAINT videos_library_video_uniq; ADD CONSTRAINT videos_library_external_uniq UNIQUE(library_id, external_id)`
 
-Befintlig data kräver ingen manuell åtgärd - default-värdet på `content_type` sätter alla befintliga rader korrekt.
+Befintlig data hanteras via explicit backfyll i step 3 - inget DB-default lämnas kvar.
 
 ---
 

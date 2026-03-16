@@ -57,8 +57,8 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
         variants={fadeUp}
       >
         Most AI tools give you generic answers from across the internet.
-        Distillr builds a personal knowledge base from the creators and topics you trust
-        so you get specific answers, always.
+        Distillr builds a personal knowledge base from YouTube transcripts and videos
+        by the creators you trust — so you get specific, cited answers, always.
       </motion.p>
 
       {/* Social proof hint */}

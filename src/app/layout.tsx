@@ -7,7 +7,25 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CookieBanner } from "@/features/cookies/CookieBanner";
 import { CookieConsentProvider } from "@/features/cookies/CookieConsentProvider";
+import { JsonLd } from "@/components/json-ld";
 import "./globals.css";
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Distillr",
+  url: "https://distillr.co",
+  description:
+    "Turn YouTube channels, playlists, and videos into a searchable AI knowledge base you can chat with and export.",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: "https://distillr.co/login",
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
 
 function getMetadataBase() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -26,9 +44,9 @@ function getMetadataBase() {
 }
 
 const siteName = "Distillr";
-const title = "Distillr - YouTube knowledge base";
+const title = "Distillr – Chat with YouTube Videos & Build Your Knowledge Base";
 const description =
-  "Turn YouTube channels, playlists, and videos into a searchable knowledge base you can chat with and export.";
+  "Distillr turns YouTube channels, playlists, and videos into a searchable AI knowledge base. Ask questions, get cited answers from video transcripts, and export structured notes from creators you trust.";
 
 export const metadata: Metadata = {
   metadataBase: getMetadataBase(),
@@ -50,7 +68,7 @@ export const metadata: Metadata = {
     description,
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title,
     description,
   },
@@ -79,6 +97,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="antialiased">
+        <JsonLd data={websiteSchema} />
         <Providers>
           <CookieConsentProvider>
             <TooltipProvider>

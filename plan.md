@@ -265,7 +265,7 @@ Inga migrationer skrivs för hand. Schemaändringar definieras i `src/db/schema.
 
 Schemaändringar:
 - Döp om fält: `youtubeVideoId` → `externalId` (Drizzle genererar RENAME COLUMN)
-- Lägg till fält: `contentType` med `.notNull().default('youtube_video')` - Drizzle inkluderar DEFAULT i generated migration vilket hanterar befintliga rader utan backfill
+- Lägg till fält: `contentType` som `.notNull()` utan default - databasen töms innan migration körs
 - Uppdatera unique index till `(libraryId, externalId)`
 
 ---

@@ -5,6 +5,8 @@ import { GeistSans } from "geist/font/sans";
 import { Providers } from "@/lib/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { CookieBanner } from "@/features/cookies/CookieBanner";
+import { CookieConsentProvider } from "@/features/cookies/CookieConsentProvider";
 import "./globals.css";
 
 function getMetadataBase() {
@@ -78,10 +80,13 @@ export default function RootLayout({
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="antialiased">
         <Providers>
-          <TooltipProvider>
-            {children}
-            <Toaster />
-          </TooltipProvider>
+          <CookieConsentProvider>
+            <TooltipProvider>
+              {children}
+              <Toaster />
+              <CookieBanner />
+            </TooltipProvider>
+          </CookieConsentProvider>
         </Providers>
       </body>
     </html>

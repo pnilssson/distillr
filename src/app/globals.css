@@ -181,3 +181,35 @@
     @apply cursor-pointer;
   }
 }
+
+/* Legal pages typography */
+.legal-content h1 {
+  @apply text-3xl font-bold tracking-tight mb-4;
+}
+.legal-content h2 {
+  @apply text-xl font-semibold mt-10 mb-3;
+}
+.legal-content h3 {
+  @apply text-base font-semibold mt-6 mb-2;
+}
+.legal-content p {
+  @apply text-sm text-muted-foreground leading-relaxed mb-4;
+}
+.legal-content ul {
+  @apply list-disc pl-5 mb-4 space-y-1 text-sm text-muted-foreground;
+}
+.legal-content a {
+  @apply underline text-foreground hover:text-muted-foreground transition-colors;
+}
+.legal-content table {
+  @apply w-full text-sm border-collapse mb-6;
+}
+.legal-content th {
+  @apply text-left font-medium border-b pb-2 pr-4;
+}
+.legal-content td {
+  @apply py-2 pr-4 border-b text-muted-foreground align-top;
+}
+.legal-content code {
+  @apply font-mono text-xs bg-muted px-1 py-0.5 rounded;
+}

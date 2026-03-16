@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 
+import { useCookieConsent } from "@/features/cookies/CookieConsentProvider";
+
 export function FooterSection() {
+  const { openPreferences } = useCookieConsent();
+
   return (
     <footer className="border-t">
       <motion.div
@@ -41,6 +45,32 @@ export function FooterSection() {
           >
             Sign in
           </Link>
+        </div>
+        <div className="flex flex-wrap gap-6">
+          <Link
+            href="/privacy"
+            className="transition-colors hover:text-foreground"
+          >
+            Privacy
+          </Link>
+          <Link
+            href="/terms"
+            className="transition-colors hover:text-foreground"
+          >
+            Terms
+          </Link>
+          <Link
+            href="/cookies"
+            className="transition-colors hover:text-foreground"
+          >
+            Cookies
+          </Link>
+          <button
+            onClick={openPreferences}
+            className="transition-colors hover:text-foreground"
+          >
+            Cookie Preferences
+          </button>
         </div>
       </motion.div>
     </footer>

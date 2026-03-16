@@ -1,42 +1,41 @@
 # Plan: Source-Agnostic Ingestion Architecture
 
-## Mål
+## Goal
 
-Gå från en YouTube-hårdkodad kodbas till en som stödjer flera källtyper likvärdigt.
-Inga nya källor implementeras i denna PR - bara abstraktionen som gör det möjligt.
-
----
-
-## Principer
-
-- Forward-only. Inga legacy-shims.
-- Minimal ytyta som måste röras per ny källa framöver.
-- `externalId` som universell identifierare för ett content item (var: `youtubeVideoId`).
-- Alla källtyper är lika värda - ingen källa är "default" eller "primär".
-- Plattformsspecifik logik kapslas in i providers.
-- Befintlig pipeline (chunking → embedding → insights) rörs inte.
-- Chat-sources exponerar källreferenser på item-nivå, inte tidsstämpelnivå.
+Move from a YouTube-coupled codebase to one that treats all content sources as equals.
+No new sources are implemented in this PR - only the abstraction that makes it possible.
 
 ---
 
-## Steg 1 - DB-schemamigration
+## Principles
 
-**Fil:** `src/db/schema.ts` + genererad migration
-
-- Döp om kolumn: `videos.youtube_video_id` → `videos.external_id`
-- Uppdatera unique constraint: `(library_id, external_id)` (semantiken är identisk)
-- Lägg till kolumn: `videos.content_type` text NOT NULL
-  - Används för att avgöra vilken provider + länkformat som ska användas
-  - Migrationen backfylls med `UPDATE videos SET content_type = 'youtube_video'` innan NOT NULL sätts
-  - Applikationskoden sätter alltid `content_type` explicit vid ingest - inget DB-default
-
-Inga övriga tabeller (video_chunks, video_insights) behöver schema-ändring - de är redan källagnostiska.
+- Forward-only. No legacy shims.
+- Minimal surface area to touch when adding a new source in the future.
+- `externalId` as the universal identifier for a content item (replaces `youtubeVideoId`).
+- All source types are equal - no source is a default or primary.
+- Platform-specific logic is encapsulated in providers.
+- The existing pipeline (chunking → embedding → insights) is not touched.
+- Chat sources are exposed at item level, not timestamp level.
 
 ---
 
-## Steg 2 - Ny provider-abstraktion
+## Step 1 - DB schema migration
 
-**Ny katalog:** `src/server/ingestion/providers/`
+**File:** `src/db/schema.ts` + generated migration
+
+- Rename field: `youtubeVideoId` → `externalId` (Drizzle generates RENAME COLUMN)
+- Add field: `contentType` as `.notNull()` with no default - database is wiped before migration runs
+- Update unique index to `(libraryId, externalId)`
+
+No other tables (`video_chunks`, `video_insights`) need schema changes - they are already source-agnostic.
+
+Migrations are never hand-written. Schema changes are defined in `src/db/schema.ts` and the migration is generated via `npm run db:generate`.
+
+---
+
+## Step 2 - New provider abstraction
+
+**New directory:** `src/server/ingestion/providers/`
 
 ### `src/server/ingestion/providers/types.ts`
 
@@ -44,12 +43,12 @@ Inga övriga tabeller (video_chunks, video_insights) behöver schema-ändring - 
 export type ContentType = "youtube_video" | "article"
 
 export type DiscoveredItem = {
-  externalId: string        // videoId för YouTube, URL för artikel
+  externalId: string        // videoId for YouTube, URL for article
   contentType: ContentType
   title: string
   thumbnailUrl: string | null
-  authorName: string | null  // channelName → authorName
-  authorId: string | null    // channelId → authorId
+  authorName: string | null  // replaces channelName
+  authorId: string | null    // replaces channelId
   publishedAt: Date | null
   durationSeconds: number | null
 }
@@ -61,11 +60,11 @@ export type DiscoveryResult = {
 }
 
 export type ContentSegment = {
-  startSeconds: number | null   // null för icke-tidsbaserat innehåll (t.ex. artikel)
+  startSeconds: number | null   // null for non-time-based content (e.g. articles)
   endSeconds: number | null
   text: string
-  // Obs: startSeconds/endSeconds används bara internt för chunking-gränser,
-  // de exponeras aldrig i chat-sources mot användaren
+  // startSeconds/endSeconds are used internally for chunk boundaries only,
+  // never exposed in chat sources
 }
 
 export type FetchedContent = {
@@ -84,10 +83,9 @@ export interface ContentFetcher {
 
 ### `src/server/ingestion/providers/youtube.ts`
 
-- Flytta allt från `youtube-discovery.ts` hit (discovery-delen)
-- Flytta all logik från `transcript.ts` hit (fetch-delen)
-- Exportera `youtubeDiscovery: ContentDiscovery` och `youtubeFetcher: ContentFetcher`
-- `youtube-discovery.ts` och `transcript.ts` raderas
+- Move all logic from `youtube-discovery.ts` (discovery) and `transcript.ts` (fetching) here
+- Export `youtubeDiscovery: ContentDiscovery` and `youtubeFetcher: ContentFetcher`
+- Delete `youtube-discovery.ts` and `transcript.ts`
 
 ### `src/server/ingestion/providers/registry.ts`
 
@@ -96,184 +94,169 @@ export function getDiscovery(sourceType: string): ContentDiscovery
 export function getFetcher(contentType: ContentType): ContentFetcher
 ```
 
-Mappar sourceType → discovery-instans och contentType → fetcher-instans.
+Maps sourceType → discovery instance and contentType → fetcher instance.
 
 ---
 
-## Steg 3 - Uppdatera valideringsskiktet
+## Step 3 - Update validation layer
 
-**Fil:** `src/lib/validation/sources.ts`
+**File:** `src/lib/validation/sources.ts`
 
-- Byt namn: `YouTubeSourceType` → ta bort, ersätt med intern typ per plattform
-- Byt namn: `ParsedYouTubeUrl` → `ParsedSourceUrl`
-- Byt namn: `parseYouTubeUrl` → `parseSourceUrl`
-  - Returnerar `{ platform: "youtube"; type: "video"|"playlist"|"channel"; sourceKey: string } | { platform: "article"; type: "article"; sourceKey: string } | null`
-- Uppdatera `addSourceSchema` zod-valideringen att acceptera YouTube-URL:er (befintligt) - artiklar läggs till i nästa PR
-- Felmeddelande: "Must be a valid YouTube video, playlist, or channel URL." → behålls för nu, uppdateras när artiklar läggs till
+- Remove `YouTubeSourceType`
+- Rename `ParsedYouTubeUrl` → `ParsedSourceUrl`
+- Rename `parseYouTubeUrl` → `parseSourceUrl`
+  - Returns `{ platform: "youtube"; type: "video"|"playlist"|"channel"; sourceKey: string } | null`
+  - Article platform added in the next PR
+- Validation error message stays as-is until articles are added
 
 ---
 
-## Steg 4 - Uppdatera Inngest-funktioner
+## Step 4 - Update Inngest functions
 
 ### `src/server/inngest/functions/source-added.ts`
 
-- Ersätt import av `discoverVideosFromSource` + `YouTubeSourceType` med `getDiscovery` från registry
-- Ersätt `youtubeVideoId` i alla upsert/events med `externalId`
-- Lägg till `contentType` i upserted video-rader
-- Event-payload `video.ingest` lägger till `contentType` fält
+- Replace `discoverVideosFromSource` + `YouTubeSourceType` imports with `getDiscovery` from registry
+- Replace `youtubeVideoId` with `externalId` in all upserts and events
+- Add `contentType` to upserted item rows
+- Add `contentType` to `video.ingest` event payload
 
 ### `src/server/inngest/functions/video-ingest.ts`
 
-- Ersätt import av `fetchTranscript` med `getFetcher(contentType)` från registry
-- Ersätt `youtubeVideoId` med `externalId` i DB-select och event-data
-- `ContentSegment` (ny generisk typ) ersätter `TranscriptSegment` i chunking-anropet
+- Replace `fetchTranscript` import with `getFetcher(contentType)` from registry
+- Replace `youtubeVideoId` with `externalId` in DB selects and event data
+- Replace `TranscriptSegment` with `ContentSegment` in chunking call
 
 ---
 
-## Steg 5 - Uppdatera chunking
+## Step 5 - Update chunking
 
-**Fil:** `src/server/ingestion/chunking.ts`
+**File:** `src/server/ingestion/chunking.ts`
 
-- Byt ut `TranscriptSegment` import mot `ContentSegment` från providers/types
-- Null-hantering för `startSeconds`/`endSeconds` (artiklar har ingen tidsstämpel)
+- Replace `TranscriptSegment` import with `ContentSegment` from `providers/types`
+- Handle null `startSeconds`/`endSeconds` for non-time-based content
 
 ---
 
-## Steg 6 - Uppdatera chat/retrieval-skiktet
+## Step 6 - Update chat/retrieval layer
 
-Alla `youtubeVideoId` → `externalId` i:
+Replace `youtubeVideoId` → `externalId` in:
 
-- `src/server/chat/retrieval.ts` (4 platser)
-- `src/server/chat/fusion.ts` (3 platser)
+- `src/server/chat/retrieval.ts` (4 locations)
+- `src/server/chat/fusion.ts` (3 locations)
 - `src/server/chat/types.ts`
 
-### Förenkling av source-rollup (bryter ut tidsstämpellogiken helt)
+### Simplified source rollup - remove all timestamp logic
 
-**Nuläge:** `ChatSourceVideo` innehåller en lista av tidsstämplar (`timestamps`) med
-YouTube-länkade `watch?v=X&t=Y` per sekund. Detta är hårt knutet till YouTube.
+**Current:** `ChatSourceVideo` holds a list of timestamps with YouTube `watch?v=X&t=Y` links per second. This is tightly coupled to YouTube.
 
-**Ny design:** Sources exponeras på item-nivå, inte tidsstämpelnivå.
+**New design:** Sources are exposed at item level, not timestamp level.
 
 `src/server/chat/types.ts`:
 ```typescript
-// Tas bort:
-// ChatSourceTimestamp, timestamps-array i ChatSourceVideo
+// Removed: ChatSourceTimestamp, timestamps array in ChatSourceVideo
 
 export type ChatSourceItem = {
   itemId: string
   externalId: string
   contentType: ContentType
   title: string
-  url: string            // externalId → URL, per contentType (byggs vid rollup)
-  referenceCount: number // hur många chunks som refererar till detta item
+  url: string            // built from externalId + contentType at rollup time
+  referenceCount: number // number of chunks referencing this item
 }
 
 export type ChatSourcesRollup = {
-  items: ChatSourceItem[]   // sorterade efter referenceCount, desc
+  items: ChatSourceItem[]   // sorted by referenceCount desc
 }
 ```
 
 `src/server/chat/sources.ts`:
-- Ta bort all tidsstämpellogik
-- Bygg `url` per item baserat på `contentType`:
+- Remove all timestamp logic
+- Build `url` per item based on `contentType`:
   - `youtube_video`: `https://www.youtube.com/watch?v={externalId}`
-  - `article`: `{externalId}` (externalId är URL:en)
-- Returnera alla sources sorterade efter `referenceCount`
-- MAX_SOURCES-konstant tas bort - returnera alla, UI-skiktet hanterar "visa mer"
+  - `article`: `{externalId}` (externalId is the URL)
+- Return all sources sorted by `referenceCount`
+- Remove `MAX_SOURCES` constant - the UI layer handles truncation
 
 `src/features/chat/` (UI):
-- Visa topp 4-5 sources med "Visa alla X källor"-knapp för att expandera
-- Ingen timestamp-listning per källa
-- Frontenden konsumerar `ChatSourcesRollup.items` och trunkerar vid rendering
+- Show top 4-5 sources with a "Show all X sources" button to expand
+- No per-source timestamp listing
+- Frontend consumes `ChatSourcesRollup.items` and truncates at render time
 
-**Konsekvens:** `evidence_json` i `chat_messages` lagras fortfarande med full retrieval-data
-(inklusive chunk-positioner) för debugging - men exponeras inte i UI.
+`evidence_json` in `chat_messages` still stores full retrieval data (including chunk positions) for debugging - not exposed in the UI.
 
 ---
 
-## Steg 7 - Uppdatera server queries
+## Step 7 - Update server queries
 
 - `src/server/sources/queries.ts`: `YouTubeSourceType` → `string`, `youtubeVideoId` → `externalId`
-- `src/server/videos/queries.ts`: `youtubeVideoId` → `externalId` i select + return-typ
-- `src/app/api/libraries/[libraryId]/videos/route.ts`: `youtubeVideoId` → `externalId` i response
+- `src/server/videos/queries.ts`: `youtubeVideoId` → `externalId` in select and return type
+- `src/app/api/libraries/[libraryId]/videos/route.ts`: `youtubeVideoId` → `externalId` in response
 
 ---
 
-## Steg 8 - Uppdatera feature-typer och UI
+## Step 8 - Update feature types and UI
 
-### Typer
+### Types
 
-- `src/features/videos/types.ts`: `youtubeVideoId` → `externalId`, lägg till `contentType`
-- `src/features/sources/types.ts`: `sourceType` behåller `"video"|"playlist"|"channel"` - inga ändringar behövs här ännu
+- `src/features/videos/types.ts`: `youtubeVideoId` → `externalId`, add `contentType`
+- `src/features/sources/types.ts`: no changes needed yet
 
-### UI-komponenter
+### UI components
 
 - `src/features/videos/VideoDetailsDialog.tsx`:
   - `getYoutubeVideoUrl` → `getItemUrl(externalId, contentType)`
-  - Aria-label "Watch on YouTube" → konditionell text baserat på `contentType`
+  - Aria-label "Watch on YouTube" → conditional text based on `contentType`
 - `src/features/sources/AddSourceDialog.tsx`:
-  - Behåller YouTube-text för nu (artiklar är nästa PR)
+  - Keep YouTube-specific text for now (updated when articles are added)
 
 ---
 
-## Steg 9 - Uppdatera docs och AGENTS.md
+## Step 9 - Update docs and AGENTS.md
 
 ### `AGENTS.md`
 
-- "Locked Stack Choices" → ta bort `Transcript extraction: TranscriptAPI` som låst val (det är nu en YouTube-specifik implementation, inte en global stack-låsning)
-- "Retrieval Invariants" → uppdatera "Retrieve from two layers: `video_chunks` and `video_insights`" → byt ut "video" med "content item" i texten, men behåll tabellnamn
-- "Observability" → `video_ready` → `item_ready`, `video_failed` → `item_failed` (analytics events)
-- Lägg till ny sektion "Content Providers" med regler för hur nya providers läggs till
+- Remove `Transcript extraction: TranscriptAPI` from Locked Stack Choices - it is now a YouTube-specific implementation detail, not a global stack choice
+- Update Retrieval Invariants: replace "video" with "content item" in descriptive text, table names unchanged
+- Update Observability: `video_ready` → `item_ready`, `video_failed` → `item_failed`
+- Add "Content Providers" section with rules for adding new providers
 
 ### `docs/product.md`
 
-- Beskrivning: "YouTube knowledge base SaaS" → "multi-source knowledge base SaaS" - YouTube är en källa bland flera, inte ett primärt fokus
-- Target Users: bredda från YouTube-specifik formulering
-- Pricing: "videos ingested" → "items ingested" i tabellerna
+- Description: "YouTube knowledge base SaaS" → "multi-source knowledge base SaaS" - YouTube is one source among many
+- Target Users: broaden from YouTube-specific framing
+- Pricing: "videos ingested" → "items ingested"
 
 ### `docs/ingestion-architecture.md`
 
-- Komplett omskrivning för att reflektera provider-abstraktionen
-- Dokumentera `ContentDiscovery` och `ContentFetcher` interfaces
-- Uppdatera pipeline-diagram med provider-steget
+- Full rewrite to reflect the provider abstraction
+- Document `ContentDiscovery` and `ContentFetcher` interfaces
+- Update pipeline description with the provider step
 
 ---
 
-## Filer som raderas
+## Files deleted
 
-- `src/server/ingestion/youtube-discovery.ts` (ersätts av `providers/youtube.ts`)
-- `src/server/ingestion/transcript.ts` (ersätts av `providers/youtube.ts`)
-
----
-
-## Filer som inte rörs
-
-- `src/server/ingestion/chunking.ts` - minimal ändring (TypeScript-typer)
-- `src/server/ingestion/openai.ts` - ingen ändring
-- `src/server/ingestion/errors.ts` - ingen ändring
-- `src/server/chat/service.ts` - ingen ändring
-- `src/server/chat/openai.ts` - ingen ändring
-- `src/server/billing/` - ingen ändring
-- All `src/components/ui/` - ingen ändring (invariant)
-- API-routes förutom sources och videos - ingen ändring
+- `src/server/ingestion/youtube-discovery.ts` (replaced by `providers/youtube.ts`)
+- `src/server/ingestion/transcript.ts` (replaced by `providers/youtube.ts`)
 
 ---
 
-## DB-migrationsplan
+## Files not touched
 
-Inga migrationer skrivs för hand. Schemaändringar definieras i `src/db/schema.ts` och migration genereras via `npm run db:generate`.
-
-Schemaändringar:
-- Döp om fält: `youtubeVideoId` → `externalId` (Drizzle genererar RENAME COLUMN)
-- Lägg till fält: `contentType` som `.notNull()` utan default - databasen töms innan migration körs
-- Uppdatera unique index till `(libraryId, externalId)`
+- `src/server/ingestion/openai.ts`
+- `src/server/ingestion/errors.ts`
+- `src/server/chat/service.ts`
+- `src/server/chat/openai.ts`
+- `src/server/billing/`
+- All `src/components/ui/` (invariant)
+- All API routes except sources and videos
 
 ---
 
-## Vad detta INTE inkluderar
+## Out of scope
 
-- Implementation av artikel-källtyp (nästa PR)
-- Uppdatering av landing page / marketing copy
-- Ändring av `/api/libraries/[libraryId]/videos` route-namn
-- Ändring av tabell-namnen `videos`, `video_chunks`, `video_insights`
-- Billing event-semantik (fortfarande "video" i Polar)
+- Article source type implementation (next PR)
+- Landing page / marketing copy updates
+- Renaming the `/api/libraries/[libraryId]/videos` route
+- Renaming the `videos`, `video_chunks`, `video_insights` tables
+- Billing event semantics (still "video" in Polar)

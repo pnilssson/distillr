@@ -16,7 +16,7 @@ const websiteSchema = {
   name: "Distillr",
   url: "https://distillr.co",
   description:
-    "Turn YouTube channels, playlists, and videos into a searchable AI knowledge base you can chat with and export.",
+    "Your YouTube research, finally searchable. Add your sources, ask anything, and get cited answers with timestamp links.",
   potentialAction: {
     "@type": "SearchAction",
     target: {
@@ -44,9 +44,9 @@ function getMetadataBase() {
 }
 
 const siteName = "Distillr";
-const title = "Distillr – Chat with YouTube Videos & Build Your Knowledge Base";
+const title = "Distillr - Your YouTube research, finally searchable.";
 const description =
-  "Distillr turns YouTube channels, playlists, and videos into a searchable AI knowledge base. Ask questions, get cited answers from video transcripts, and export structured notes from creators you trust.";
+  "Distillr builds a research library from the YouTube channels and playlists you actually follow. Ask questions across your sources and get cited answers with timestamp links.";
 
 export const metadata: Metadata = {
   metadataBase: getMetadataBase(),

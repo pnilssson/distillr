@@ -19,7 +19,7 @@ const softwareApplicationSchema = {
   operatingSystem: "Web",
   url: "https://distillr.co",
   description:
-    "Turn YouTube channels, playlists, and videos into a searchable AI knowledge base you can chat with and export. Get cited answers from video transcripts with timestamp-linked sources.",
+    "Distillr turns the YouTube channels and playlists you follow into a searchable research library. Ask questions across your sources and get cited answers with timestamp links.",
   offers: [
     {
       "@type": "Offer",
@@ -54,7 +54,7 @@ const faqSchema = {
       name: "What is Distillr?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Distillr is an AI-powered YouTube knowledge base. It extracts and indexes transcripts from YouTube channels, playlists, and individual videos so you can search across them and chat with the content using natural language — with cited, timestamp-linked answers.",
+        text: "Distillr is a YouTube research library. It indexes transcripts from channels, playlists, and videos you choose, so you can search and ask questions across your sources with cited answers and timestamp links.",
       },
     },
     {
@@ -62,7 +62,7 @@ const faqSchema = {
       name: "How does Distillr work with YouTube?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Paste a YouTube channel URL, playlist URL, or individual video URL into Distillr. We automatically extract the video transcripts, process them with AI embeddings, and add them to your searchable knowledge base. New uploads from channels and playlists are picked up automatically.",
+        text: "Paste a YouTube channel URL, playlist URL, or individual video URL into Distillr. We automatically extract transcripts, index them into your research library, and keep channels and playlists up to date with new uploads.",
       },
     },
     {
@@ -70,7 +70,7 @@ const faqSchema = {
       name: "Which YouTube formats are supported?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Distillr supports YouTube channels, playlists, and individual videos. Once you add a channel or playlist, new uploads are indexed automatically so your knowledge base stays current.",
+        text: "Distillr supports YouTube channels, playlists, and individual videos. Once you add a channel or playlist, new uploads are indexed automatically so your research library stays current.",
       },
     },
     {
@@ -94,7 +94,7 @@ const faqSchema = {
       name: "Can I export my knowledge base data?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Distillr supports exports in Markdown, PDF, TXT, and full chat log formats — ready for Notion, Obsidian, or any note-taking tool you use.",
+        text: "Yes. Distillr supports exports in Markdown, PDF, TXT, and full chat log formats, ready for Notion, Obsidian, or any note-taking tool you use.",
       },
     },
     {
@@ -102,7 +102,7 @@ const faqSchema = {
       name: "What is the credit system?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Credits are the unit used for AI chat. Each message costs credits depending on which AI model you choose — faster models cost fewer credits, more capable models cost more. Monthly credits reset on your billing date, and top-ups are available on paid plans.",
+        text: "Credits are the unit used for AI chat. Each message costs credits depending on which AI model you choose, faster models cost fewer credits, more capable models cost more. Monthly credits reset on your billing date, and top-ups are available on paid plans.",
       },
     },
     {

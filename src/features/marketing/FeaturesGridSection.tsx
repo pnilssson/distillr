@@ -29,7 +29,7 @@ const features = [
   {
     icon: Download,
     title: "Structured exports",
-    desc: "Export summaries, transcripts, and chat logs to Markdown, PDF, or TXT — ready for Notion, Obsidian, or wherever you work.",
+    desc: "Export summaries, transcripts, and chat logs to Markdown, PDF, or TXT, ready for Notion, Obsidian, or wherever you work.",
   },
   {
     icon: Youtube,
@@ -69,7 +69,15 @@ export function FeaturesGridSection() {
           Built for knowledge that compounds
         </h2>
         <p className="max-w-2xl leading-relaxed text-muted-foreground">
-          Everything you need to collect, search, and reuse insights from the creators you track.
+          Most AI tools give you generic answers. Distillr builds a research
+          library from the YouTube channels and playlists you actually follow,
+          and lets you query all of it at once with cited, timestamp-linked
+          answers.
+          <br />
+          <br />
+          The manual version of this workflow already exists: watch a video,
+          copy the transcript, paste it into an LLM, ask a question. It breaks
+          at ten videos. Distillr does it properly, at scale, with memory.
         </p>
       </motion.div>
 

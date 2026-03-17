@@ -32,7 +32,7 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
         custom={0}
         variants={fadeUp}
       >
-        Turn videos into a searchable knowledge base
+        YouTube research library
       </motion.div>
 
       {/* Headline */}
@@ -43,9 +43,7 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
         custom={0.1}
         variants={fadeUp}
       >
-        YouTube has the knowledge.
-        <br />
-        Distillr makes it yours.
+        Your YouTube research, finally searchable.
       </motion.h1>
 
       {/* Subheadline */}
@@ -56,9 +54,7 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
         custom={0.2}
         variants={fadeUp}
       >
-        Most AI tools give you generic answers from across the internet.
-        Distillr builds a personal knowledge base from YouTube transcripts and videos
-        by the creators you trust — so you get specific, cited answers, always.
+        Add your sources. Ask anything. Get cited answers with timestamp links.
       </motion.p>
 
       {/* Social proof hint */}
@@ -69,7 +65,8 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
         custom={0.25}
         variants={fadeUp}
       >
-        Used by researchers, creators, and lifelong learners
+        Built for analysts, researchers, and writers who treat YouTube as a
+        primary source.
       </motion.p>
 
       {/* CTA */}

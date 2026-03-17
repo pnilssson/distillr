@@ -8,7 +8,7 @@ const faqs = [
   {
     question: "What is Distillr?",
     answer:
-      "Distillr is an AI-powered YouTube knowledge base. It extracts and indexes transcripts from YouTube channels, playlists, and individual videos so you can search across them and chat with the content using natural language, with cited, timestamp-linked answers.",
+      "Distillr is a YouTube research library. It indexes transcripts from channels, playlists, and videos you choose, so you can search and ask questions across your sources with cited answers and timestamp links.",
   },
   {
     question: "How does Distillr work with YouTube?",
@@ -33,12 +33,12 @@ const faqs = [
   {
     question: "Can I export my knowledge base data?",
     answer:
-      "Yes. Distillr supports exports in Markdown, PDF, TXT, and full chat log formats — ready for Notion, Obsidian, or any note-taking tool you use.",
+      "Yes. Distillr supports exports in Markdown, PDF, TXT, and full chat log formats, ready for Notion, Obsidian, or any note-taking tool you use.",
   },
   {
     question: "What is the credit system?",
     answer:
-      "Credits are the unit used for AI chat. Each message costs credits depending on which AI model you choose — faster models cost fewer credits, more capable models cost more. Monthly credits reset on your billing date, and top-ups are available on paid plans.",
+      "Credits are the unit used for AI chat. Each message costs credits depending on which AI model you choose, faster models cost fewer credits, more capable models cost more. Monthly credits reset on your billing date, and top-ups are available on paid plans.",
   },
   {
     question: "Does Distillr work with videos that have no subtitles?",

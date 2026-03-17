@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Distillr – YouTube knowledge base";
+export const alt = "Distillr - YouTube research library";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -43,7 +43,7 @@ export default async function Image() {
           lineHeight: 1.4,
         }}
       >
-        YouTube has the knowledge. Distillr makes it yours.
+        Your YouTube research, finally searchable.
       </div>
 
       {/* Sub tagline */}
@@ -55,7 +55,7 @@ export default async function Image() {
           textAlign: "center",
         }}
       >
-        Turn YouTube channels, playlists, and videos into a searchable AI knowledge base.
+        Add your sources. Ask anything. Get cited answers with timestamp links.
       </div>
     </div>,
     { ...size }

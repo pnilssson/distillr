@@ -1,1 +1,0 @@
-ALTER TABLE "sources" ADD COLUMN "status" text DEFAULT 'ready' NOT NULL;

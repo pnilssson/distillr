@@ -10,7 +10,7 @@ export default function TermsPage() {
     <>
       <h1>Terms of Service</h1>
       <p>
-        <strong>Last updated: 16 March 2026</strong>
+        <strong>Last updated: 17 March 2026</strong>
       </p>
 
       <p>
@@ -22,14 +22,9 @@ export default function TermsPage() {
 
       <h2>1. The Service</h2>
       <p>
-        Distillr is a web application that lets you add YouTube channels,
-        playlists, and videos to a personal knowledge base. The Service processes
-        YouTube transcripts with AI to make them searchable and queryable via
-        chat.
-      </p>
-      <p>
-        We rely on publicly available YouTube transcript data. Distillr is not
-        affiliated with or endorsed by YouTube or Google LLC.
+        Distillr is a web application that lets you build a personal knowledge
+        base from content sources. The Service processes content with AI to make
+        it searchable and queryable via chat.
       </p>
 
       <h2>2. Eligibility</h2>
@@ -55,7 +50,12 @@ export default function TermsPage() {
           Terms.
         </li>
         <li>
-          Add content that infringes third-party intellectual property rights.
+          Add content that infringes third-party intellectual property rights or
+          that you are not authorised to submit.
+        </li>
+        <li>
+          Submit confidential, proprietary, or sensitive content that you are
+          not authorised to share with third-party processors.
         </li>
         <li>
           Attempt to reverse-engineer, scrape, or overload the Service.
@@ -110,6 +110,15 @@ export default function TermsPage() {
       <p>
         AI-generated content may contain errors. Do not rely on it as a
         substitute for professional advice.
+      </p>
+      <p>
+        <strong>User-submitted content.</strong> The Service processes content
+        you submit through AI models and third-party infrastructure. You are
+        solely responsible for ensuring you are authorised to submit any content
+        you add. Do not submit content that contains confidential, proprietary,
+        personal, or otherwise sensitive information that you are not authorised
+        to share with third-party processors. We accept no responsibility for
+        any consequences arising from the submission of such information.
       </p>
 
       <h2>8. Limitation of Liability</h2>

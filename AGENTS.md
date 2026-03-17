@@ -12,6 +12,13 @@ This file is the operational source of truth for agent behavior in this reposito
 - When behavior or decisions change, update this file and any impacted feature doc in the same PR.
 - Remove outdated guidance instead of keeping historical notes.
 
+## Code Design Principles
+
+- Build abstractions proactively when a concern spans multiple files or is likely to change independently (e.g. AI providers, billing, auth). A thin interface today prevents scattered rewrites later.
+- Prefer scalable, future-proof designs over the shortest path. If adding a second instance of something (model, provider, plan tier) would require touching more than one file, the design is not scalable enough — fix the abstraction first.
+- Follow DRY: if the same logic, value, or type appears in more than one place, extract it to a single source of truth. Duplication is a bug waiting to happen.
+- These principles complement, not override, YAGNI. Build the abstraction when the pattern is clear and established; do not build it speculatively for features that do not exist yet.
+
 ## MVP Code Hygiene
 
 - Prefer forward-only implementation. Do not add backward-compatibility shims, dual-write paths, or legacy fallbacks.

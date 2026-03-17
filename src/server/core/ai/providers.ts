@@ -17,9 +17,3 @@ export function getOpenAIProvider(): ReturnType<typeof createOpenAI> {
 
   return openaiProvider;
 }
-
-// Add additional provider factories here when new providers are onboarded.
-// Example:
-// import { createAnthropic } from "@ai-sdk/anthropic";
-// let anthropicProvider: ReturnType<typeof createAnthropic> | null = null;
-// export function getAnthropicProvider(): ReturnType<typeof createAnthropic> { ... }

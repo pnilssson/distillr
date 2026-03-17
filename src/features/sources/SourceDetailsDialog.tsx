@@ -64,17 +64,17 @@ const SOURCE_TYPE_META: Record<
   SourceListItem["sourceType"],
   { label: string; icon: typeof Video; ctaLabel: string }
 > = {
-  video: {
+  youtube_video: {
     label: "Video",
     icon: Video,
     ctaLabel: "Go to video",
   },
-  playlist: {
+  youtube_playlist: {
     label: "Playlist",
     icon: List,
     ctaLabel: "Go to playlist",
   },
-  channel: {
+  youtube_channel: {
     label: "Channel",
     icon: User,
     ctaLabel: "Go to channel",

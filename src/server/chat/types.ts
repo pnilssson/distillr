@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { ContentType } from "@/lib/sources/types";
+
 export type ChatMessageRole = "user" | "assistant";
 export type ChatMessageStatus = "completed" | "aborted" | "failed";
 export type ChatRequestMode = "auto" | "library" | "chat";
@@ -11,22 +13,17 @@ export type ChatUsage = {
   totalTokens: number;
 };
 
-export type ChatSourceTimestamp = {
-  seconds: number;
-  label: string;
-  url: string;
-};
-
-export type ChatSourceVideo = {
-  videoId: string;
-  youtubeVideoId: string;
+export type ChatSourceItem = {
+  itemId: string;
+  externalId: string;
+  contentType: ContentType;
   title: string;
-  timestamps: ChatSourceTimestamp[];
+  url: string;
+  referenceCount: number;
 };
 
 export type ChatSourcesRollup = {
-  videos: ChatSourceVideo[];
-  extraVideos: number;
+  items: ChatSourceItem[];
 };
 
 export type ChatSessionListItem = {
@@ -58,7 +55,8 @@ export type RetrievalCandidate = {
   channel: RetrievalChannel;
   rawScore: number;
   videoId: string;
-  youtubeVideoId: string;
+  externalId: string;
+  contentType: ContentType;
   videoTitle: string;
   text: string;
   insightType: string | null;
@@ -70,7 +68,8 @@ export type FusedEvidence = {
   id: string;
   kind: "chunk" | "insight";
   videoId: string;
-  youtubeVideoId: string;
+  externalId: string;
+  contentType: ContentType;
   videoTitle: string;
   text: string;
   insightType: string | null;

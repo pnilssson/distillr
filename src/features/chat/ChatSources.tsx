@@ -1,52 +1,68 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
 import type { ChatMessageSources } from "@/features/chat/types";
+
+const INITIAL_VISIBLE_ITEMS = 4;
 
 type ChatSourcesProps = {
   sources: ChatMessageSources;
 };
 
 export function ChatSources({ sources }: ChatSourcesProps) {
-  if (sources.videos.length === 0) {
+  const [expanded, setExpanded] = useState(false);
+
+  const sortedItems = useMemo(
+    () =>
+      [...sources.items].sort((a, b) => {
+        if (b.referenceCount !== a.referenceCount) {
+          return b.referenceCount - a.referenceCount;
+        }
+
+        return a.itemId.localeCompare(b.itemId);
+      }),
+    [sources.items],
+  );
+
+  if (sortedItems.length === 0) {
     return null;
   }
+
+  const visibleItems = expanded ? sortedItems : sortedItems.slice(0, INITIAL_VISIBLE_ITEMS);
 
   return (
     <div className="mt-3 border-t pt-3" aria-label="Sources">
       <p className="mb-2 text-xs font-medium text-muted-foreground">Sources</p>
-      <ol className="space-y-1.5">
-        {sources.videos.map((video, index) => (
-          <li key={video.videoId} className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs">
-            <span className="shrink-0 text-muted-foreground">{index + 1}.</span>
-            <span className="max-w-[200px] truncate font-medium" title={video.title}>
-              {video.title}
-            </span>
-            <span className="flex flex-wrap gap-1">
-              {video.timestamps.map((timestamp) => {
-                const safeSeconds = Number.isFinite(timestamp.seconds)
-                  ? Math.max(0, Math.floor(timestamp.seconds))
-                  : 0;
-                const href = `https://youtube.com/watch?v=${encodeURIComponent(video.youtubeVideoId)}&t=${safeSeconds}`;
 
-                return (
-                  <a
-                    key={`${video.videoId}-${safeSeconds}`}
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded bg-muted px-1.5 py-0.5 text-xs transition-colors hover:bg-muted/70"
-                    aria-label={`Jump to ${timestamp.label} in ${video.title}`}
-                  >
-                    {timestamp.label}
-                  </a>
-                );
-              })}
-            </span>
+      <ol className="space-y-1.5">
+        {visibleItems.map((item, index) => (
+          <li key={item.itemId} className="flex items-baseline gap-2 text-xs">
+            <span className="shrink-0 text-muted-foreground">{index + 1}.</span>
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="truncate font-medium underline underline-offset-2"
+              title={item.title}
+            >
+              {item.title}
+            </a>
+            <span className="shrink-0 text-muted-foreground">({item.referenceCount})</span>
           </li>
         ))}
       </ol>
-      {sources.extraVideos > 0 ? (
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          +{sources.extraVideos} more {sources.extraVideos === 1 ? "video" : "videos"} used
-        </p>
+
+      {sortedItems.length > INITIAL_VISIBLE_ITEMS ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          className="mt-2 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+        >
+          {expanded
+            ? "Show fewer sources"
+            : `Show all ${sortedItems.length} sources`}
+        </button>
       ) : null}
     </div>
   );

@@ -3,8 +3,7 @@ import "server-only";
 import { NonRetriableError } from "inngest";
 
 import { isTranscriptUnavailableMessage } from "@/server/core/errors/user-facing";
-import { TranscriptUnavailableError } from "@/server/ingestion/transcript";
-import { YouTubeDiscoveryError } from "@/server/ingestion/youtube-discovery";
+import { IngestionError } from "@/server/ingestion/providers/types";
 
 export type IngestionErrorDecision = {
   reason: string;
@@ -29,15 +28,7 @@ export function classifyIngestionError(error: unknown): IngestionErrorDecision {
     };
   }
 
-  if (error instanceof TranscriptUnavailableError) {
-    return {
-      reason: normalizeFailureReason(error.message),
-      retryable: !error.terminal,
-      captureException: !error.terminal,
-    };
-  }
-
-  if (error instanceof YouTubeDiscoveryError) {
+  if (error instanceof IngestionError) {
     return {
       reason: normalizeFailureReason(error.message),
       retryable: !error.terminal,

@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import type { ContentType } from "@/lib/sources/types";
 import type { LibraryVideoProgressItem } from "@/features/videos/types";
 
 type VideoDetailsDialogProps = {
@@ -65,10 +66,11 @@ export function VideoDetailsDialog({
   onOpenChange,
 }: VideoDetailsDialogProps) {
   const [copied, setCopied] = useState(false);
-  const youtubeUrl = video ? getYoutubeVideoUrl(video.youtubeVideoId) : "";
+  const itemUrl = video ? getItemUrl(video.externalId, video.contentType) : "";
+  const itemCtaLabel = video ? getItemCtaLabel(video.contentType) : "Open item";
 
   function copyUrl() {
-    navigator.clipboard.writeText(youtubeUrl).then(() => {
+    navigator.clipboard.writeText(itemUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -83,11 +85,11 @@ export function VideoDetailsDialog({
         {video ? (
           <>
             <a
-              href={youtubeUrl}
+              href={itemUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="group relative block aspect-video w-full overflow-hidden bg-muted"
-              aria-label={`Watch '${video.title}' on YouTube`}
+              aria-label={`${itemCtaLabel} '${video.title}'`}
             >
               {video.thumbnailUrl ? (
                 <Image
@@ -141,12 +143,12 @@ export function VideoDetailsDialog({
 
                 <Button variant="outline" size="sm" className="w-full" asChild>
                   <a
-                    href={youtubeUrl}
+                    href={itemUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <ExternalLink aria-hidden="true" />
-                    Watch on YouTube
+                    {itemCtaLabel}
                   </a>
                 </Button>
               </div>
@@ -173,7 +175,7 @@ export function VideoDetailsDialog({
                     <AlertCircle size={14} aria-hidden="true" />
                     Processing failed
                   </p>
-                  <p className="mt-1 wrap-break-word text-xs text-destructive/90">
+                  <p className="mt-1 break-words text-xs text-destructive/90">
                     {video.failureReason}
                   </p>
                 </div>
@@ -198,13 +200,25 @@ function MetaCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-0.5 wrap-break-word text-sm">{value}</p>
+      <p className="mt-0.5 break-words text-sm">{value}</p>
     </div>
   );
 }
 
-function getYoutubeVideoUrl(youtubeVideoId: string): string {
-  return `https://www.youtube.com/watch?v=${encodeURIComponent(youtubeVideoId)}`;
+function getItemUrl(externalId: string, contentType: ContentType): string {
+  if (contentType === "youtube_video") {
+    return `https://www.youtube.com/watch?v=${encodeURIComponent(externalId)}`;
+  }
+
+  return externalId;
+}
+
+function getItemCtaLabel(contentType: ContentType): string {
+  if (contentType === "youtube_video") {
+    return "Watch on YouTube";
+  }
+
+  return "Open source";
 }
 
 function formatDateTime(value: string): string {

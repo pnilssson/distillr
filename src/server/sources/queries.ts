@@ -4,7 +4,7 @@ import { and, asc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { sources } from "@/db/schema";
-import type { YouTubeSourceType } from "@/lib/validation/sources";
+import type { SourceType } from "@/lib/sources/types";
 
 export type SourceStatus = "processing" | "ready" | "failed";
 
@@ -71,7 +71,7 @@ export async function createSource(
   libraryId: string,
   url: string,
   sourceKey: string,
-  sourceType: YouTubeSourceType,
+  sourceType: SourceType,
   status: SourceStatus,
   channelName: string | null,
   title: string | null,

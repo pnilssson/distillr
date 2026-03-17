@@ -7,9 +7,9 @@ import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import type { SourceListItem } from "./types";
 
 const SOURCE_TYPE_ICONS = {
-  video: Video,
-  playlist: List,
-  channel: User,
+  youtube_video: Video,
+  youtube_playlist: List,
+  youtube_channel: User,
 } as const;
 
 type Props = {

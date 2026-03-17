@@ -143,8 +143,7 @@ export async function streamChatMessage(params: StreamChatMessageParams): Promis
     isWeakEvidence: false,
   };
   let sourcesRollup: ChatSourcesRollup = {
-    videos: [],
-    extraVideos: 0,
+    items: [],
   };
 
   if (effectiveMode === "library") {
@@ -420,7 +419,7 @@ function evidenceToContextBlock(item: FusedEvidence): string {
   const label = item.kind === "insight" ? "Insight" : "Transcript";
 
   return [
-    `Video: ${item.videoTitle} (${item.youtubeVideoId})`,
+    `Item: ${item.videoTitle} [${item.contentType}] (${item.externalId})`,
     `Type: ${label}`,
     `Timestamp: ${timestamp}`,
     `Score: ${item.fusedScore.toFixed(3)}`,

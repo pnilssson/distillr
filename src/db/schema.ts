@@ -175,7 +175,7 @@ export const sources = pgTable(
       .references(() => libraries.id, { onDelete: "cascade" }),
     url: text("url").notNull(),
     sourceKey: text("source_key").notNull(),
-    sourceType: text("source_type").notNull(), // 'video' | 'playlist' | 'channel'
+    sourceType: text("source_type").notNull(), // 'youtube_video' | 'youtube_playlist' | 'youtube_channel'
     status: text("status").notNull().default("processing"), // 'processing' | 'ready' | 'failed'
     channelName: text("channel_name"),
     title: text("title"),
@@ -221,7 +221,8 @@ export const videos = pgTable(
     sourceId: uuid("source_id")
       .notNull()
       .references(() => sources.id, { onDelete: "cascade" }),
-    youtubeVideoId: text("youtube_video_id").notNull(),
+    externalId: text("youtube_video_id").notNull(),
+    contentType: text("content_type").notNull(),
     title: text("title").notNull(),
     thumbnailUrl: text("thumbnail_url").notNull(),
     channelName: text("channel_name").notNull(),
@@ -243,7 +244,11 @@ export const videos = pgTable(
       .notNull(),
   },
   (table) => [
-    unique("videos_library_video_uniq").on(table.libraryId, table.youtubeVideoId),
+    unique("videos_library_video_uniq").on(
+      table.libraryId,
+      table.contentType,
+      table.externalId,
+    ),
     index("videos_library_id_idx").on(table.libraryId),
     index("videos_source_id_idx").on(table.sourceId),
     pgPolicy("videos_select_own", {
@@ -286,8 +291,8 @@ export const videoChunks = pgTable(
     chunkIndex: integer("chunk_index").notNull(),
     chunkText: text("chunk_text").notNull(),
     videoTitle: text("video_title").notNull(),
-    startSeconds: doublePrecision("start_seconds").notNull(),
-    endSeconds: doublePrecision("end_seconds").notNull(),
+    startSeconds: doublePrecision("start_seconds"),
+    endSeconds: doublePrecision("end_seconds"),
     embedding: vector("embedding", { dimensions: 1536 }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()

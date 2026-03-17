@@ -1,3 +1,5 @@
+import type { ContentType } from "@/lib/sources/types";
+
 export type ChatSessionListItem = {
   id: string;
   title: string;
@@ -7,16 +9,17 @@ export type ChatSessionListItem = {
   messageCount: number;
 };
 
-export type ChatMessageSource = {
-  videoId: string;
-  youtubeVideoId: string;
+export type ChatMessageSourceItem = {
+  itemId: string;
+  externalId: string;
+  contentType: ContentType;
   title: string;
-  timestamps: { seconds: number; label: string; url: string }[];
+  url: string;
+  referenceCount: number;
 };
 
 export type ChatMessageSources = {
-  videos: ChatMessageSource[];
-  extraVideos: number;
+  items: ChatMessageSourceItem[];
 };
 
 export type ChatMessageItem = {

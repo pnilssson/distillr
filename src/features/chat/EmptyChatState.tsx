@@ -1,5 +1,5 @@
 const SUGGESTIONS = [
-  "What are the main themes across these videos?",
+  "What are the main themes across these sources?",
   "What tools or tactics are mentioned most?",
   "What questions does this content answer?",
   "Summarize the key points in this library.",
@@ -14,7 +14,7 @@ export function EmptyChatState({ onSuggestion }: EmptyChatStateProps) {
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <h2 className="text-base font-semibold">Ask anything about this library</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Questions are answered across all ready videos.
+        Questions are answered across all ready content in this library.
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-2">
         {SUGGESTIONS.map((suggestion) => (

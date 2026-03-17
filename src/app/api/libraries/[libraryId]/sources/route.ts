@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
-import { addSourceSchema, parseYouTubeUrl } from "@/lib/validation/sources";
+import { addSourceSchema, parseSourceUrl } from "@/lib/validation/sources";
 import { ensurePolarCustomerState } from "@/server/billing/polar/customers";
 import { inngest } from "@/server/inngest/client";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
@@ -57,7 +57,7 @@ export const POST = withApiAuth<SourcesRouteProps>(async (request, { params, use
     name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
   });
 
-  const parsedUrl = parseYouTubeUrl(parsed.data.url);
+  const parsedUrl = parseSourceUrl(parsed.data.url);
   if (!parsedUrl) {
     return NextResponse.json(
       { error: "Must be a valid YouTube video, playlist, or channel URL." },
@@ -78,7 +78,7 @@ export const POST = withApiAuth<SourcesRouteProps>(async (request, { params, use
     libraryId,
     parsed.data.url,
     parsedUrl.sourceKey,
-    parsedUrl.type,
+    parsedUrl.sourceType,
     "processing",
     null,
     null,
@@ -149,7 +149,7 @@ export const POST = withApiAuth<SourcesRouteProps>(async (request, { params, use
 
   await captureServerEvent(user.id, "source_added", {
     library_id: libraryId,
-    source_type: parsedUrl.type,
+    source_type: parsedUrl.sourceType,
   });
 
   return NextResponse.json({ source }, { status: 201 });

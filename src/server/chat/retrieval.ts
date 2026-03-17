@@ -1,9 +1,11 @@
 import "server-only";
 
+import * as Sentry from "@sentry/nextjs";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { videoChunks, videoInsights, videos } from "@/db/schema";
+import { isContentType, type ContentType } from "@/lib/sources/types";
 import type { RetrievalCandidate } from "@/server/chat/types";
 
 const CHUNK_VECTOR_LIMIT = 40;
@@ -27,6 +29,25 @@ export async function runHybridRetrieval(params: RetrievalParams): Promise<Retri
   return [...chunkVector, ...insightVector, ...chunkFts];
 }
 
+function normalizeContentType(contentType: string, candidateId: string): ContentType | null {
+  if (isContentType(contentType)) {
+    return contentType;
+  }
+
+  Sentry.captureMessage("Invalid content type in retrieval row.", {
+    level: "warning",
+    tags: {
+      area: "chat.retrieval.invalid_content_type",
+    },
+    extra: {
+      candidateId,
+      contentType,
+    },
+  });
+
+  return null;
+}
+
 async function searchChunkVector(params: RetrievalParams): Promise<RetrievalCandidate[]> {
   if (params.embedding.length === 0) {
     return [];
@@ -40,7 +61,8 @@ async function searchChunkVector(params: RetrievalParams): Promise<RetrievalCand
       id: videoChunks.id,
       rawScore: cosineDistance,
       videoId: videoChunks.videoId,
-      youtubeVideoId: videos.youtubeVideoId,
+      externalId: videos.externalId,
+      contentType: videos.contentType,
       videoTitle: videoChunks.videoTitle,
       text: videoChunks.chunkText,
       startSeconds: videoChunks.startSeconds,
@@ -60,18 +82,26 @@ async function searchChunkVector(params: RetrievalParams): Promise<RetrievalCand
     .orderBy(asc(cosineDistance))
     .limit(CHUNK_VECTOR_LIMIT);
 
-  return rows.map((row) => ({
-    id: row.id,
-    channel: "chunk_vector",
-    rawScore: Number(row.rawScore ?? 1),
-    videoId: row.videoId,
-    youtubeVideoId: row.youtubeVideoId,
-    videoTitle: row.videoTitle,
-    text: row.text,
-    insightType: null,
-    startSeconds: row.startSeconds,
-    endSeconds: row.endSeconds,
-  }));
+  return rows.flatMap((row) => {
+    const contentType = normalizeContentType(row.contentType, row.id);
+    if (!contentType) {
+      return [];
+    }
+
+    return [{
+      id: row.id,
+      channel: "chunk_vector" as const,
+      rawScore: Number(row.rawScore ?? 1),
+      videoId: row.videoId,
+      externalId: row.externalId,
+      contentType,
+      videoTitle: row.videoTitle,
+      text: row.text,
+      insightType: null,
+      startSeconds: row.startSeconds,
+      endSeconds: row.endSeconds,
+    }];
+  });
 }
 
 async function searchInsightVector(params: RetrievalParams): Promise<RetrievalCandidate[]> {
@@ -87,7 +117,8 @@ async function searchInsightVector(params: RetrievalParams): Promise<RetrievalCa
       id: videoInsights.id,
       rawScore: cosineDistance,
       videoId: videoInsights.videoId,
-      youtubeVideoId: videos.youtubeVideoId,
+      externalId: videos.externalId,
+      contentType: videos.contentType,
       videoTitle: videos.title,
       text: videoInsights.content,
       insightType: videoInsights.insightType,
@@ -106,18 +137,26 @@ async function searchInsightVector(params: RetrievalParams): Promise<RetrievalCa
     .orderBy(asc(cosineDistance))
     .limit(INSIGHT_VECTOR_LIMIT);
 
-  return rows.map((row) => ({
-    id: row.id,
-    channel: "insight_vector",
-    rawScore: Number(row.rawScore ?? 1),
-    videoId: row.videoId,
-    youtubeVideoId: row.youtubeVideoId,
-    videoTitle: row.videoTitle,
-    text: row.text,
-    insightType: row.insightType,
-    startSeconds: null,
-    endSeconds: null,
-  }));
+  return rows.flatMap((row) => {
+    const contentType = normalizeContentType(row.contentType, row.id);
+    if (!contentType) {
+      return [];
+    }
+
+    return [{
+      id: row.id,
+      channel: "insight_vector" as const,
+      rawScore: Number(row.rawScore ?? 1),
+      videoId: row.videoId,
+      externalId: row.externalId,
+      contentType,
+      videoTitle: row.videoTitle,
+      text: row.text,
+      insightType: row.insightType,
+      startSeconds: null,
+      endSeconds: null,
+    }];
+  });
 }
 
 async function searchChunkFts(params: RetrievalParams): Promise<RetrievalCandidate[]> {
@@ -134,7 +173,8 @@ async function searchChunkFts(params: RetrievalParams): Promise<RetrievalCandida
       id: videoChunks.id,
       rawScore: rank,
       videoId: videoChunks.videoId,
-      youtubeVideoId: videos.youtubeVideoId,
+      externalId: videos.externalId,
+      contentType: videos.contentType,
       videoTitle: videoChunks.videoTitle,
       text: videoChunks.chunkText,
       startSeconds: videoChunks.startSeconds,
@@ -155,16 +195,24 @@ async function searchChunkFts(params: RetrievalParams): Promise<RetrievalCandida
     .orderBy(desc(rank))
     .limit(CHUNK_FTS_LIMIT);
 
-  return rows.map((row) => ({
-    id: row.id,
-    channel: "chunk_fts",
-    rawScore: Number(row.rawScore ?? 0),
-    videoId: row.videoId,
-    youtubeVideoId: row.youtubeVideoId,
-    videoTitle: row.videoTitle,
-    text: row.text,
-    insightType: null,
-    startSeconds: row.startSeconds,
-    endSeconds: row.endSeconds,
-  }));
+  return rows.flatMap((row) => {
+    const contentType = normalizeContentType(row.contentType, row.id);
+    if (!contentType) {
+      return [];
+    }
+
+    return [{
+      id: row.id,
+      channel: "chunk_fts" as const,
+      rawScore: Number(row.rawScore ?? 0),
+      videoId: row.videoId,
+      externalId: row.externalId,
+      contentType,
+      videoTitle: row.videoTitle,
+      text: row.text,
+      insightType: null,
+      startSeconds: row.startSeconds,
+      endSeconds: row.endSeconds,
+    }];
+  });
 }

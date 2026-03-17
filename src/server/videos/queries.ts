@@ -1,15 +1,18 @@
 import "server-only";
 
+import * as Sentry from "@sentry/nextjs";
 import { and, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { sources, videos } from "@/db/schema";
+import { isContentType, type ContentType } from "@/lib/sources/types";
 
 export type VideoIngestionStatus = "pending" | "processing" | "ready" | "failed";
 
 export type LibraryVideoProgressItem = {
   id: string;
-  youtubeVideoId: string;
+  externalId: string;
+  contentType: ContentType;
   title: string;
   thumbnailUrl: string;
   channelName: string;
@@ -42,7 +45,8 @@ export async function getLibraryVideosProgress(
     db
       .select({
         id: videos.id,
-        youtubeVideoId: videos.youtubeVideoId,
+        externalId: videos.externalId,
+        contentType: videos.contentType,
         title: videos.title,
         thumbnailUrl: videos.thumbnailUrl,
         channelName: videos.channelName,
@@ -69,10 +73,18 @@ export async function getLibraryVideosProgress(
 
   const sourceProcessingCount = Number(sourceProcessingCountResult[0]?.count ?? 0);
 
-  const normalizedVideos = videoRows.map((row) => ({
-    ...row,
-    status: normalizeStatus(row.status),
-  }));
+  const normalizedVideos = videoRows.flatMap((row) => {
+    const contentType = normalizeContentType(row.contentType, row.id);
+    if (!contentType) {
+      return [];
+    }
+
+    return [{
+      ...row,
+      contentType,
+      status: normalizeStatus(row.status),
+    }];
+  });
 
   const counts = {
     total: normalizedVideos.length,
@@ -120,4 +132,23 @@ function normalizeStatus(status: string): VideoIngestionStatus {
   }
 
   return "pending";
+}
+
+function normalizeContentType(contentType: string, videoId: string): ContentType | null {
+  if (isContentType(contentType)) {
+    return contentType;
+  }
+
+  Sentry.captureMessage("Invalid content type in videos query row.", {
+    level: "warning",
+    tags: {
+      area: "videos.queries.invalid_content_type",
+    },
+    extra: {
+      videoId,
+      contentType,
+    },
+  });
+
+  return null;
 }

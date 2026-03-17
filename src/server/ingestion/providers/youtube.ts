@@ -1,13 +1,23 @@
 import "server-only";
 
-import type { YouTubeSourceType } from "@/lib/validation/sources";
 import { env } from "@/server/core/env";
+import {
+  IngestionError,
+  type ContentDiscovery,
+  type ContentFetcher,
+  type ContentSegment,
+  type DiscoveryResult,
+  type DiscoveredItem,
+  type FetchedContent,
+  type SourceType,
+} from "@/server/ingestion/providers/types";
 
 const YOUTUBE_API_BASE_URL = "https://www.googleapis.com/youtube/v3";
 const YOUTUBE_MAX_PAGE_SIZE = 50;
 const YOUTUBE_VIDEO_BATCH_SIZE = 50;
 const MAX_PLAYLIST_VIDEOS = 1000;
 const MAX_PLAYLIST_PAGES = 20;
+const TRANSCRIPT_API_URL = "https://transcriptapi.com/api/v2/youtube/transcript";
 
 type YoutubePlaylistItemsResponse = {
   items?: Array<{
@@ -70,100 +80,176 @@ type YoutubeApiErrorResponse = {
   };
 };
 
-export type DiscoveredVideo = {
-  youtubeVideoId: string;
-  title: string;
-  thumbnailUrl: string;
-  channelName: string;
-  channelId: string;
-  publishedAt: Date;
-  durationSeconds: number;
+type TranscriptApiSegment = {
+  start?: number;
+  duration?: number;
+  text?: string;
 };
 
-export type SourceDiscoveryResult = {
-  videos: DiscoveredVideo[];
-  sourceChannelName: string | null;
-  sourceTitle: string | null;
+type TranscriptApiErrorDetail = {
+  message?: string;
 };
 
-export class YouTubeDiscoveryError extends Error {
-  readonly terminal: boolean;
+type TranscriptApiMetadata = {
+  title?: string;
+};
 
+type TranscriptApiResponse = {
+  transcript?: TranscriptApiSegment[];
+  metadata?: TranscriptApiMetadata;
+  detail?: string | TranscriptApiErrorDetail;
+};
+
+export class YouTubeDiscoveryError extends IngestionError {
   constructor(message: string, terminal: boolean) {
-    super(message);
+    super(message, terminal);
     this.name = "YouTubeDiscoveryError";
-    this.terminal = terminal;
   }
 }
 
-export async function discoverVideosFromSource(
-  url: string,
-  sourceType: YouTubeSourceType,
-): Promise<SourceDiscoveryResult> {
+export class TranscriptUnavailableError extends IngestionError {
+  constructor(message: string, terminal: boolean) {
+    super(message, terminal);
+    this.name = "TranscriptUnavailableError";
+  }
+}
+
+export const youtubeDiscovery: ContentDiscovery = {
+  async discover(url, sourceType) {
+    return discoverFromYouTube(url, sourceType);
+  },
+};
+
+export const youtubeFetcher: ContentFetcher = {
+  async fetch(externalId) {
+    return fetchYouTubeContent(externalId);
+  },
+};
+
+async function discoverFromYouTube(url: string, sourceType: SourceType): Promise<DiscoveryResult> {
   const playlistMetadata =
-    sourceType === "playlist" ? await fetchPlaylistMetadata(extractPlaylistId(url)) : null;
+    sourceType === "youtube_playlist" ? await fetchPlaylistMetadata(extractPlaylistId(url)) : null;
 
-  const videoIds = await discoverVideoIds(url, sourceType);
+  const externalIds = await discoverExternalIds(url, sourceType);
 
-  if (videoIds.length === 0) {
+  if (externalIds.length === 0) {
     return {
-      videos: [],
-      sourceChannelName: playlistMetadata?.channelName ?? null,
-      sourceTitle: sourceType === "playlist" ? playlistMetadata?.title ?? null : null,
+      items: [],
+      sourceAuthorName: playlistMetadata?.authorName ?? null,
+      sourceTitle: sourceType === "youtube_playlist" ? playlistMetadata?.title ?? null : null,
     };
   }
 
-  const videos = await fetchVideoMetadata(videoIds);
-  const primaryVideo = videos[0] ?? null;
+  const items = await fetchVideoMetadata(externalIds);
+  const primaryItem = items[0] ?? null;
 
-  if (sourceType === "video") {
+  if (sourceType === "youtube_video") {
     return {
-      videos,
-      sourceChannelName: primaryVideo?.channelName ?? null,
-      sourceTitle: primaryVideo?.title ?? null,
+      items,
+      sourceAuthorName: primaryItem?.authorName ?? null,
+      sourceTitle: primaryItem?.title ?? null,
     };
   }
 
-  if (sourceType === "playlist") {
+  if (sourceType === "youtube_playlist") {
     return {
-      videos,
-      sourceChannelName: playlistMetadata?.channelName ?? primaryVideo?.channelName ?? null,
+      items,
+      sourceAuthorName: playlistMetadata?.authorName ?? primaryItem?.authorName ?? null,
       sourceTitle: playlistMetadata?.title ?? null,
     };
   }
 
   return {
-    videos,
-    sourceChannelName: primaryVideo?.channelName ?? null,
+    items,
+    sourceAuthorName: primaryItem?.authorName ?? null,
     sourceTitle: null,
   };
 }
 
-async function discoverVideoIds(url: string, sourceType: YouTubeSourceType): Promise<string[]> {
+async function fetchYouTubeContent(externalId: string): Promise<FetchedContent> {
+  if (!env.TRANSCRIPTAPI_API_KEY) {
+    throw new TranscriptUnavailableError(
+      "Source processing is temporarily unavailable. Please try again.",
+      true,
+    );
+  }
+
+  const url = new URL(TRANSCRIPT_API_URL);
+  url.searchParams.set("video_url", `https://www.youtube.com/watch?v=${externalId}`);
+  url.searchParams.set("format", "json");
+  url.searchParams.set("include_timestamp", "true");
+  url.searchParams.set("send_metadata", "true");
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${env.TRANSCRIPTAPI_API_KEY}`,
+    },
+    signal: AbortSignal.timeout(20000),
+  });
+
+  const body = await parseTranscriptJson(response);
+
+  if (!response.ok) {
+    const message = getTranscriptErrorMessage(body, response.status);
+    const normalizedMessage = message.toLowerCase();
+    const terminal =
+      response.status === 400 ||
+      response.status === 401 ||
+      response.status === 402 ||
+      response.status === 404 ||
+      response.status === 422 ||
+      normalizedMessage.includes("no caption") ||
+      normalizedMessage.includes("no transcript") ||
+      normalizedMessage.includes("captions are disabled") ||
+      normalizedMessage.includes("transcript is disabled");
+
+    throw new TranscriptUnavailableError(message, terminal);
+  }
+
+  const segments = normalizeTranscriptSegments(getTranscriptSegments(body));
+
+  if (segments.length === 0) {
+    throw new TranscriptUnavailableError("No transcript segments were returned for this video.", true);
+  }
+
+  return {
+    title: body?.metadata?.title ?? null,
+    segments,
+    raw: body ?? {},
+  };
+}
+
+async function discoverExternalIds(url: string, sourceType: SourceType): Promise<string[]> {
   switch (sourceType) {
-    case "video": {
+    case "youtube_video": {
       const videoId = extractVideoId(url);
       if (!videoId) {
-        throw new Error("Could not parse YouTube video ID from URL.");
+        throw new YouTubeDiscoveryError("Could not parse YouTube video ID from URL.", true);
       }
+
       return [videoId];
     }
-    case "playlist": {
+    case "youtube_playlist": {
       const playlistId = extractPlaylistId(url);
       if (!playlistId) {
-        throw new Error("Could not parse YouTube playlist ID from URL.");
+        throw new YouTubeDiscoveryError("Could not parse YouTube playlist ID from URL.", true);
       }
+
       return fetchPlaylistVideoIds(playlistId);
     }
-    case "channel": {
+    case "youtube_channel": {
       const uploadsPlaylistId = await resolveUploadsPlaylistId(url);
       if (!uploadsPlaylistId) {
-        throw new Error("Could not resolve YouTube channel uploads playlist.");
+        throw new YouTubeDiscoveryError("Could not resolve YouTube channel uploads playlist.", true);
       }
+
       return fetchPlaylistVideoIds(uploadsPlaylistId);
     }
-    default:
-      return [];
+    default: {
+      const exhaustiveCheck: never = sourceType;
+      throw new YouTubeDiscoveryError(`Unsupported source type: ${exhaustiveCheck}`, true);
+    }
   }
 }
 
@@ -205,7 +291,7 @@ async function fetchPlaylistVideoIds(playlistId: string): Promise<string[]> {
 
 async function fetchPlaylistMetadata(
   playlistId: string | null,
-): Promise<{ title: string | null; channelName: string | null } | null> {
+): Promise<{ title: string | null; authorName: string | null } | null> {
   if (!playlistId) {
     return null;
   }
@@ -220,15 +306,15 @@ async function fetchPlaylistMetadata(
 
   return {
     title: item?.snippet?.title?.trim() || null,
-    channelName: item?.snippet?.channelTitle?.trim() || null,
+    authorName: item?.snippet?.channelTitle?.trim() || null,
   };
 }
 
-async function fetchVideoMetadata(videoIds: string[]): Promise<DiscoveredVideo[]> {
-  const discovered: DiscoveredVideo[] = [];
+async function fetchVideoMetadata(externalIds: string[]): Promise<DiscoveredItem[]> {
+  const discovered: DiscoveredItem[] = [];
 
-  for (let i = 0; i < videoIds.length; i += YOUTUBE_VIDEO_BATCH_SIZE) {
-    const batch = videoIds.slice(i, i + YOUTUBE_VIDEO_BATCH_SIZE);
+  for (let i = 0; i < externalIds.length; i += YOUTUBE_VIDEO_BATCH_SIZE) {
+    const batch = externalIds.slice(i, i + YOUTUBE_VIDEO_BATCH_SIZE);
 
     const response = await fetchYouTube<YoutubeVideosResponse>("videos", {
       part: "snippet,contentDetails",
@@ -237,24 +323,24 @@ async function fetchVideoMetadata(videoIds: string[]): Promise<DiscoveredVideo[]
     });
 
     for (const item of response.items ?? []) {
-      const youtubeVideoId = item.id;
+      const externalId = item.id;
       const title = item.snippet?.title;
       const thumbnailUrl =
         item.snippet?.thumbnails?.maxres?.url ??
         item.snippet?.thumbnails?.high?.url ??
         item.snippet?.thumbnails?.medium?.url ??
         item.snippet?.thumbnails?.default?.url;
-      const channelName = item.snippet?.channelTitle;
-      const channelId = item.snippet?.channelId;
+      const authorName = item.snippet?.channelTitle;
+      const authorId = item.snippet?.channelId;
       const publishedAtRaw = item.snippet?.publishedAt;
       const durationRaw = item.contentDetails?.duration;
 
       if (
-        !youtubeVideoId ||
+        !externalId ||
         !title ||
         !thumbnailUrl ||
-        !channelName ||
-        !channelId ||
+        !authorName ||
+        !authorId ||
         !publishedAtRaw ||
         !durationRaw
       ) {
@@ -267,23 +353,24 @@ async function fetchVideoMetadata(videoIds: string[]): Promise<DiscoveredVideo[]
       }
 
       discovered.push({
-        youtubeVideoId,
+        externalId,
+        contentType: "youtube_video",
         title,
         thumbnailUrl,
-        channelName,
-        channelId,
+        authorName,
+        authorId,
         publishedAt,
         durationSeconds: parseDurationSeconds(durationRaw),
       });
     }
   }
 
-  const uniqueByVideoId = new Map<string, DiscoveredVideo>();
+  const uniqueByExternalId = new Map<string, DiscoveredItem>();
   for (const video of discovered) {
-    uniqueByVideoId.set(video.youtubeVideoId, video);
+    uniqueByExternalId.set(video.externalId, video);
   }
 
-  return Array.from(uniqueByVideoId.values());
+  return Array.from(uniqueByExternalId.values());
 }
 
 async function resolveUploadsPlaylistId(url: string): Promise<string | null> {
@@ -388,7 +475,10 @@ function parseDurationSeconds(duration: string): number {
 
 async function fetchYouTube<T>(endpoint: string, params: Record<string, string | undefined>): Promise<T> {
   if (!env.YOUTUBE_DATA_API_KEY) {
-    throw new Error("Missing YOUTUBE_DATA_API_KEY environment variable.");
+    throw new YouTubeDiscoveryError(
+      "Source processing is temporarily unavailable. Please try again.",
+      true,
+    );
   }
 
   const url = new URL(`${YOUTUBE_API_BASE_URL}/${endpoint}`);
@@ -471,4 +561,87 @@ function getUserFacingYouTubeErrorMessage(status: number, body: YoutubeApiErrorR
   }
 
   return "Could not process this source. Check the URL and try again.";
+}
+
+async function parseTranscriptJson(response: Response): Promise<TranscriptApiResponse | null> {
+  try {
+    return (await response.json()) as TranscriptApiResponse;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeTranscriptSegments(segments: TranscriptApiSegment[]): ContentSegment[] {
+  const normalized = segments
+    .map((segment) => {
+      const startSeconds = Number(segment.start ?? 0);
+      const durationSeconds = Number(segment.duration ?? 0);
+      const text = (segment.text ?? "").trim().replace(/\s+/g, " ");
+
+      if (!text) {
+        return null;
+      }
+
+      return {
+        startSeconds: Number.isFinite(startSeconds) ? startSeconds : 0,
+        durationSeconds:
+          Number.isFinite(durationSeconds) && durationSeconds > 0 ? durationSeconds : null,
+        text,
+      };
+    })
+    .filter(
+      (
+        segment,
+      ): segment is { startSeconds: number; durationSeconds: number | null; text: string } =>
+        Boolean(segment),
+    )
+    .sort((a, b) => a.startSeconds - b.startSeconds);
+
+  return normalized.map((segment, index) => {
+    const nextStart = normalized[index + 1]?.startSeconds;
+    const durationEnd =
+      typeof segment.durationSeconds === "number"
+        ? segment.startSeconds + segment.durationSeconds
+        : null;
+    const fallbackEnd = segment.startSeconds + 4;
+    let endSeconds = fallbackEnd;
+
+    if (typeof durationEnd === "number" && durationEnd > segment.startSeconds) {
+      endSeconds = durationEnd;
+    }
+
+    if (typeof nextStart === "number" && nextStart > segment.startSeconds) {
+      endSeconds = Math.min(endSeconds, nextStart);
+    }
+
+    return {
+      startSeconds: segment.startSeconds,
+      endSeconds,
+      text: segment.text,
+    };
+  });
+}
+
+function getTranscriptSegments(body: TranscriptApiResponse | null): TranscriptApiSegment[] {
+  return Array.isArray(body?.transcript) ? body.transcript : [];
+}
+
+function getTranscriptErrorMessage(body: TranscriptApiResponse | null, status: number): string {
+  const detail = body?.detail;
+
+  if (typeof detail === "string" && detail.length > 0) {
+    return detail;
+  }
+
+  if (
+    detail &&
+    typeof detail === "object" &&
+    "message" in detail &&
+    typeof detail.message === "string" &&
+    detail.message.length > 0
+  ) {
+    return detail.message;
+  }
+
+  return `Transcript API request failed (${status}).`;
 }

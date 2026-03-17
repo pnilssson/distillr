@@ -2,23 +2,23 @@ import "server-only";
 
 import { getEncoding } from "js-tiktoken";
 
-import type { TranscriptSegment } from "@/server/ingestion/transcript";
+import type { ContentSegment } from "@/server/ingestion/providers/types";
 
 const encoder = getEncoding("cl100k_base");
 
 const MAX_CHUNK_TOKENS = 400;
 const OVERLAP_TOKENS = 60;
 
-export type TranscriptChunk = {
+export type ContentChunk = {
   chunkIndex: number;
   chunkText: string;
-  startSeconds: number;
-  endSeconds: number;
+  startSeconds: number | null;
+  endSeconds: number | null;
   tokenCount: number;
 };
 
-export function chunkTranscriptSegments(segments: TranscriptSegment[]): {
-  chunks: TranscriptChunk[];
+export function chunkContentSegments(segments: ContentSegment[]): {
+  chunks: ContentChunk[];
   totalTokenCount: number;
 } {
   if (segments.length === 0) {
@@ -35,10 +35,10 @@ export function chunkTranscriptSegments(segments: TranscriptSegment[]): {
     return {
       chunkIndex,
       chunkText,
-      startSeconds: mergedSegments[0]?.startSeconds ?? 0,
-      endSeconds: mergedSegments[mergedSegments.length - 1]?.endSeconds ?? 0,
+      startSeconds: mergedSegments[0]?.startSeconds ?? null,
+      endSeconds: mergedSegments[mergedSegments.length - 1]?.endSeconds ?? null,
       tokenCount: countTokens(chunkText),
-    } satisfies TranscriptChunk;
+    } satisfies ContentChunk;
   });
 
   const totalTokenCount = chunks.reduce((sum, chunk) => sum + chunk.tokenCount, 0);
@@ -46,9 +46,9 @@ export function chunkTranscriptSegments(segments: TranscriptSegment[]): {
   return { chunks, totalTokenCount };
 }
 
-function buildBaseChunks(segments: TranscriptSegment[]): TranscriptSegment[][] {
-  const chunks: TranscriptSegment[][] = [];
-  let currentChunk: TranscriptSegment[] = [];
+function buildBaseChunks(segments: ContentSegment[]): ContentSegment[][] {
+  const chunks: ContentSegment[][] = [];
+  let currentChunk: ContentSegment[] = [];
   let currentTokenCount = 0;
 
   for (const segment of segments) {
@@ -71,8 +71,8 @@ function buildBaseChunks(segments: TranscriptSegment[]): TranscriptSegment[][] {
   return chunks;
 }
 
-function getTailOverlapSegments(previousChunk: TranscriptSegment[]): TranscriptSegment[] {
-  const overlap: TranscriptSegment[] = [];
+function getTailOverlapSegments(previousChunk: ContentSegment[]): ContentSegment[] {
+  const overlap: ContentSegment[] = [];
   let tokenCount = 0;
 
   for (let i = previousChunk.length - 1; i >= 0; i -= 1) {

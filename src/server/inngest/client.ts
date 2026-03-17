@@ -2,6 +2,8 @@ import "server-only";
 
 import { EventSchemas, Inngest } from "inngest";
 
+import type { ContentType } from "@/lib/sources/types";
+
 export const inngest = new Inngest({
   id: "distillr",
   schemas: new EventSchemas().fromRecord<{
@@ -18,7 +20,7 @@ export const inngest = new Inngest({
         libraryId: string;
         sourceId: string;
         videoId: string;
-        youtubeVideoId: string;
+        contentType: ContentType;
       };
     };
     "billing.usage.chat.record": {

@@ -22,7 +22,8 @@ type AggregatedEvidence = {
   id: string;
   kind: "chunk" | "insight";
   videoId: string;
-  youtubeVideoId: string;
+  externalId: string;
+  contentType: FusedEvidence["contentType"];
   videoTitle: string;
   text: string;
   insightType: string | null;
@@ -51,9 +52,10 @@ export function fuseRetrievalCandidates(candidates: RetrievalCandidate[]): Fusio
     if (!existing) {
       aggregated.set(key, {
         id: candidate.id,
-        kind: candidate.startSeconds === null ? "insight" : "chunk",
+        kind: candidate.channel === "insight_vector" ? "insight" : "chunk",
         videoId: candidate.videoId,
-        youtubeVideoId: candidate.youtubeVideoId,
+        externalId: candidate.externalId,
+        contentType: candidate.contentType,
         videoTitle: candidate.videoTitle,
         text: candidate.text,
         insightType: candidate.insightType,
@@ -96,7 +98,8 @@ export function fuseRetrievalCandidates(candidates: RetrievalCandidate[]): Fusio
         id: item.id,
         kind: item.kind,
         videoId: item.videoId,
-        youtubeVideoId: item.youtubeVideoId,
+        externalId: item.externalId,
+        contentType: item.contentType,
         videoTitle: item.videoTitle,
         text: item.text,
         insightType: item.insightType,
@@ -156,8 +159,9 @@ export function fuseRetrievalCandidates(candidates: RetrievalCandidate[]): Fusio
 function candidateKey(candidate: RetrievalCandidate): string {
   const normalizedText = normalizeText(candidate.text);
 
-  if (candidate.startSeconds !== null) {
-    return `${candidate.videoId}:chunk:${Math.floor(candidate.startSeconds)}:${normalizedText}`;
+  if (candidate.channel === "chunk_vector" || candidate.channel === "chunk_fts") {
+    const secondKey = candidate.startSeconds === null ? "na" : String(Math.floor(candidate.startSeconds));
+    return `${candidate.videoId}:chunk:${secondKey}:${normalizedText}`;
   }
 
   return `${candidate.videoId}:insight:${candidate.insightType ?? "unknown"}:${normalizedText}`;

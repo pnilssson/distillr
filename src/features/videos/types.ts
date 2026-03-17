@@ -1,8 +1,11 @@
+import type { ContentType } from "@/lib/sources/types";
+
 export type VideoIngestionStatus = "pending" | "processing" | "ready" | "failed";
 
 export type LibraryVideoProgressItem = {
   id: string;
-  youtubeVideoId: string;
+  externalId: string;
+  contentType: ContentType;
   title: string;
   thumbnailUrl: string;
   channelName: string;

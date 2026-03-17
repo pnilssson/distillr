@@ -6,12 +6,12 @@ import { NonRetriableError } from "inngest";
 
 import { db } from "@/db";
 import { sources, videos } from "@/db/schema";
-import type { YouTubeSourceType } from "@/lib/validation/sources";
 import { getPolarCustomerState } from "@/server/billing/polar/customers";
 import { isPolarBillingEnabled } from "@/server/billing/polar/config";
 import { buildBillingSnapshot } from "@/server/billing/polar/state";
 import { classifyIngestionError } from "@/server/ingestion/errors";
-import { discoverVideosFromSource } from "@/server/ingestion/youtube-discovery";
+import { getDiscovery } from "@/server/ingestion/providers/registry";
+import { isContentType, isSourceType, type ContentType } from "@/server/ingestion/providers/types";
 import { inngest } from "@/server/inngest/client";
 import { runIngestionStep } from "@/server/inngest/ingestion-step";
 import { shouldStopRetrying } from "@/server/inngest/retry-policy";
@@ -21,7 +21,8 @@ const VIDEO_EVENT_BATCH_SIZE = 100;
 
 type VideoRow = {
   id: string;
-  youtubeVideoId: string;
+  contentType: string;
+  externalId: string;
   status: string;
 };
 
@@ -77,6 +78,12 @@ export const sourceAdded = inngest.createFunction(
       failureContext.libraryId = source.libraryId;
       failureContext.sourceId = source.id;
 
+      if (!isSourceType(source.sourceType)) {
+        throw new NonRetriableError(`Unsupported source type: ${source.sourceType}`);
+      }
+
+      const sourceType = source.sourceType;
+
       await step.run("mark-source-processing", async () => {
         await db
           .update(sources)
@@ -93,17 +100,18 @@ export const sourceAdded = inngest.createFunction(
           );
       });
 
-      const discoveryResult = await runIngestionStep(step, "discover-source-videos", async () => {
-        return discoverVideosFromSource(source.url, source.sourceType as YouTubeSourceType);
+      const discoveryResult = await runIngestionStep(step, "discover-source-items", async () => {
+        const discovery = getDiscovery(sourceType);
+        return discovery.discover(source.url, sourceType);
       });
 
-      const discoveredVideos = discoveryResult.videos;
+      const discoveredItems = discoveryResult.items;
 
       await step.run("update-source-metadata", async () => {
         await db
           .update(sources)
           .set({
-            channelName: discoveryResult.sourceChannelName,
+            channelName: discoveryResult.sourceAuthorName,
             title: discoveryResult.sourceTitle,
             updatedAt: sql`now()`,
           })
@@ -116,8 +124,8 @@ export const sourceAdded = inngest.createFunction(
           );
       });
 
-      if (discoveredVideos.length === 0) {
-        await step.run("mark-source-ready-no-videos", async () => {
+      if (discoveredItems.length === 0) {
+        await step.run("mark-source-ready-no-items", async () => {
           await db
             .update(sources)
             .set({
@@ -140,35 +148,36 @@ export const sourceAdded = inngest.createFunction(
         };
       }
 
-      const dedupedVideos = Array.from(
-        new Map(discoveredVideos.map((video) => [video.youtubeVideoId, video])).values(),
+      const dedupedItems = Array.from(
+        new Map(discoveredItems.map((item) => [`${item.contentType}:${item.externalId}`, item])).values(),
       );
 
       const upsertedRows: VideoRow[] = [];
 
-      for (let i = 0; i < dedupedVideos.length; i += VIDEO_DB_BATCH_SIZE) {
-        const batch = dedupedVideos.slice(i, i + VIDEO_DB_BATCH_SIZE);
+      for (let i = 0; i < dedupedItems.length; i += VIDEO_DB_BATCH_SIZE) {
+        const batch = dedupedItems.slice(i, i + VIDEO_DB_BATCH_SIZE);
         const batchId = i / VIDEO_DB_BATCH_SIZE;
 
         const rows = await step.run(`upsert-videos-${batchId}`, async () => {
           return db
             .insert(videos)
             .values(
-              batch.map((video) => ({
+              batch.map((item) => ({
                 userId: source.userId,
                 libraryId: source.libraryId,
                 sourceId: source.id,
-                youtubeVideoId: video.youtubeVideoId,
-                title: video.title,
-                thumbnailUrl: video.thumbnailUrl,
-                channelName: video.channelName,
-                channelId: video.channelId,
-                publishedAt: new Date(video.publishedAt),
-                durationSeconds: video.durationSeconds,
+                externalId: item.externalId,
+                contentType: item.contentType,
+                title: item.title,
+                thumbnailUrl: item.thumbnailUrl,
+                channelName: item.authorName,
+                channelId: item.authorId,
+                publishedAt: new Date(item.publishedAt),
+                durationSeconds: item.durationSeconds,
               })),
             )
             .onConflictDoUpdate({
-              target: [videos.libraryId, videos.youtubeVideoId],
+              target: [videos.libraryId, videos.contentType, videos.externalId],
               set: {
                 sourceId: sql`excluded.source_id`,
                 title: sql`excluded.title`,
@@ -182,7 +191,8 @@ export const sourceAdded = inngest.createFunction(
             })
             .returning({
               id: videos.id,
-              youtubeVideoId: videos.youtubeVideoId,
+              contentType: videos.contentType,
+              externalId: videos.externalId,
               status: videos.status,
             });
         });
@@ -190,12 +200,12 @@ export const sourceAdded = inngest.createFunction(
         upsertedRows.push(...rows);
       }
 
-      const rowsByYoutubeId = new Map(
-        upsertedRows.map((row) => [row.youtubeVideoId, row] as const),
+      const rowsByIdentity = new Map(
+        upsertedRows.map((row) => [`${row.contentType}:${row.externalId}`, row] as const),
       );
 
-      const queueCandidates = dedupedVideos
-        .map((video) => rowsByYoutubeId.get(video.youtubeVideoId))
+      const queueCandidates = dedupedItems
+        .map((item) => rowsByIdentity.get(`${item.contentType}:${item.externalId}`))
         .filter((row): row is VideoRow => Boolean(row))
         .filter((row) => row.status === "pending" || row.status === "failed");
 
@@ -205,11 +215,7 @@ export const sourceAdded = inngest.createFunction(
 
       const allowedCount = Math.max(
         0,
-        Math.min(
-          queueCandidates.length,
-          allowance.monthlyRemaining,
-          allowance.lifetimeRemaining,
-        ),
+        Math.min(queueCandidates.length, allowance.monthlyRemaining, allowance.lifetimeRemaining),
       );
 
       const rowsToQueue = queueCandidates.slice(0, allowedCount);
@@ -245,16 +251,20 @@ export const sourceAdded = inngest.createFunction(
 
         await step.sendEvent(
           `enqueue-video-ingest-${batchId}`,
-          batch.map((row) => ({
-            name: "video.ingest" as const,
-            data: {
-              userId: source.userId,
-              libraryId: source.libraryId,
-              sourceId: source.id,
-              videoId: row.id,
-              youtubeVideoId: row.youtubeVideoId,
-            },
-          })),
+          batch.map((row) => {
+            const contentType = normalizeContentTypeForEvent(row.contentType);
+
+            return {
+              name: "video.ingest" as const,
+              data: {
+                userId: source.userId,
+                libraryId: source.libraryId,
+                sourceId: source.id,
+                videoId: row.id,
+                contentType,
+              },
+            };
+          }),
         );
       }
 
@@ -276,7 +286,7 @@ export const sourceAdded = inngest.createFunction(
 
       return {
         sourceId: source.id,
-        discovered: dedupedVideos.length,
+        discovered: dedupedItems.length,
         queued: rowsToQueue.length,
         overflow: overflowRows.length,
       };
@@ -353,4 +363,12 @@ function getOverflowReason(allowance: IngestionAllowance): string {
   }
 
   return "You have reached your video ingestion limit for this plan.";
+}
+
+function normalizeContentTypeForEvent(contentType: string): ContentType {
+  if (isContentType(contentType)) {
+    return contentType;
+  }
+
+  throw new NonRetriableError(`Unsupported content type: ${contentType}`);
 }

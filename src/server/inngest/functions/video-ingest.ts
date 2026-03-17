@@ -7,10 +7,11 @@ import { NonRetriableError } from "inngest";
 import { db } from "@/db";
 import { videoChunks, videoInsights, videos } from "@/db/schema";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
+import { chunkContentSegments } from "@/server/ingestion/chunking";
 import { classifyIngestionError } from "@/server/ingestion/errors";
-import { chunkTranscriptSegments } from "@/server/ingestion/chunking";
 import { embedTexts, generateInsights } from "@/server/ingestion/ai";
-import { fetchTranscript, TranscriptUnavailableError } from "@/server/ingestion/transcript";
+import { getFetcher } from "@/server/ingestion/providers/registry";
+import { IngestionError, isContentType } from "@/server/ingestion/providers/types";
 import { inngest } from "@/server/inngest/client";
 import { runIngestionStep } from "@/server/inngest/ingestion-step";
 import { shouldStopRetrying } from "@/server/inngest/retry-policy";
@@ -47,9 +48,9 @@ export const videoIngest = inngest.createFunction(
             id: videos.id,
             userId: videos.userId,
             libraryId: videos.libraryId,
-            youtubeVideoId: videos.youtubeVideoId,
+            externalId: videos.externalId,
+            contentType: videos.contentType,
             title: videos.title,
-            status: videos.status,
           })
           .from(videos)
           .where(
@@ -71,6 +72,12 @@ export const videoIngest = inngest.createFunction(
       failureContext.libraryId = video.libraryId;
       failureContext.videoId = video.id;
 
+      if (!isContentType(video.contentType)) {
+        throw new NonRetriableError(`Unsupported content type: ${video.contentType}`);
+      }
+
+      const contentType = video.contentType;
+
       await step.run("mark-processing", async () => {
         await db
           .update(videos)
@@ -82,18 +89,19 @@ export const videoIngest = inngest.createFunction(
           .where(eq(videos.id, video.id));
       });
 
-      const transcript = await runIngestionStep(step, "fetch-transcript", async () => {
-        return fetchTranscript(video.youtubeVideoId);
+      const content = await runIngestionStep(step, "fetch-content", async () => {
+        const fetcher = getFetcher(contentType);
+        return fetcher.fetch(video.externalId);
       });
 
-      const transcriptText = transcript.segments.map((segment) => segment.text).join(" ");
+      const contentText = content.segments.map((segment) => segment.text).join(" ");
 
-      const chunkingResult = await step.run("chunk-transcript", async () => {
-        return chunkTranscriptSegments(transcript.segments);
+      const chunkingResult = await step.run("chunk-content", async () => {
+        return chunkContentSegments(content.segments);
       });
 
       if (chunkingResult.chunks.length === 0) {
-        throw new TranscriptUnavailableError("Transcript produced zero chunks.", true);
+        throw new IngestionError("Content produced zero chunks.", true);
       }
 
       const chunkEmbeddings = await step.run("embed-chunks", async () => {
@@ -155,7 +163,7 @@ export const videoIngest = inngest.createFunction(
       });
 
       const insights = await step.run("generate-insights", async () => {
-        return generateInsights(video.userId, video.title, transcriptText);
+        return generateInsights(video.userId, video.title, contentText);
       });
 
       const insightRecords: InsightRecord[] = [
@@ -232,7 +240,7 @@ export const videoIngest = inngest.createFunction(
           .set({
             status: "ready",
             failureReason: null,
-            transcriptRaw: JSON.stringify(transcript.raw),
+            transcriptRaw: JSON.stringify(content.raw),
             summary: insights.summary,
             keyInsights: insights.keyPoints.join("\n"),
             chunkCount: chunkingResult.chunks.length,

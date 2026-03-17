@@ -4,6 +4,7 @@ import { and, desc, eq, lt, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { chatMessages, chatSessions } from "@/db/schema";
+import { isContentType } from "@/lib/sources/types";
 import type {
   ChatEffectiveMode,
   ChatMessageListItem,
@@ -322,87 +323,52 @@ function toSourcesRollup(value: unknown): ChatSourcesRollup | null {
   }
 
   const candidate = value as {
-    videos?: unknown;
-    extraVideos?: unknown;
+    items?: unknown;
   };
 
-  if (!Array.isArray(candidate.videos)) {
+  if (!Array.isArray(candidate.items)) {
     return null;
   }
 
-  const videos = candidate.videos
-    .map((video) => {
-      if (!video || typeof video !== "object") {
+  const items = candidate.items
+    .map((item) => {
+      if (!item || typeof item !== "object") {
         return null;
       }
 
-      const row = video as {
-        videoId?: unknown;
-        youtubeVideoId?: unknown;
+      const row = item as {
+        itemId?: unknown;
+        externalId?: unknown;
+        contentType?: unknown;
         title?: unknown;
-        timestamps?: unknown;
+        url?: unknown;
+        referenceCount?: unknown;
       };
 
       if (
-        typeof row.videoId !== "string" ||
-        typeof row.youtubeVideoId !== "string" ||
-        typeof row.title !== "string"
+        typeof row.itemId !== "string" ||
+        typeof row.externalId !== "string" ||
+        typeof row.contentType !== "string" ||
+        !isContentType(row.contentType) ||
+        typeof row.title !== "string" ||
+        typeof row.url !== "string" ||
+        typeof row.referenceCount !== "number"
       ) {
         return null;
       }
 
-      const timestamps = Array.isArray(row.timestamps)
-        ? row.timestamps
-            .map((timestamp) => {
-              if (!timestamp || typeof timestamp !== "object") {
-                return null;
-              }
-
-              const t = timestamp as {
-                seconds?: unknown;
-                label?: unknown;
-                url?: unknown;
-              };
-
-              if (
-                typeof t.seconds !== "number" ||
-                typeof t.label !== "string" ||
-                typeof t.url !== "string"
-              ) {
-                return null;
-              }
-
-              return {
-                seconds: t.seconds,
-                label: t.label,
-                url: t.url,
-              };
-            })
-            .filter((timestamp): timestamp is { seconds: number; label: string; url: string } =>
-              Boolean(timestamp),
-            )
-        : [];
-
       return {
-        videoId: row.videoId,
-        youtubeVideoId: row.youtubeVideoId,
+        itemId: row.itemId,
+        externalId: row.externalId,
+        contentType: row.contentType,
         title: row.title,
-        timestamps,
+        url: row.url,
+        referenceCount: row.referenceCount,
       };
     })
-    .filter(
-      (
-        video,
-      ): video is {
-        videoId: string;
-        youtubeVideoId: string;
-        title: string;
-        timestamps: { seconds: number; label: string; url: string }[];
-      } => Boolean(video),
-    );
+    .filter((item): item is ChatSourcesRollup["items"][number] => Boolean(item));
 
   return {
-    videos,
-    extraVideos: typeof candidate.extraVideos === "number" ? candidate.extraVideos : 0,
+    items,
   };
 }

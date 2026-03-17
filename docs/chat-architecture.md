@@ -2,11 +2,19 @@
 
 ## Purpose
 
-Distillr chat answers questions over one library using hybrid retrieval plus streamed generation. It persists full chat history, usage metrics, and compact source rollups for traceable answers.
+Distillr chat answers questions over one library using hybrid retrieval and streamed generation. It persists chat history, usage metrics, and compact source rollups for traceable answers.
+
+Chat contracts are forward-only and source-agnostic.
+
+## Forward-Only Policy
+
+- No compatibility support for legacy source rollup shapes.
+- No dual payload formats in `sources_json`.
+- No timestamp-specific source schema as the canonical contract.
 
 ## Scope
 
-- Scope: one user, one library, ready videos only.
+- Scope: one user, one library, ready content items only.
 - Modes: `auto | library | chat`.
 - Model tiers: `fast` (alias `chat.fast`, Nano), `smart` (alias `chat.smart`, Mini), or `pro` (alias `chat.pro`, Smart), selected per request by the user. Defaults to `smart` (Mini).
 - Transport: Vercel AI SDK v6 UI message stream protocol.
@@ -22,11 +30,11 @@ Distillr chat answers questions over one library using hybrid retrieval plus str
    - `auto` uses structured intent routing.
    - `library` forces retrieval.
    - `chat` skips retrieval.
-6. In `library` mode, query rewrite + embedding + hybrid retrieval run.
+6. In `library` mode, rewrite + embedding + hybrid retrieval run.
 7. Retrieval candidates are fused into ranked evidence.
 8. Prompt is built with bounded history and bounded retrieval context.
 9. Response streams to client.
-10. On stream finish, assistant message is persisted with usage and status.
+10. On finish, assistant message is persisted with usage and status.
 
 ## Retrieval Model
 
@@ -36,6 +44,8 @@ Hybrid retrieval runs in parallel:
 - insight vector search over `video_insights`
 - full-text search over `video_chunks`
 
+Retrieval remains scoped to one library and `videos.status = 'ready'`.
+
 Deterministic normalization and fusion:
 
 - `vec_norm = clamp(1 - cosine_distance, 0, 1)`
@@ -44,15 +54,36 @@ Deterministic normalization and fusion:
 
 Weak evidence policy:
 
-- If evidence quality is weak, assistant must avoid guessing, give the strongest supported answer first, and use concise uncertainty language.
-- Assistant should not discuss retrieval mechanics in user-facing phrasing (for example, avoid terms like "patchy evidence").
+- Avoid guessing.
+- Give the strongest supported answer first.
+- Use concise uncertainty phrasing when support is weak.
+- Do not discuss retrieval mechanics in user-facing text.
 
 ## Source Rollup Contract
 
-- Chat answers include a compact `Sources` rollup (top 3-5 videos).
-- Each source includes grouped timestamps with YouTube links (`watch?v=ID&t=SECONDS`).
-- Full evidence is persisted for internal debugging and future UI expansion.
+Canonical chat source contract is item-level:
+
+```ts
+type ChatSourceItem = {
+  itemId: string;
+  externalId: string;
+  contentType: string;
+  title: string;
+  url: string;
+  referenceCount: number;
+};
+
+type ChatSourcesRollup = {
+  items: ChatSourceItem[];
+};
+```
+
+Rules:
+
+- No per-item timestamp arrays.
+- No `extraVideos` summary counter in persisted source payload.
 - `chat` mode responses do not include sources.
+- Full evidence remains in `evidence_json` for internal debugging.
 
 ## Persistence Model
 
@@ -79,16 +110,17 @@ Finish reason mapping:
 
 ## Billing Integration
 
-- Preflight check uses Polar snapshot and denies when balance is below 1 credit (MVP behavior).
-- On successful/aborted assistant messages with token usage, service emits `billing.usage.chat.record` to Inngest.
-- Usage ingestion to Polar is asynchronous; reconciliation covers missed dispatches.
+- Preflight check uses Polar snapshot and denies when balance is below 1 credit.
+- On successful or aborted assistant messages with usage, service emits `billing.usage.chat.record`.
+- Usage ingestion to Polar is async. Reconciliation covers missed dispatches.
 
 ## UX and API Contract
 
 - Client uses `useChat` with `DefaultChatTransport`.
 - Stream response is returned via `toUIMessageStreamResponse()`.
-- Server uses `consumeSseStream` to ensure finish callbacks run on abort/disconnect.
+- Server uses `consumeSseStream` so finish callbacks run on abort/disconnect.
 - Sidebar session list refreshes after stream finish to reflect title/recency updates.
+- Sources UI renders item-level links and may collapse long lists behind a reveal interaction.
 
 ## Observability
 
@@ -104,6 +136,8 @@ Finish reason mapping:
 - `src/server/chat/retrieval.ts`
 - `src/server/chat/fusion.ts`
 - `src/server/chat/sources.ts`
+- `src/server/chat/queries.ts`
+- `src/features/chat/ChatSources.tsx`
 - `src/app/api/libraries/[libraryId]/chat/sessions/[sessionId]/messages/route.ts`
 
 ## Safe Change Checklist
@@ -114,5 +148,6 @@ When changing chat behavior:
 2. Keep retrieval scoped to one library and `videos.status = 'ready'`.
 3. Preserve deterministic fusion unless intentionally reworked.
 4. Preserve stream-finish persistence guarantees.
-5. Verify `npm run typecheck`, `npm run lint`, and `npm run build`.
-6. Update this file when mode semantics, scoring, budgets, or status mapping changes.
+5. Do not introduce compatibility rollup shapes or legacy aliases.
+6. Verify `npm run typecheck`, `npm run lint`, and `npm run build`.
+7. Update this file when mode semantics, scoring, budgets, or status mapping changes.

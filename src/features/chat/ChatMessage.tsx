@@ -74,7 +74,7 @@ export function ChatMessage({ message, isLastMessage, isStreaming, isAborted }: 
         <p className="mt-1 text-xs italic text-muted-foreground">Response stopped.</p>
       ) : null}
 
-      {message.metadata?.sources && message.metadata.sources.videos.length > 0 ? (
+      {message.metadata?.sources && message.metadata.sources.items.length > 0 ? (
         <ChatSources sources={message.metadata.sources} />
       ) : null}
 

@@ -1,13 +1,11 @@
 import { z } from "zod";
 
-export type YouTubeSourceType = "video" | "playlist" | "channel";
+export type ParsedSourceUrl =
+  | { sourceType: "youtube_video"; sourceKey: string }
+  | { sourceType: "youtube_playlist"; sourceKey: string }
+  | { sourceType: "youtube_channel"; sourceKey: string; channelRef: string };
 
-export type ParsedYouTubeUrl =
-  | { type: "video"; sourceKey: string }
-  | { type: "playlist"; sourceKey: string }
-  | { type: "channel"; sourceKey: string; channelRef: string };
-
-export function parseYouTubeUrl(raw: string): ParsedYouTubeUrl | null {
+export function parseSourceUrl(raw: string): ParsedSourceUrl | null {
   let url: URL;
   try {
     url = new URL(raw);
@@ -20,31 +18,40 @@ export function parseYouTubeUrl(raw: string): ParsedYouTubeUrl | null {
 
   const playlistId = url.searchParams.get("list")?.trim();
   if (playlistId) {
-    return { type: "playlist", sourceKey: `playlist:${playlistId}` };
+    return {
+      sourceType: "youtube_playlist",
+      sourceKey: `youtube_playlist:${playlistId}`,
+    };
   }
 
   if (host === "youtu.be") {
     const videoId = getPathFirstSegment(url.pathname);
     if (videoId) {
-      return { type: "video", sourceKey: `video:${videoId}` };
+      return {
+        sourceType: "youtube_video",
+        sourceKey: `youtube_video:${videoId}`,
+      };
     }
   }
 
   if (url.pathname === "/watch") {
     const videoId = url.searchParams.get("v")?.trim();
     if (videoId) {
-      return { type: "video", sourceKey: `video:${videoId}` };
+      return {
+        sourceType: "youtube_video",
+        sourceKey: `youtube_video:${videoId}`,
+      };
     }
   }
 
-  const channelMatch = url.pathname.match(/^\/(channel\/|@|c\/)([^/?&]+)/);
+  const channelMatch = url.pathname.match(/^\/(channel\/|@)([^/?&]+)/);
   if (channelMatch) {
     const prefix = channelMatch[1];
     const id = channelMatch[2];
     const channelRef = prefix === "@" ? `@${id}`.toLowerCase() : `${prefix}${id}`;
     return {
-      type: "channel",
-      sourceKey: `channel:${channelRef}`,
+      sourceType: "youtube_channel",
+      sourceKey: `youtube_channel:${channelRef}`,
       channelRef,
     };
   }
@@ -59,13 +66,13 @@ function getPathFirstSegment(pathname: string): string | null {
 
 export const addSourceSchema = z.object({
   url: z
-    .string()
-    .trim()
-    .min(1, "URL is required.")
-    .refine(
-      (v) => parseYouTubeUrl(v) !== null,
-      "Must be a valid YouTube video, playlist, or channel URL.",
-    ),
+      .string()
+      .trim()
+      .min(1, "URL is required.")
+      .refine(
+        (v) => parseSourceUrl(v) !== null,
+        "Must be a valid YouTube video, playlist, or channel URL.",
+      ),
 });
 
 export type AddSourceInput = z.infer<typeof addSourceSchema>;

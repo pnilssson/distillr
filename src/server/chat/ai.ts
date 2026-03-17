@@ -93,7 +93,7 @@ export async function classifyChatIntentRoute({
         "- Minimize unnecessary retrieval calls.",
         "- Only use retrieval when the user likely needs facts grounded in their video library.",
         "Definitions:",
-        "- retrieval: user asks for factual/library-grounded info from videos, transcript details, summaries of video content, evidence, timestamps, sources, comparisons across videos.",
+        "- retrieval: user asks for factual/library-grounded info from source content, transcript details, summaries, evidence, timestamps, sources, or comparisons across items.",
         "- chat_only: greeting, small talk, thanks, acknowledgement, brainstorming, writing help, planning, opinions, generic advice, or discussion that can be handled from conversation context alone.",
         "- hybrid: user asks for both library evidence and substantial conversational transformation/synthesis.",
         "Decision rules:",
@@ -101,7 +101,7 @@ export async function classifyChatIntentRoute({
         "2) retrieval requires positive evidence that library content is needed.",
         "3) Short social turns are chat_only even in an existing library chat.",
         '4) Follow-up requests like "expand that" are chat_only unless user explicitly asks for new evidence.',
-        "5) If user asks for citations/timestamps/sources from videos, choose retrieval.",
+        "5) If user asks for citations, timestamps, or sources from library content, choose retrieval.",
       ].join("\n"),
       prompt: [
         historySnippet.length > 0 ? `Recent conversation:\n${historySnippet}` : "Recent conversation: (none)",

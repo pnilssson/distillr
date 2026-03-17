@@ -1,7 +1,9 @@
+import type { SourceType } from "@/lib/sources/types";
+
 export type SourceListItem = {
   id: string;
   url: string;
-  sourceType: "video" | "playlist" | "channel";
+  sourceType: SourceType;
   status: "processing" | "ready" | "failed";
   channelName: string | null;
   title: string | null;

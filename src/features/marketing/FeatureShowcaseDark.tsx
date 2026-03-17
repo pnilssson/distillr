@@ -2,24 +2,30 @@
 
 import { motion } from "framer-motion";
 
-const exportFormats = ["Markdown", "PDF", "TXT", "Full chat log"];
+const exportFormats = ["Markdown", "PDF", "TXT"];
 
 const exportPreview = [
-  { type: "heading", text: "# Summary: Building a Morning Routine" },
-  { type: "bold", text: "Main takeaways:" },
-  { type: "item", text: "- Wake up at the same time every day" },
+  { type: "heading", text: "Title: Research Notes: AI and the Future of Knowledge Work" },
   {
-    type: "item",
-    text: "- Avoid your phone for the first 30 minutes",
+    type: "bold",
+    text: "Across 14 videos from Lex Fridman, Dwarkesh Patel, and The Knowledge Project:",
   },
   {
     type: "item",
-    text: "- Start with movement, even just a short walk",
+    text: "- All three channels agree that second-order effects of AI will hit knowledge work before physical work",
+  },
+  {
+    type: "item",
+    text: "- Dwarkesh Patel (ep. 48, 12:34) argues the constraint is not capability but institutional adoption speed",
+  },
+  {
+    type: "item",
+    text: "- Shane Parrish and his guest diverged sharply on timeline: Parrish sees a 3-year window, his guest argues incumbents will slow it to 10+ [38:17]",
   },
   { type: "spacer", text: "" },
   {
     type: "cite",
-    text: "Sources: [Video 1] [Video 2]",
+    text: "Sources: [Lex Fridman #399] [Dwarkesh Patel #48] [Knowledge Project #171]",
   },
 ];
 

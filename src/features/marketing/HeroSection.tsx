@@ -87,26 +87,6 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
         )}
       </motion.div>
 
-      <motion.div
-        className="mt-16 w-full max-w-4xl overflow-hidden rounded-2xl border bg-card shadow-xl"
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" as const, delay: 0.45 }}
-      >
-        <div className="border-b bg-muted/40 px-4 py-3 text-left">
-          <p className="text-xs font-medium text-muted-foreground">Hero image placeholder</p>
-        </div>
-        <div className="flex min-h-72 items-center justify-center bg-muted/20 p-8 text-center sm:min-h-80">
-          <div className="rounded-lg border-2 border-dashed border-border bg-background/70 px-8 py-6">
-            <p className="text-sm font-medium text-muted-foreground">
-              Waiting for updated hero visual
-            </p>
-            <p className="mt-1.5 max-w-xs text-xs text-muted-foreground/60">
-              Share the final page and we will capture and place the hero screenshot here.
-            </p>
-          </div>
-        </div>
-      </motion.div>
     </section>
   );
 }

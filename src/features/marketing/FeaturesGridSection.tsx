@@ -45,7 +45,11 @@ const features = [
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" as const },
+  },
 };
 
 const staggerContainer = {
@@ -55,7 +59,10 @@ const staggerContainer = {
 
 export function FeaturesGridSection() {
   return (
-    <section id="features" className="border-t mx-auto w-full max-w-5xl px-6 py-24 lg:py-36">
+    <section
+      id="features"
+      className="border-t mx-auto w-full max-w-5xl px-6 py-24 lg:py-36"
+    >
       <motion.div
         initial="hidden"
         whileInView="visible"
@@ -79,6 +86,11 @@ export function FeaturesGridSection() {
           copy the transcript, paste it into an LLM, ask a question. It breaks
           at ten videos. Distillr does it properly, at scale, with memory.
         </p>
+
+        <div className="mt-8 inline-flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-xs font-medium text-foreground">
+          <Shield size={14} className="text-muted-foreground" />
+          Private by default - your sources stay private to your account.
+        </div>
       </motion.div>
 
       <motion.div
@@ -102,6 +114,25 @@ export function FeaturesGridSection() {
           </motion.div>
         ))}
       </motion.div>
+
+      <motion.aside
+        className="mt-10 rounded-xl border bg-card p-6 sm:p-7"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        variants={fadeUp}
+      >
+        <h3 className="text-sm font-semibold">Built for a specific kind of researcher</h3>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          You follow 10 to 20 YouTube channels seriously. Macro economists, tech
+          analysts, long-form interviewers, domain specialists. You take notes.
+          You paste transcripts. You lose track of what you heard and where.
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Distillr is a library for those channels. Add them once. Query all of
+          them. Get the answer and the timestamp.
+        </p>
+      </motion.aside>
     </section>
   );
 }

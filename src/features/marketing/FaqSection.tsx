@@ -11,6 +11,11 @@ const faqs = [
       "Distillr is a YouTube research library. It indexes transcripts from channels, playlists, and videos you choose, so you can search and ask questions across your sources with cited answers and timestamp links.",
   },
   {
+    question: "Do you have to be technical to use it?",
+    answer:
+      "No. You paste a YouTube URL. Distillr handles the rest. If you can use ChatGPT, you can use Distillr.",
+  },
+  {
     question: "How does Distillr work with YouTube?",
     answer:
       "Paste a YouTube channel URL, playlist URL, or individual video URL into Distillr. We automatically extract the video transcripts, process them with AI embeddings, and add them to your searchable knowledge base. New uploads from channels and playlists are picked up automatically.",

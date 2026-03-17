@@ -1,9 +1,9 @@
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
 import { MarketingNav } from "@/features/navigation/MarketingNav";
 import { HeroSection } from "@/features/marketing/HeroSection";
+import { SocialProofBar } from "@/features/marketing/SocialProofBar";
 import { HowItWorksSection } from "@/features/marketing/HowItWorksSection";
 import { FeaturesGridSection } from "@/features/marketing/FeaturesGridSection";
-import { FeatureShowcaseChat } from "@/features/marketing/FeatureShowcaseChat";
 import { FeatureShowcaseDark } from "@/features/marketing/FeatureShowcaseDark";
 import { PricingSection } from "@/features/marketing/PricingSection";
 import { FaqSection } from "@/features/marketing/FaqSection";
@@ -55,6 +55,14 @@ const faqSchema = {
       acceptedAnswer: {
         "@type": "Answer",
         text: "Distillr is a YouTube research library. It indexes transcripts from channels, playlists, and videos you choose, so you can search and ask questions across your sources with cited answers and timestamp links.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Do you have to be technical to use it?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "No. You paste a YouTube URL. Distillr handles the rest. If you can use ChatGPT, you can use Distillr.",
       },
     },
     {
@@ -129,9 +137,9 @@ export default async function HomePage() {
       <JsonLd data={faqSchema} />
       <MarketingNav isAuthenticated={isAuthenticated} />
       <HeroSection isAuthenticated={isAuthenticated} />
+      <SocialProofBar />
       <HowItWorksSection />
       <FeaturesGridSection />
-      <FeatureShowcaseChat />
       <FeatureShowcaseDark />
       <PricingSection isAuthenticated={isAuthenticated} />
       <FaqSection />

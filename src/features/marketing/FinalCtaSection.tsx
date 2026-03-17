@@ -31,6 +31,9 @@ export function FinalCtaSection({ isAuthenticated }: FinalCtaSectionProps) {
         <Button asChild size="lg" className="h-12 px-10 text-base">
           <Link href={ctaHref}>{ctaLabel}</Link>
         </Button>
+        <p className="mt-2 text-xs text-muted-foreground">
+          No credit card needed. Cancel anytime.
+        </p>
       </motion.div>
     </section>
   );

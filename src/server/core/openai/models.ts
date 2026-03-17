@@ -2,7 +2,6 @@ import "server-only";
 
 import { env } from "@/server/core/env";
 
-export type ChatModelTier = "fast" | "smart";
 export type OpenAIModelAlias = "embedding.default" | "ingestion.default" | "chat.fast" | "chat.smart";
 
 export type OpenAIModelId = "text-embedding-3-small" | "gpt-5-mini" | "gpt-5.1";
@@ -55,15 +54,6 @@ export function getOpenAIModelById(modelId: string): OpenAIModelConfig {
   }
 
   return model;
-}
-
-export function getDefaultChatModel(): OpenAIModelConfig {
-  return getOpenAIModel(getDefaultChatModelAlias());
-}
-
-export function getDefaultChatModelAlias(): OpenAIModelAlias {
-  const tier = env.OPENAI_CHAT_DEFAULT_TIER ?? "smart";
-  return tier === "fast" ? "chat.fast" : "chat.smart";
 }
 
 export function calculateOpenAICostUsd(params: {

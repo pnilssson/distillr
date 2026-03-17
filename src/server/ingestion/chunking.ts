@@ -2,7 +2,7 @@ import "server-only";
 
 import { getEncoding } from "js-tiktoken";
 
-import type { ContentSegment } from "@/server/ingestion/providers/types";
+import type { ContentAnchor, ContentSegment } from "@/server/ingestion/providers/types";
 
 const encoder = getEncoding("cl100k_base");
 
@@ -14,6 +14,7 @@ export type ContentChunk = {
   chunkText: string;
   startSeconds: number | null;
   endSeconds: number | null;
+  anchors: ContentAnchor[];
   tokenCount: number;
 };
 
@@ -37,6 +38,7 @@ export function chunkContentSegments(segments: ContentSegment[]): {
       chunkText,
       startSeconds: mergedSegments[0]?.startSeconds ?? null,
       endSeconds: mergedSegments[mergedSegments.length - 1]?.endSeconds ?? null,
+      anchors: collectChunkAnchors(mergedSegments),
       tokenCount: countTokens(chunkText),
     } satisfies ContentChunk;
   });
@@ -92,4 +94,19 @@ function getTailOverlapSegments(previousChunk: ContentSegment[]): ContentSegment
 
 function countTokens(text: string): number {
   return encoder.encode(text).length;
+}
+
+function collectChunkAnchors(segments: ContentSegment[]): ContentAnchor[] {
+  const deduped = new Map<string, ContentAnchor>();
+
+  for (const segment of segments) {
+    for (const anchor of segment.anchors) {
+      const key = `${anchor.anchorType}:${anchor.anchorKey}`;
+      if (!deduped.has(key)) {
+        deduped.set(key, anchor);
+      }
+    }
+  }
+
+  return [...deduped.values()];
 }

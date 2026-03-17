@@ -3,6 +3,7 @@ import "server-only";
 import { env } from "@/server/core/env";
 import {
   IngestionError,
+  type ContentAnchor,
   type ContentDiscovery,
   type ContentFetcher,
   type ContentSegment,
@@ -618,8 +619,36 @@ function normalizeTranscriptSegments(segments: TranscriptApiSegment[]): ContentS
       startSeconds: segment.startSeconds,
       endSeconds,
       text: segment.text,
+      anchors: [buildTimecodeAnchor(segment.startSeconds)],
     };
   });
+}
+
+function buildTimecodeAnchor(startSeconds: number): ContentAnchor {
+  const rounded = Math.max(0, Math.floor(startSeconds));
+
+  return {
+    anchorKey: `timecode:${rounded}`,
+    anchorType: "timecode",
+    startValue: rounded,
+    endValue: null,
+    label: formatTimestampLabel(rounded),
+    urlFragment: `t=${rounded}`,
+    metadata: null,
+  };
+}
+
+function formatTimestampLabel(totalSeconds: number): string {
+  const seconds = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainder = seconds % 60;
+
+  if (hours > 0) {
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+  }
+
+  return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
 }
 
 function getTranscriptSegments(body: TranscriptApiResponse | null): TranscriptApiSegment[] {

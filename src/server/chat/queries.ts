@@ -4,7 +4,7 @@ import { and, desc, eq, lt, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { chatMessages, chatSessions } from "@/db/schema";
-import { isContentType } from "@/lib/sources/types";
+import { isContentAnchorType, isContentType } from "@/lib/sources/types";
 import type {
   ChatEffectiveMode,
   ChatMessageListItem,
@@ -343,6 +343,7 @@ function toSourcesRollup(value: unknown): ChatSourcesRollup | null {
         title?: unknown;
         url?: unknown;
         referenceCount?: unknown;
+        anchors?: unknown;
       };
 
       if (
@@ -357,6 +358,37 @@ function toSourcesRollup(value: unknown): ChatSourcesRollup | null {
         return null;
       }
 
+      const anchors = Array.isArray(row.anchors)
+        ? row.anchors
+            .map((anchor) => {
+              if (!anchor || typeof anchor !== "object") {
+                return null;
+              }
+
+              const value = anchor as {
+                anchorType?: unknown;
+                label?: unknown;
+                url?: unknown;
+              };
+
+              if (
+                typeof value.anchorType !== "string" ||
+                !isContentAnchorType(value.anchorType) ||
+                (value.label !== null && typeof value.label !== "string") ||
+                typeof value.url !== "string"
+              ) {
+                return null;
+              }
+
+              return {
+                anchorType: value.anchorType,
+                label: value.label,
+                url: value.url,
+              };
+            })
+            .filter((anchor): anchor is ChatSourcesRollup["items"][number]["anchors"][number] => Boolean(anchor))
+        : [];
+
       return {
         itemId: row.itemId,
         externalId: row.externalId,
@@ -364,6 +396,7 @@ function toSourcesRollup(value: unknown): ChatSourcesRollup | null {
         title: row.title,
         url: row.url,
         referenceCount: row.referenceCount,
+        anchors,
       };
     })
     .filter((item): item is ChatSourcesRollup["items"][number] => Boolean(item));

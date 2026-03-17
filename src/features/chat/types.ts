@@ -1,4 +1,4 @@
-import type { ContentType } from "@/lib/sources/types";
+import type { ContentAnchorType, ContentType } from "@/lib/sources/types";
 
 export type ChatSessionListItem = {
   id: string;
@@ -16,6 +16,11 @@ export type ChatMessageSourceItem = {
   title: string;
   url: string;
   referenceCount: number;
+  anchors: Array<{
+    anchorType: ContentAnchorType;
+    label: string | null;
+    url: string;
+  }>;
 };
 
 export type ChatMessageSources = {

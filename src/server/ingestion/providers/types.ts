@@ -3,6 +3,7 @@ import "server-only";
 import {
   isContentType,
   isSourceType,
+  type ContentAnchorType,
   type ContentType,
   type SourceType,
 } from "@/lib/sources/types";
@@ -26,10 +27,21 @@ export type DiscoveryResult = {
   sourceTitle: string | null;
 };
 
+export type ContentAnchor = {
+  anchorKey: string;
+  anchorType: ContentAnchorType;
+  startValue: number | null;
+  endValue: number | null;
+  label: string | null;
+  urlFragment: string | null;
+  metadata: Record<string, unknown> | null;
+};
+
 export type ContentSegment = {
   startSeconds: number | null;
   endSeconds: number | null;
   text: string;
+  anchors: ContentAnchor[];
 };
 
 export type FetchedContent = {

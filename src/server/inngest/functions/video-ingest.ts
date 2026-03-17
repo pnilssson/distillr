@@ -1,11 +1,11 @@
 import "server-only";
 
 import * as Sentry from "@sentry/nextjs";
-import { and, eq, gte, notInArray, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, notInArray, sql } from "drizzle-orm";
 import { NonRetriableError } from "inngest";
 
 import { db } from "@/db";
-import { videoChunks, videoInsights, videos } from "@/db/schema";
+import { contentChunkAnchors, contentChunks, contentInsights, contentItems } from "@/db/schema";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { chunkContentSegments } from "@/server/ingestion/chunking";
 import { classifyIngestionError } from "@/server/ingestion/errors";
@@ -45,19 +45,19 @@ export const videoIngest = inngest.createFunction(
       const video = await step.run("load-video", async () => {
         const [row] = await db
           .select({
-            id: videos.id,
-            userId: videos.userId,
-            libraryId: videos.libraryId,
-            externalId: videos.externalId,
-            contentType: videos.contentType,
-            title: videos.title,
+            id: contentItems.id,
+            userId: contentItems.userId,
+            libraryId: contentItems.libraryId,
+            externalId: contentItems.externalId,
+            contentType: contentItems.contentType,
+            title: contentItems.title,
           })
-          .from(videos)
+          .from(contentItems)
           .where(
             and(
-              eq(videos.id, event.data.videoId),
-              eq(videos.userId, event.data.userId),
-              eq(videos.libraryId, event.data.libraryId),
+              eq(contentItems.id, event.data.videoId),
+              eq(contentItems.userId, event.data.userId),
+              eq(contentItems.libraryId, event.data.libraryId),
             ),
           );
 
@@ -80,13 +80,13 @@ export const videoIngest = inngest.createFunction(
 
       await step.run("mark-processing", async () => {
         await db
-          .update(videos)
+          .update(contentItems)
           .set({
             status: "processing",
             failureReason: null,
             updatedAt: sql`now()`,
           })
-          .where(eq(videos.id, video.id));
+          .where(eq(contentItems.id, video.id));
       });
 
       const content = await runIngestionStep(step, "fetch-content", async () => {
@@ -126,10 +126,10 @@ export const videoIngest = inngest.createFunction(
             return {
               userId: video.userId,
               libraryId: video.libraryId,
-              videoId: video.id,
+              contentItemId: video.id,
               chunkIndex: chunk.chunkIndex,
               chunkText: chunk.chunkText,
-              videoTitle: video.title,
+              itemTitle: video.title,
               startSeconds: chunk.startSeconds,
               endSeconds: chunk.endSeconds,
               embedding,
@@ -137,13 +137,13 @@ export const videoIngest = inngest.createFunction(
           });
 
           await db
-            .insert(videoChunks)
+            .insert(contentChunks)
             .values(values)
             .onConflictDoUpdate({
-              target: [videoChunks.videoId, videoChunks.chunkIndex],
+              target: [contentChunks.contentItemId, contentChunks.chunkIndex],
               set: {
                 chunkText: sql`excluded.chunk_text`,
-                videoTitle: sql`excluded.video_title`,
+                itemTitle: sql`excluded.item_title`,
                 startSeconds: sql`excluded.start_seconds`,
                 endSeconds: sql`excluded.end_seconds`,
                 embedding: sql`excluded.embedding`,
@@ -153,13 +153,115 @@ export const videoIngest = inngest.createFunction(
         }
 
         await db
-          .delete(videoChunks)
+          .delete(contentChunks)
           .where(
             and(
-              eq(videoChunks.videoId, video.id),
-              gte(videoChunks.chunkIndex, chunkingResult.chunks.length),
+              eq(contentChunks.contentItemId, video.id),
+              gte(contentChunks.chunkIndex, chunkingResult.chunks.length),
             ),
           );
+      });
+
+      await step.run("upsert-chunk-anchors", async () => {
+        const chunkIndexes = chunkingResult.chunks.map((chunk) => chunk.chunkIndex);
+
+        const persistedChunks = await db
+          .select({
+            id: contentChunks.id,
+            chunkIndex: contentChunks.chunkIndex,
+          })
+          .from(contentChunks)
+          .where(
+            and(
+              eq(contentChunks.contentItemId, video.id),
+              inArray(contentChunks.chunkIndex, chunkIndexes),
+            ),
+          );
+
+        const chunkIdByIndex = new Map(
+          persistedChunks.map((chunk) => [chunk.chunkIndex, chunk.id] as const),
+        );
+
+        const desiredAnchorsByChunkId = new Map<
+          string,
+          Array<{
+            anchorKey: string;
+            anchorType: "timecode" | "page" | "section" | "char_range";
+            startValue: number | null;
+            endValue: number | null;
+            label: string | null;
+            urlFragment: string | null;
+            metadata: Record<string, unknown> | null;
+          }>
+        >();
+
+        const anchorValues = chunkingResult.chunks.flatMap((chunk) => {
+          const chunkId = chunkIdByIndex.get(chunk.chunkIndex);
+          if (!chunkId) {
+            return [];
+          }
+
+          desiredAnchorsByChunkId.set(chunkId, chunk.anchors);
+
+          if (chunk.anchors.length === 0) {
+            return [];
+          }
+
+          return chunk.anchors.map((anchor) => ({
+            userId: video.userId,
+            libraryId: video.libraryId,
+            contentItemId: video.id,
+            contentChunkId: chunkId,
+            anchorKey: anchor.anchorKey,
+            anchorType: anchor.anchorType,
+            startValue: anchor.startValue,
+            endValue: anchor.endValue,
+            label: anchor.label,
+            urlFragment: anchor.urlFragment,
+            metadata: anchor.metadata,
+          }));
+        });
+
+        for (let i = 0; i < anchorValues.length; i += DB_BATCH_SIZE) {
+          const batch = anchorValues.slice(i, i + DB_BATCH_SIZE);
+
+          await db
+            .insert(contentChunkAnchors)
+            .values(batch)
+            .onConflictDoUpdate({
+              target: [contentChunkAnchors.contentChunkId, contentChunkAnchors.anchorKey],
+              set: {
+                anchorType: sql`excluded.anchor_type`,
+                startValue: sql`excluded.start_value`,
+                endValue: sql`excluded.end_value`,
+                label: sql`excluded.label`,
+                urlFragment: sql`excluded.url_fragment`,
+                metadata: sql`excluded.metadata`,
+                updatedAt: sql`now()`,
+              },
+            });
+        }
+
+        for (const [chunkId, anchors] of desiredAnchorsByChunkId.entries()) {
+          if (anchors.length === 0) {
+            await db
+              .delete(contentChunkAnchors)
+              .where(eq(contentChunkAnchors.contentChunkId, chunkId));
+            continue;
+          }
+
+          await db
+            .delete(contentChunkAnchors)
+            .where(
+              and(
+                eq(contentChunkAnchors.contentChunkId, chunkId),
+                notInArray(
+                  contentChunkAnchors.anchorKey,
+                  anchors.map((anchor) => anchor.anchorKey),
+                ),
+              ),
+            );
+        }
       });
 
       const insights = await step.run("generate-insights", async () => {
@@ -184,7 +286,7 @@ export const videoIngest = inngest.createFunction(
 
       await step.run("upsert-video-insights", async () => {
         if (insightRecords.length === 0) {
-          await db.delete(videoInsights).where(eq(videoInsights.videoId, video.id));
+          await db.delete(contentInsights).where(eq(contentInsights.contentItemId, video.id));
           return;
         }
 
@@ -201,7 +303,7 @@ export const videoIngest = inngest.createFunction(
             return {
               userId: video.userId,
               libraryId: video.libraryId,
-              videoId: video.id,
+              contentItemId: video.id,
               insightType: insight.insightType,
               content: insight.content,
               embedding,
@@ -209,10 +311,10 @@ export const videoIngest = inngest.createFunction(
           });
 
           await db
-            .insert(videoInsights)
+            .insert(contentInsights)
             .values(values)
             .onConflictDoUpdate({
-              target: [videoInsights.videoId, videoInsights.insightType],
+              target: [contentInsights.contentItemId, contentInsights.insightType],
               set: {
                 content: sql`excluded.content`,
                 embedding: sql`excluded.embedding`,
@@ -222,12 +324,12 @@ export const videoIngest = inngest.createFunction(
         }
 
         await db
-          .delete(videoInsights)
+          .delete(contentInsights)
           .where(
             and(
-              eq(videoInsights.videoId, video.id),
+              eq(contentInsights.contentItemId, video.id),
               notInArray(
-                videoInsights.insightType,
+                contentInsights.insightType,
                 insightRecords.map((record) => record.insightType),
               ),
             ),
@@ -236,7 +338,7 @@ export const videoIngest = inngest.createFunction(
 
       await step.run("mark-ready", async () => {
         await db
-          .update(videos)
+          .update(contentItems)
           .set({
             status: "ready",
             failureReason: null,
@@ -247,7 +349,7 @@ export const videoIngest = inngest.createFunction(
             tokenCount: chunkingResult.totalTokenCount,
             updatedAt: sql`now()`,
           })
-          .where(eq(videos.id, video.id));
+          .where(eq(contentItems.id, video.id));
       });
 
       try {
@@ -305,7 +407,7 @@ export const videoIngest = inngest.createFunction(
 
       await step.run("mark-failed", async () => {
         await db
-          .update(videos)
+          .update(contentItems)
           .set({
             status: "failed",
             failureReason: reason,
@@ -313,9 +415,9 @@ export const videoIngest = inngest.createFunction(
           })
           .where(
             and(
-              eq(videos.id, failureContext.videoId),
-              eq(videos.userId, failureContext.userId),
-              eq(videos.libraryId, failureContext.libraryId),
+              eq(contentItems.id, failureContext.videoId),
+              eq(contentItems.userId, failureContext.userId),
+              eq(contentItems.libraryId, failureContext.libraryId),
             ),
           );
       });

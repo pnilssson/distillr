@@ -5,7 +5,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { NonRetriableError } from "inngest";
 
 import { db } from "@/db";
-import { sources, videos } from "@/db/schema";
+import { contentItems, sources } from "@/db/schema";
 import { getPolarCustomerState } from "@/server/billing/polar/customers";
 import { isPolarBillingEnabled } from "@/server/billing/polar/config";
 import { buildBillingSnapshot } from "@/server/billing/polar/state";
@@ -158,9 +158,9 @@ export const sourceAdded = inngest.createFunction(
         const batch = dedupedItems.slice(i, i + VIDEO_DB_BATCH_SIZE);
         const batchId = i / VIDEO_DB_BATCH_SIZE;
 
-        const rows = await step.run(`upsert-videos-${batchId}`, async () => {
+        const rows = await step.run(`upsert-content-items-${batchId}`, async () => {
           return db
-            .insert(videos)
+            .insert(contentItems)
             .values(
               batch.map((item) => ({
                 userId: source.userId,
@@ -177,7 +177,7 @@ export const sourceAdded = inngest.createFunction(
               })),
             )
             .onConflictDoUpdate({
-              target: [videos.libraryId, videos.contentType, videos.externalId],
+              target: [contentItems.libraryId, contentItems.contentType, contentItems.externalId],
               set: {
                 sourceId: sql`excluded.source_id`,
                 title: sql`excluded.title`,
@@ -190,10 +190,10 @@ export const sourceAdded = inngest.createFunction(
               },
             })
             .returning({
-              id: videos.id,
-              contentType: videos.contentType,
-              externalId: videos.externalId,
-              status: videos.status,
+              id: contentItems.id,
+              contentType: contentItems.contentType,
+              externalId: contentItems.externalId,
+              status: contentItems.status,
             });
         });
 
@@ -224,9 +224,9 @@ export const sourceAdded = inngest.createFunction(
       if (overflowRows.length > 0) {
         const overflowReason = getOverflowReason(allowance);
 
-        await step.run("mark-overflow-videos-failed", async () => {
+        await step.run("mark-overflow-items-failed", async () => {
           await db
-            .update(videos)
+            .update(contentItems)
             .set({
               status: "failed",
               failureReason: overflowReason,
@@ -234,10 +234,10 @@ export const sourceAdded = inngest.createFunction(
             })
             .where(
               and(
-                eq(videos.userId, source.userId),
-                eq(videos.libraryId, source.libraryId),
+                eq(contentItems.userId, source.userId),
+                eq(contentItems.libraryId, source.libraryId),
                 inArray(
-                  videos.id,
+                  contentItems.id,
                   overflowRows.map((row) => row.id),
                 ),
               ),

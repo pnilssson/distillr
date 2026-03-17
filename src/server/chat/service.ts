@@ -167,7 +167,11 @@ export async function streamChatMessage(params: StreamChatMessageParams): Promis
 
     fusion = fuseRetrievalCandidates(retrievalCandidates);
     contextSelection = buildRetrievalContext(fusion.evidence, RETRIEVAL_CONTEXT_TOKEN_BUDGET);
-    sourcesRollup = buildSourcesRollup(contextSelection.selectedEvidence);
+    sourcesRollup = await buildSourcesRollup({
+      userId: params.userId,
+      libraryId: params.libraryId,
+      evidence: contextSelection.selectedEvidence,
+    });
   }
 
   const messagesForModel = await getMessagesForModel({

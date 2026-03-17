@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/nextjs";
 import { and, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { sources, videos } from "@/db/schema";
+import { contentItems, sources } from "@/db/schema";
 import { isContentType, type ContentType } from "@/lib/sources/types";
 
 export type VideoIngestionStatus = "pending" | "processing" | "ready" | "failed";
@@ -44,21 +44,21 @@ export async function getLibraryVideosProgress(
   const [videoRows, sourceProcessingCountResult] = await Promise.all([
     db
       .select({
-        id: videos.id,
-        externalId: videos.externalId,
-        contentType: videos.contentType,
-        title: videos.title,
-        thumbnailUrl: videos.thumbnailUrl,
-        channelName: videos.channelName,
-        status: videos.status,
-        failureReason: videos.failureReason,
-        publishedAt: videos.publishedAt,
-        createdAt: videos.createdAt,
-        updatedAt: videos.updatedAt,
+        id: contentItems.id,
+        externalId: contentItems.externalId,
+        contentType: contentItems.contentType,
+        title: contentItems.title,
+        thumbnailUrl: contentItems.thumbnailUrl,
+        channelName: contentItems.channelName,
+        status: contentItems.status,
+        failureReason: contentItems.failureReason,
+        publishedAt: contentItems.publishedAt,
+        createdAt: contentItems.createdAt,
+        updatedAt: contentItems.updatedAt,
       })
-      .from(videos)
-      .where(and(eq(videos.userId, userId), eq(videos.libraryId, libraryId)))
-      .orderBy(desc(videos.createdAt), desc(videos.updatedAt)),
+      .from(contentItems)
+      .where(and(eq(contentItems.userId, userId), eq(contentItems.libraryId, libraryId)))
+      .orderBy(desc(contentItems.createdAt), desc(contentItems.updatedAt)),
     db
       .select({ count: sql<number>`count(*)` })
       .from(sources)

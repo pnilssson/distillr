@@ -10,7 +10,7 @@ Chat contracts are forward-only and source-agnostic.
 
 - No compatibility support for legacy source rollup shapes.
 - No dual payload formats in `sources_json`.
-- No timestamp-specific source schema as the canonical contract.
+- No provider-specific source payload shapes as the canonical contract.
 
 ## Scope
 
@@ -40,11 +40,11 @@ Chat contracts are forward-only and source-agnostic.
 
 Hybrid retrieval runs in parallel:
 
-- chunk vector search over `video_chunks`
-- insight vector search over `video_insights`
-- full-text search over `video_chunks`
+- chunk vector search over `content_chunks`
+- insight vector search over `content_insights`
+- full-text search over `content_chunks`
 
-Retrieval remains scoped to one library and `videos.status = 'ready'`.
+Retrieval remains scoped to one library and `content_items.status = 'ready'`.
 
 Deterministic normalization and fusion:
 
@@ -61,7 +61,7 @@ Weak evidence policy:
 
 ## Source Rollup Contract
 
-Canonical chat source contract is item-level:
+Canonical chat source contract is item-level with optional typed anchors:
 
 ```ts
 type ChatSourceItem = {
@@ -71,6 +71,11 @@ type ChatSourceItem = {
   title: string;
   url: string;
   referenceCount: number;
+  anchors: Array<{
+    anchorType: "timecode" | "page" | "section" | "char_range";
+    label: string | null;
+    url: string;
+  }>;
 };
 
 type ChatSourcesRollup = {
@@ -80,10 +85,15 @@ type ChatSourcesRollup = {
 
 Rules:
 
-- No per-item timestamp arrays.
 - No `extraVideos` summary counter in persisted source payload.
 - `chat` mode responses do not include sources.
 - Full evidence remains in `evidence_json` for internal debugging.
+
+Anchors:
+
+- Anchors are optional and provider-emitted.
+- YouTube currently emits timecode anchors.
+- Future providers can emit page, section, or char-range anchors without changing the top-level rollup schema.
 
 ## Persistence Model
 
@@ -120,7 +130,7 @@ Finish reason mapping:
 - Stream response is returned via `toUIMessageStreamResponse()`.
 - Server uses `consumeSseStream` so finish callbacks run on abort/disconnect.
 - Sidebar session list refreshes after stream finish to reflect title/recency updates.
-- Sources UI renders item-level links and may collapse long lists behind a reveal interaction.
+- Sources UI renders item-level links and optional anchor links, and may collapse long lists behind a reveal interaction.
 
 ## Observability
 
@@ -145,7 +155,7 @@ Finish reason mapping:
 When changing chat behavior:
 
 1. Keep ownership checks and provider-agnostic errors intact.
-2. Keep retrieval scoped to one library and `videos.status = 'ready'`.
+2. Keep retrieval scoped to one library and `content_items.status = 'ready'`.
 3. Preserve deterministic fusion unless intentionally reworked.
 4. Preserve stream-finish persistence guarantees.
 5. Do not introduce compatibility rollup shapes or legacy aliases.

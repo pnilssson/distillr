@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Distillr ingests source content into retrieval-ready artifacts (`video_chunks`, `video_insights`) through durable Inngest workflows. The architecture is source-agnostic by contract, currently implemented with a YouTube provider only.
+Distillr ingests source content into retrieval-ready artifacts (`content_chunks`, `content_insights`, `content_chunk_anchors`) through durable Inngest workflows. The architecture is source-agnostic by contract, currently implemented with a YouTube provider only.
 
 The ingestion system is idempotent, retry-safe, and tenant-isolated.
 
@@ -19,15 +19,15 @@ This project is pre-user. Clean architecture is prioritized over preserving old 
 
 - Source inputs currently supported: YouTube channel, playlist, and single video URLs.
 - Processing scope: one user, one library.
-- Output: item status in `videos`, plus chunk embeddings and insight embeddings.
-- Retrieval eligibility: only rows where `videos.status = 'ready'`.
+- Output: item status in `content_items`, chunk embeddings, insight embeddings, and chunk-level citation anchors.
+- Retrieval eligibility: only rows where `content_items.status = 'ready'`.
 
 ## Canonical Contracts
 
 - Item identity in app and events: `externalId`.
 - Item classification: `contentType`.
 - Source classification: provider-qualified `sourceType` values.
-- Item uniqueness in `videos`: `(library_id, content_type, external_id)`.
+- Item uniqueness in `content_items`: `(library_id, content_type, external_id)`.
 
 Current provider-qualified source types:
 
@@ -39,7 +39,7 @@ Current provider-qualified source types:
 
 Provider code lives in `src/server/ingestion/providers/`.
 
-- `types.ts` defines canonical provider contracts (`ContentDiscovery`, `ContentFetcher`, `ContentSegment`, `FetchedContent`).
+- `types.ts` defines canonical provider contracts (`ContentDiscovery`, `ContentFetcher`, `ContentSegment`, `ContentAnchor`, `FetchedContent`).
 - `registry.ts` resolves discovery/fetcher implementations by `sourceType`/`contentType`.
 - `youtube.ts` contains YouTube-specific discovery and fetching.
 
@@ -49,7 +49,7 @@ All files in `src/server/**` are server-only.
 
 1. User adds source via API.
 2. API validates source URL and enqueues `source.added`.
-3. `source-added` resolves provider discovery from registry, discovers items, upserts `videos`, applies allowance gating, then enqueues `video.ingest`.
+3. `source-added` resolves provider discovery from registry, discovers items, upserts `content_items`, applies allowance gating, then enqueues `video.ingest`.
 4. `video-ingest` resolves provider fetcher from registry and processes one item to `ready` or terminal `failed`.
 
 ## Source Planning (`source.added`)
@@ -72,17 +72,19 @@ All files in `src/server/**` are server-only.
   1. Mark row `processing`.
   2. Fetch provider content using `contentType` + `externalId`.
   3. Chunk content segments with token-aware boundaries.
-  4. Embed chunks and upsert `video_chunks`.
-  5. Generate insights and embed/upsert `video_insights`.
-  6. Mark row `ready` and persist summary metadata.
-  7. Emit `billing.usage.video.record`.
-  8. Emit analytics event for ready completion.
+  4. Embed chunks and upsert `content_chunks`.
+  5. Upsert chunk-level citation anchors to `content_chunk_anchors`.
+  6. Generate insights and embed/upsert `content_insights`.
+  7. Mark row `ready` and persist summary metadata.
+  8. Emit `billing.usage.video.record`.
+  9. Emit analytics event for ready completion.
 
 ## Idempotency and Data Guarantees
 
-- `video_chunks` upsert target: `(video_id, chunk_index)`.
-- `video_insights` upsert target: `(video_id, insight_type)`.
-- Stale chunk/insight rows are deleted when a later run yields fewer records.
+- `content_chunks` upsert target: `(content_item_id, chunk_index)`.
+- `content_chunk_anchors` upsert target: `(content_chunk_id, anchor_key)`.
+- `content_insights` upsert target: `(content_item_id, insight_type)`.
+- Stale chunk/anchor/insight rows are deleted when a later run yields fewer records.
 - Retries converge on latest provider-derived state, not duplicate rows.
 
 ## Failure Model

@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/nextjs";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { videoChunks, videoInsights, videos } from "@/db/schema";
+import { contentChunks, contentInsights, contentItems } from "@/db/schema";
 import { isContentType, type ContentType } from "@/lib/sources/types";
 import type { RetrievalCandidate } from "@/server/chat/types";
 
@@ -54,29 +54,29 @@ async function searchChunkVector(params: RetrievalParams): Promise<RetrievalCand
   }
 
   const embeddingLiteral = JSON.stringify(params.embedding);
-  const cosineDistance = sql<number>`${videoChunks.embedding} <=> ${embeddingLiteral}::vector`;
+  const cosineDistance = sql<number>`${contentChunks.embedding} <=> ${embeddingLiteral}::vector`;
 
   const rows = await db
     .select({
-      id: videoChunks.id,
+      id: contentChunks.id,
       rawScore: cosineDistance,
-      videoId: videoChunks.videoId,
-      externalId: videos.externalId,
-      contentType: videos.contentType,
-      videoTitle: videoChunks.videoTitle,
-      text: videoChunks.chunkText,
-      startSeconds: videoChunks.startSeconds,
-      endSeconds: videoChunks.endSeconds,
+      videoId: contentChunks.contentItemId,
+      externalId: contentItems.externalId,
+      contentType: contentItems.contentType,
+      videoTitle: contentChunks.itemTitle,
+      text: contentChunks.chunkText,
+      startSeconds: contentChunks.startSeconds,
+      endSeconds: contentChunks.endSeconds,
     })
-    .from(videoChunks)
-    .innerJoin(videos, eq(videos.id, videoChunks.videoId))
+    .from(contentChunks)
+    .innerJoin(contentItems, eq(contentItems.id, contentChunks.contentItemId))
     .where(
       and(
-        eq(videoChunks.userId, params.userId),
-        eq(videoChunks.libraryId, params.libraryId),
-        eq(videos.userId, params.userId),
-        eq(videos.libraryId, params.libraryId),
-        eq(videos.status, "ready"),
+        eq(contentChunks.userId, params.userId),
+        eq(contentChunks.libraryId, params.libraryId),
+        eq(contentItems.userId, params.userId),
+        eq(contentItems.libraryId, params.libraryId),
+        eq(contentItems.status, "ready"),
       ),
     )
     .orderBy(asc(cosineDistance))
@@ -110,28 +110,28 @@ async function searchInsightVector(params: RetrievalParams): Promise<RetrievalCa
   }
 
   const embeddingLiteral = JSON.stringify(params.embedding);
-  const cosineDistance = sql<number>`${videoInsights.embedding} <=> ${embeddingLiteral}::vector`;
+  const cosineDistance = sql<number>`${contentInsights.embedding} <=> ${embeddingLiteral}::vector`;
 
   const rows = await db
     .select({
-      id: videoInsights.id,
+      id: contentInsights.id,
       rawScore: cosineDistance,
-      videoId: videoInsights.videoId,
-      externalId: videos.externalId,
-      contentType: videos.contentType,
-      videoTitle: videos.title,
-      text: videoInsights.content,
-      insightType: videoInsights.insightType,
+      videoId: contentInsights.contentItemId,
+      externalId: contentItems.externalId,
+      contentType: contentItems.contentType,
+      videoTitle: contentItems.title,
+      text: contentInsights.content,
+      insightType: contentInsights.insightType,
     })
-    .from(videoInsights)
-    .innerJoin(videos, eq(videos.id, videoInsights.videoId))
+    .from(contentInsights)
+    .innerJoin(contentItems, eq(contentItems.id, contentInsights.contentItemId))
     .where(
       and(
-        eq(videoInsights.userId, params.userId),
-        eq(videoInsights.libraryId, params.libraryId),
-        eq(videos.userId, params.userId),
-        eq(videos.libraryId, params.libraryId),
-        eq(videos.status, "ready"),
+        eq(contentInsights.userId, params.userId),
+        eq(contentInsights.libraryId, params.libraryId),
+        eq(contentItems.userId, params.userId),
+        eq(contentItems.libraryId, params.libraryId),
+        eq(contentItems.status, "ready"),
       ),
     )
     .orderBy(asc(cosineDistance))
@@ -166,30 +166,30 @@ async function searchChunkFts(params: RetrievalParams): Promise<RetrievalCandida
   }
 
   const tsQuery = sql`plainto_tsquery('english', ${query})`;
-  const rank = sql<number>`ts_rank_cd(to_tsvector('english', ${videoChunks.chunkText}), ${tsQuery})`;
+  const rank = sql<number>`ts_rank_cd(to_tsvector('english', ${contentChunks.chunkText}), ${tsQuery})`;
 
   const rows = await db
     .select({
-      id: videoChunks.id,
+      id: contentChunks.id,
       rawScore: rank,
-      videoId: videoChunks.videoId,
-      externalId: videos.externalId,
-      contentType: videos.contentType,
-      videoTitle: videoChunks.videoTitle,
-      text: videoChunks.chunkText,
-      startSeconds: videoChunks.startSeconds,
-      endSeconds: videoChunks.endSeconds,
+      videoId: contentChunks.contentItemId,
+      externalId: contentItems.externalId,
+      contentType: contentItems.contentType,
+      videoTitle: contentChunks.itemTitle,
+      text: contentChunks.chunkText,
+      startSeconds: contentChunks.startSeconds,
+      endSeconds: contentChunks.endSeconds,
     })
-    .from(videoChunks)
-    .innerJoin(videos, eq(videos.id, videoChunks.videoId))
+    .from(contentChunks)
+    .innerJoin(contentItems, eq(contentItems.id, contentChunks.contentItemId))
     .where(
       and(
-        eq(videoChunks.userId, params.userId),
-        eq(videoChunks.libraryId, params.libraryId),
-        eq(videos.userId, params.userId),
-        eq(videos.libraryId, params.libraryId),
-        eq(videos.status, "ready"),
-        sql`to_tsvector('english', ${videoChunks.chunkText}) @@ ${tsQuery}`,
+        eq(contentChunks.userId, params.userId),
+        eq(contentChunks.libraryId, params.libraryId),
+        eq(contentItems.userId, params.userId),
+        eq(contentItems.libraryId, params.libraryId),
+        eq(contentItems.status, "ready"),
+        sql`to_tsvector('english', ${contentChunks.chunkText}) @@ ${tsQuery}`,
       ),
     )
     .orderBy(desc(rank))

@@ -1,319 +1,225 @@
-# Forward-Only Plan: Source-Agnostic Ingestion Foundation
+# Forward-Only Plan: Source-Agnostic Ingestion + Universal Anchors
 
-## Goal
+## Why This Exists
 
-Refactor the ingestion and retrieval contracts so the codebase is source-agnostic by design, while still supporting only YouTube in this PR.
+We are pre-user and intentionally forward-only. We optimize for a clean target architecture, not backward compatibility.
 
-This plan is intentionally forward-only:
+Rules:
 
 - no compatibility shims
 - no dual-write paths
-- no legacy fallback logic
-- no data migrations to preserve old rows
+- no legacy aliases
+- no backfills to preserve old rows
 
-We currently have no users, so we prioritize a clean target architecture over compatibility.
+## What Is Already Done
 
-## What This Plan Changes
+The codebase already completed the source-agnostic foundation:
 
-- Replace YouTube-coupled identifiers (`youtubeVideoId`) with provider-neutral identifiers (`externalId`).
-- Introduce provider interfaces and a provider registry for discovery and content fetching.
-- Make ingestion and chat source rollups item-based, not YouTube-timestamp based.
-- Keep existing retrieval tables (`videos`, `video_chunks`, `video_insights`) for now, but make their row contracts source-agnostic.
+- provider-based ingestion (`src/server/ingestion/providers/*`)
+- canonical item identity (`externalId`, `contentType`)
+- provider-qualified source types (`youtube_video`, `youtube_playlist`, `youtube_channel`)
+- item-level chat source rollup (`items[]`)
+- strict forward-only cleanup of legacy YouTube-coupled contracts
 
-## What This Plan Does Not Do
+This gives one shared retrieval pipeline after provider extraction.
 
-- No new non-YouTube provider implementation in this PR.
-- No landing page or positioning rewrite in this PR.
-- No compatibility layers for old schema, old events, or old payload shapes.
+## What We Are Adding Next
 
-## Forward-Only Rules For This Refactor
+Introduce one universal anchor layer so source-specific citations work across all providers while keeping one shared RAG model.
 
-1. Remove obsolete code paths immediately after replacement.
-2. Rename contracts directly instead of aliasing old and new names.
-3. If schema changes break old rows, wipe ingestion-related data before rollout.
-4. Keep only one canonical interface per concern.
+Canonical new table:
 
-## Target Architecture
+- `content_chunk_anchors`
 
-### 1) Canonical identity model
+We are not introducing parallel pipelines (`texts`, `text_chunks`, `text_insights`).
 
-- Content item identity in app code: `externalId`.
-- Content classification in app code: `contentType`.
-- DB uniqueness for items: `(library_id, content_type, external_id)`.
+## Architectural Decision
 
-### 2) Source type model
+Keep one shared storage path for retrieval content:
 
-Do not use generic `"video" | "playlist" | "channel"` as global source types.
+- `content_items`
+- `content_chunks`
+- `content_insights`
 
-Use provider-qualified values so new providers do not collide:
+Add one shared citation extension layer:
 
-- `youtube_video`
-- `youtube_playlist`
-- `youtube_channel`
+- `content_chunk_anchors`
 
-### 3) Provider contract
+Providers can emit source-specific anchors, but storage and chat contracts stay canonical.
 
-Create `src/server/ingestion/providers/` with:
+## Canonical Anchor Contract
 
-- `types.ts`
-- `registry.ts`
-- `youtube.ts`
-
-Core interfaces:
+Add these types to `src/server/ingestion/providers/types.ts`:
 
 ```ts
-export type ContentType = "youtube_video";
+export type ContentAnchorType = "timecode" | "page" | "section" | "char_range";
 
-export type SourceType = "youtube_video" | "youtube_playlist" | "youtube_channel";
-
-export type DiscoveredItem = {
-  externalId: string;
-  contentType: ContentType;
-  title: string;
-  thumbnailUrl: string | null;
-  authorName: string | null;
-  authorId: string | null;
-  publishedAt: Date | null;
-  durationSeconds: number | null;
-};
-
-export type DiscoveryResult = {
-  items: DiscoveredItem[];
-  sourceAuthorName: string | null;
-  sourceTitle: string | null;
+export type ContentAnchor = {
+  anchorKey: string;
+  anchorType: ContentAnchorType;
+  startValue: number | null;
+  endValue: number | null;
+  label: string | null;
+  urlFragment: string | null;
+  metadata: Record<string, unknown> | null;
 };
 
 export type ContentSegment = {
   startSeconds: number | null;
   endSeconds: number | null;
   text: string;
+  anchors: ContentAnchor[];
 };
-
-export type FetchedContent = {
-  title: string | null;
-  segments: ContentSegment[];
-  raw: unknown;
-};
-
-export interface ContentDiscovery {
-  discover(url: string, sourceType: SourceType): Promise<DiscoveryResult>;
-}
-
-export interface ContentFetcher {
-  fetch(externalId: string): Promise<FetchedContent>;
-}
 ```
 
-Note: keep `ContentType` as `"youtube_video"` for now. Add new members only when a provider is implemented.
+Notes:
 
-### 4) Shared ingestion error base class
+- `anchorKey` is deterministic and used for upsert dedupe per chunk.
+- `metadata` is for provider-specific long-tail fields only.
 
-Provider errors must extend one shared error:
+## Implementation Plan
+
+### Step 0 - destructive preflight
+
+Before rollout in any environment with stale rows:
+
+- wipe ingestion-derived rows (`content_items`, `content_chunks`, `content_insights`)
+- no backfill scripts are added
+
+### Step 1 - schema: add `content_chunk_anchors`
+
+Update `src/db/schema.ts` with a new table:
+
+- `id` uuid pk
+- `userId` uuid not null
+- `libraryId` uuid not null
+- `contentItemId` uuid fk -> `content_items.id`
+- `contentChunkId` uuid fk -> `content_chunks.id`
+- `anchorKey` text not null
+- `anchorType` text not null
+- `startValue` double precision null
+- `endValue` double precision null
+- `label` text null
+- `urlFragment` text null
+- `metadata` jsonb null
+- `createdAt`, `updatedAt`
+
+Indexes/constraints:
+
+- unique `(contentChunkId, anchorKey)`
+- index `(libraryId)`
+- index `(videoId)`
+- index `(chunkId)`
+- index `(anchorType)`
+
+Add RLS policies with the same user/library ownership pattern as other ingestion tables.
+
+Generate/apply migration via:
+
+- `npm run db:generate`
+- `npm run db:migrate`
+
+### Step 2 - provider output: YouTube emits anchors
+
+Update `src/server/ingestion/providers/youtube.ts` so segments include timecode anchors:
+
+- `anchorType: "timecode"`
+- `anchorKey: "timecode:${Math.floor(startSeconds)}"`
+- `label: "mm:ss"`
+- `urlFragment: "t=<seconds>"`
+
+### Step 3 - chunking propagation
+
+Update `src/server/ingestion/chunking.ts`:
+
+- preserve segment-to-chunk grouping boundaries
+- aggregate/dedupe anchors from covered segments into each output chunk
+- keep `startSeconds/endSeconds` as coarse chunk bounds only
+
+### Step 4 - ingestion write path
+
+Update `src/server/inngest/functions/video-ingest.ts`:
+
+- upsert chunk rows as today
+- upsert chunk anchors into `content_chunk_anchors`
+- conflict target: `(contentChunkId, anchorKey)`
+- delete stale anchors for removed/changed chunks in same run
+
+### Step 5 - retrieval and rollup contract
+
+Update:
+
+- `src/server/chat/types.ts`
+- `src/server/chat/sources.ts`
+- `src/server/chat/service.ts`
+- `src/server/chat/queries.ts`
+
+New contract shape:
 
 ```ts
-export class IngestionError extends Error {
-  readonly terminal: boolean;
+type ChatSourceAnchor = {
+  anchorType: "timecode" | "page" | "section" | "char_range";
+  label: string | null;
+  url: string;
+};
 
-  constructor(message: string, terminal: boolean) {
-    super(message);
-    this.name = "IngestionError";
-    this.terminal = terminal;
-  }
-}
-```
-
-`classifyIngestionError` must depend only on `IngestionError`, not provider-specific classes.
-
-### 5) Item-level source rollup
-
-Chat source rollups must not include YouTube timestamp links.
-
-Use one source item per content item:
-
-```ts
-export type ChatSourceItem = {
+type ChatSourceItem = {
   itemId: string;
   externalId: string;
   contentType: ContentType;
   title: string;
   url: string;
   referenceCount: number;
-};
-
-export type ChatSourcesRollup = {
-  items: ChatSourceItem[];
+  anchors: ChatSourceAnchor[];
 };
 ```
 
-## Implementation Plan
+Rules:
 
-### Step 0 - destructive preflight (required)
+- item-level rollup remains canonical
+- anchors are optional and additive
+- no legacy timestamp-array contract is restored
 
-Before applying schema and contract changes:
+### Step 6 - URL builder centralization
 
-- wipe ingestion-derived data (`videos`, `video_chunks`, `video_insights`) in every environment before rollout
-- remove any obsolete local/dev data that uses old contracts
+Add a single URL helper (shared server/client):
 
-No backfill scripts are added.
+- `buildItemUrl(externalId, contentType)`
+- `buildAnchorUrl(externalId, contentType, urlFragment)`
 
-### Step 1 - schema and DB contract
+No provider-specific URL logic in chat UI components.
 
-Update `src/db/schema.ts`:
+### Step 7 - UI rendering
 
-- rename `videos.youtubeVideoId` -> `videos.externalId`
-- add `videos.contentType` as `.notNull()` with no default
-- replace unique key with `(libraryId, contentType, externalId)`
-- make `video_chunks.startSeconds` and `video_chunks.endSeconds` nullable now
+Update:
 
-Generate migration with `npm run db:generate`.
-
-### Step 2 - provider module refactor
-
-- Add `src/server/ingestion/providers/types.ts`.
-- Add `src/server/ingestion/providers/registry.ts`.
-- Add `src/server/ingestion/providers/youtube.ts` by moving logic from:
-  - `src/server/ingestion/youtube-discovery.ts`
-  - `src/server/ingestion/transcript.ts`
-- Delete the two legacy files after replacement.
-
-### Step 3 - validation and source typing
-
-Update `src/lib/validation/sources.ts`:
-
-- `parseYouTubeUrl` -> `parseSourceUrl`
-- `ParsedYouTubeUrl` -> `ParsedSourceUrl`
-- return provider-qualified `SourceType` values
-- keep current user-facing validation text YouTube-specific for now
-
-### Step 4 - update Inngest ingestion functions
-
-Update `src/server/inngest/functions/source-added.ts`:
-
-- use `getDiscovery(sourceType)`
-- write `externalId` and `contentType`
-- dedupe by `(contentType, externalId)`
-- include `contentType` in `video.ingest` event payload
-
-Update `src/server/inngest/functions/video-ingest.ts`:
-
-- load `externalId` and `contentType`
-- use `getFetcher(contentType)`
-- use content chunks from provider fetcher
-- replace transcript-specific names with content-specific names
-
-Update `src/server/inngest/client.ts` event schemas accordingly.
-
-### Step 5 - chunking contract
-
-Update `src/server/ingestion/chunking.ts`:
-
-- `TranscriptSegment` -> `ContentSegment`
-- `TranscriptChunk` -> `ContentChunk`
-- `chunkTranscriptSegments` -> `chunkContentSegments`
-- preserve token-window behavior
-- support nullable start/end seconds in chunk outputs
-
-### Step 6 - retrieval, fusion, and chat persistence
-
-Update these files to use `externalId` and item-level source rollup:
-
-- `src/server/chat/types.ts`
-- `src/server/chat/retrieval.ts`
-- `src/server/chat/fusion.ts`
-- `src/server/chat/sources.ts`
-- `src/server/chat/service.ts`
-- `src/server/chat/queries.ts`
-
-Key changes:
-
-- remove timestamp-array source output
-- return `{ items: ChatSourceItem[] }`
-- build item URL from `contentType`
-- keep `evidence_json` intact for debugging
-
-### Step 7 - API and feature type propagation
-
-Update server and client contracts:
-
-- `src/server/videos/queries.ts`
-- `src/app/api/libraries/[libraryId]/videos/route.ts`
-- `src/features/videos/types.ts`
-- `src/features/videos/VideoDetailsDialog.tsx`
 - `src/features/chat/types.ts`
 - `src/features/chat/ChatSources.tsx`
 
-Update source typing usage where needed:
+Render item links with optional anchor links:
 
-- `src/server/sources/queries.ts`
-- `src/app/api/libraries/[libraryId]/sources/route.ts`
-- `src/features/sources/types.ts`
-- source UI components that switch on source type
-
-### Step 8 - delete obsolete contracts and files
-
-Required cleanup in same PR:
-
-- remove remaining `youtubeVideoId` references
-- remove old transcript-specific ingestion types
-- delete replaced ingestion files
-- remove dead timestamp rollup helpers
-
-No deprecated aliases are kept.
-
-## Files That Must Be Included (minimum)
-
-- `src/db/schema.ts`
-- `src/lib/validation/sources.ts`
-- `src/server/ingestion/errors.ts`
-- `src/server/ingestion/chunking.ts`
-- `src/server/ingestion/providers/types.ts` (new)
-- `src/server/ingestion/providers/registry.ts` (new)
-- `src/server/ingestion/providers/youtube.ts` (new)
-- `src/server/inngest/client.ts`
-- `src/server/inngest/functions/source-added.ts`
-- `src/server/inngest/functions/video-ingest.ts`
-- `src/server/chat/types.ts`
-- `src/server/chat/retrieval.ts`
-- `src/server/chat/fusion.ts`
-- `src/server/chat/sources.ts`
-- `src/server/chat/service.ts`
-- `src/server/chat/queries.ts`
-- `src/server/videos/queries.ts`
-- `src/app/api/libraries/[libraryId]/videos/route.ts`
-- `src/features/videos/types.ts`
-- `src/features/videos/VideoDetailsDialog.tsx`
-- `src/features/chat/types.ts`
-- `src/features/chat/ChatSources.tsx`
-
-## Documentation Updates Required In Same PR
-
-- `docs/ingestion-architecture.md` (provider architecture and new contracts)
-- `docs/chat-architecture.md` (item-level source rollup)
-- `AGENTS.md` only if invariant wording changes in this refactor
+- timecode links for YouTube now
+- page/section/char-range links for future providers
 
 ## Acceptance Criteria
 
-1. No runtime usage of `youtubeVideoId` remains in `src/**`.
-2. `classifyIngestionError` has no provider-specific imports.
-3. Ingestion works end-to-end for YouTube with provider registry wiring.
-4. Chat sources render item-level citations without timestamp lists.
-5. DB uniqueness uses `(libraryId, contentType, externalId)`.
-6. No compatibility code paths or legacy aliases exist.
+1. `content_chunk_anchors` is the canonical citation-anchor table.
+2. YouTube ingestion writes timecode anchors into `content_chunk_anchors`.
+3. Chat source rollup remains item-level and can include optional anchors.
+4. No compatibility aliases, dual payloads, or backfill code paths are added.
+5. `npm run typecheck`, `npm run lint`, and `npm run build` pass.
 
 ## Verification
 
-Run after implementation:
-
 ```bash
 npm run db:generate
+npm run db:migrate
 npm run typecheck
 npm run lint
 npm run build
-rg "youtubeVideoId|TranscriptSegment|ChatSourceTimestamp|extraVideos" src
 ```
 
 ## Out of Scope
 
 - Implementing non-YouTube providers
-- Renaming `videos`, `video_chunks`, `video_insights` tables
 - Reworking billing product semantics in this refactor

@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/nextjs";
 import { and, desc, eq, gte, inArray, isNotNull, lt, or } from "drizzle-orm";
 
 import { db } from "@/db";
-import { chatMessages, videos } from "@/db/schema";
+import { chatMessages, contentItems } from "@/db/schema";
 import {
   ingestChatCreditsUsage,
   ingestVideoUsage,
@@ -286,34 +286,34 @@ export const billingUsageReconcile = inngest.createFunction(
         `load-video-reconciliation-batch-${batchId}`,
         async (): Promise<VideoReconciliationRow[]> => {
         const baseWhere = and(
-          eq(videos.status, "ready"),
-          gte(videos.updatedAt, since),
+          eq(contentItems.status, "ready"),
+          gte(contentItems.updatedAt, since),
         );
 
         const whereClause = cursor
           ? and(
               baseWhere,
-              or(
-                lt(videos.updatedAt, new Date(cursor.updatedAtIso)),
-                and(
-                  eq(videos.updatedAt, new Date(cursor.updatedAtIso)),
-                  lt(videos.id, cursor.id),
+                or(
+                  lt(contentItems.updatedAt, new Date(cursor.updatedAtIso)),
+                  and(
+                    eq(contentItems.updatedAt, new Date(cursor.updatedAtIso)),
+                    lt(contentItems.id, cursor.id),
+                  ),
                 ),
-              ),
-            )
+              )
           : baseWhere;
 
         return db
           .select({
-            userId: videos.userId,
-            libraryId: videos.libraryId,
-            sourceId: videos.sourceId,
-            videoId: videos.id,
-            updatedAt: videos.updatedAt,
+            userId: contentItems.userId,
+            libraryId: contentItems.libraryId,
+            sourceId: contentItems.sourceId,
+            videoId: contentItems.id,
+            updatedAt: contentItems.updatedAt,
           })
-          .from(videos)
+          .from(contentItems)
           .where(whereClause)
-          .orderBy(desc(videos.updatedAt), desc(videos.id))
+          .orderBy(desc(contentItems.updatedAt), desc(contentItems.id))
           .limit(RECONCILIATION_BATCH_SIZE);
         },
       );

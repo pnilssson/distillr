@@ -76,9 +76,9 @@ This file is the operational source of truth for agent behavior in this reposito
 ## Retrieval Invariants
 
 - Use hybrid retrieval by default: vector similarity + full-text search.
-- Retrieve from two layers: `video_chunks` and `video_insights`.
-- Scope retrieval to one library and only `videos.status = 'ready'`.
-- Include a compact source rollup with video title + timestamps in chat answers.
+- Retrieve from two layers: `content_chunks` and `content_insights`.
+- Scope retrieval to one library and only `content_items.status = 'ready'`.
+- Include a compact source rollup with item-level citations and optional typed anchors in chat answers.
 - If retrieval evidence is weak, respond with uncertainty instead of guessing.
 
 ## UI and Accessibility Invariants

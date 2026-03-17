@@ -210,8 +210,8 @@ export const sources = pgTable(
 
 export type Source = typeof sources.$inferSelect;
 
-export const videos = pgTable(
-  "videos",
+export const contentItems = pgTable(
+  "content_items",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id").notNull(),
@@ -221,7 +221,7 @@ export const videos = pgTable(
     sourceId: uuid("source_id")
       .notNull()
       .references(() => sources.id, { onDelete: "cascade" }),
-    externalId: text("youtube_video_id").notNull(),
+    externalId: text("external_id").notNull(),
     contentType: text("content_type").notNull(),
     title: text("title").notNull(),
     thumbnailUrl: text("thumbnail_url").notNull(),
@@ -244,30 +244,30 @@ export const videos = pgTable(
       .notNull(),
   },
   (table) => [
-    unique("videos_library_video_uniq").on(
+    unique("content_items_library_content_external_uniq").on(
       table.libraryId,
       table.contentType,
       table.externalId,
     ),
-    index("videos_library_id_idx").on(table.libraryId),
-    index("videos_source_id_idx").on(table.sourceId),
-    pgPolicy("videos_select_own", {
+    index("content_items_library_id_idx").on(table.libraryId),
+    index("content_items_source_id_idx").on(table.sourceId),
+    pgPolicy("content_items_select_own", {
       for: "select",
       to: authenticatedRole,
       using: sql`auth.uid() = user_id`,
     }),
-    pgPolicy("videos_insert_own", {
+    pgPolicy("content_items_insert_own", {
       for: "insert",
       to: authenticatedRole,
       withCheck: sql`auth.uid() = user_id`,
     }),
-    pgPolicy("videos_update_own", {
+    pgPolicy("content_items_update_own", {
       for: "update",
       to: authenticatedRole,
       using: sql`auth.uid() = user_id`,
       withCheck: sql`auth.uid() = user_id`,
     }),
-    pgPolicy("videos_delete_own", {
+    pgPolicy("content_items_delete_own", {
       for: "delete",
       to: authenticatedRole,
       using: sql`auth.uid() = user_id`,
@@ -275,22 +275,22 @@ export const videos = pgTable(
   ],
 ).enableRLS();
 
-export type Video = typeof videos.$inferSelect;
+export type ContentItem = typeof contentItems.$inferSelect;
 
-export const videoChunks = pgTable(
-  "video_chunks",
+export const contentChunks = pgTable(
+  "content_chunks",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id").notNull(),
     libraryId: uuid("library_id")
       .notNull()
       .references(() => libraries.id, { onDelete: "cascade" }),
-    videoId: uuid("video_id")
+    contentItemId: uuid("content_item_id")
       .notNull()
-      .references(() => videos.id, { onDelete: "cascade" }),
+      .references(() => contentItems.id, { onDelete: "cascade" }),
     chunkIndex: integer("chunk_index").notNull(),
     chunkText: text("chunk_text").notNull(),
-    videoTitle: text("video_title").notNull(),
+    itemTitle: text("item_title").notNull(),
     startSeconds: doublePrecision("start_seconds"),
     endSeconds: doublePrecision("end_seconds"),
     embedding: vector("embedding", { dimensions: 1536 }).notNull(),
@@ -302,35 +302,35 @@ export const videoChunks = pgTable(
       .notNull(),
   },
   (table) => [
-    unique("video_chunks_video_chunk_uniq").on(table.videoId, table.chunkIndex),
-    index("video_chunks_library_id_idx").on(table.libraryId),
-    index("video_chunks_video_id_idx").on(table.videoId),
-    index("video_chunks_user_id_idx").on(table.userId),
-    index("video_chunks_embedding_idx").using(
+    unique("content_chunks_item_chunk_uniq").on(table.contentItemId, table.chunkIndex),
+    index("content_chunks_library_id_idx").on(table.libraryId),
+    index("content_chunks_content_item_id_idx").on(table.contentItemId),
+    index("content_chunks_user_id_idx").on(table.userId),
+    index("content_chunks_embedding_idx").using(
       "hnsw",
       table.embedding.op("vector_cosine_ops"),
     ),
-    index("video_chunks_chunk_text_fts_idx").using(
+    index("content_chunks_chunk_text_fts_idx").using(
       "gin",
       sql`to_tsvector('english', ${table.chunkText})`,
     ),
-    pgPolicy("video_chunks_select_own", {
+    pgPolicy("content_chunks_select_own", {
       for: "select",
       to: authenticatedRole,
       using: sql`auth.uid() = user_id`,
     }),
-    pgPolicy("video_chunks_insert_own", {
+    pgPolicy("content_chunks_insert_own", {
       for: "insert",
       to: authenticatedRole,
       withCheck: sql`auth.uid() = user_id`,
     }),
-    pgPolicy("video_chunks_update_own", {
+    pgPolicy("content_chunks_update_own", {
       for: "update",
       to: authenticatedRole,
       using: sql`auth.uid() = user_id`,
       withCheck: sql`auth.uid() = user_id`,
     }),
-    pgPolicy("video_chunks_delete_own", {
+    pgPolicy("content_chunks_delete_own", {
       for: "delete",
       to: authenticatedRole,
       using: sql`auth.uid() = user_id`,
@@ -338,19 +338,80 @@ export const videoChunks = pgTable(
   ],
 ).enableRLS();
 
-export type VideoChunk = typeof videoChunks.$inferSelect;
+export type ContentChunk = typeof contentChunks.$inferSelect;
 
-export const videoInsights = pgTable(
-  "video_insights",
+export const contentChunkAnchors = pgTable(
+  "content_chunk_anchors",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id").notNull(),
     libraryId: uuid("library_id")
       .notNull()
       .references(() => libraries.id, { onDelete: "cascade" }),
-    videoId: uuid("video_id")
+    contentItemId: uuid("content_item_id")
       .notNull()
-      .references(() => videos.id, { onDelete: "cascade" }),
+      .references(() => contentItems.id, { onDelete: "cascade" }),
+    contentChunkId: uuid("content_chunk_id")
+      .notNull()
+      .references(() => contentChunks.id, { onDelete: "cascade" }),
+    anchorKey: text("anchor_key").notNull(),
+    anchorType: text("anchor_type").notNull(),
+    startValue: doublePrecision("start_value"),
+    endValue: doublePrecision("end_value"),
+    label: text("label"),
+    urlFragment: text("url_fragment"),
+    metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    unique("content_chunk_anchors_chunk_anchor_uniq").on(table.contentChunkId, table.anchorKey),
+    index("content_chunk_anchors_library_id_idx").on(table.libraryId),
+    index("content_chunk_anchors_content_item_id_idx").on(table.contentItemId),
+    index("content_chunk_anchors_content_chunk_id_idx").on(table.contentChunkId),
+    index("content_chunk_anchors_anchor_type_idx").on(table.anchorType),
+    index("content_chunk_anchors_user_id_idx").on(table.userId),
+    pgPolicy("content_chunk_anchors_select_own", {
+      for: "select",
+      to: authenticatedRole,
+      using: sql`auth.uid() = user_id`,
+    }),
+    pgPolicy("content_chunk_anchors_insert_own", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: sql`auth.uid() = user_id`,
+    }),
+    pgPolicy("content_chunk_anchors_update_own", {
+      for: "update",
+      to: authenticatedRole,
+      using: sql`auth.uid() = user_id`,
+      withCheck: sql`auth.uid() = user_id`,
+    }),
+    pgPolicy("content_chunk_anchors_delete_own", {
+      for: "delete",
+      to: authenticatedRole,
+      using: sql`auth.uid() = user_id`,
+    }),
+  ],
+).enableRLS();
+
+export type ContentChunkAnchor = typeof contentChunkAnchors.$inferSelect;
+
+export const contentInsights = pgTable(
+  "content_insights",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull(),
+    libraryId: uuid("library_id")
+      .notNull()
+      .references(() => libraries.id, { onDelete: "cascade" }),
+    contentItemId: uuid("content_item_id")
+      .notNull()
+      .references(() => contentItems.id, { onDelete: "cascade" }),
     insightType: text("insight_type").notNull(),
     content: text("content").notNull(),
     embedding: vector("embedding", { dimensions: 1536 }).notNull(),
@@ -362,31 +423,31 @@ export const videoInsights = pgTable(
       .notNull(),
   },
   (table) => [
-    unique("video_insights_video_type_uniq").on(table.videoId, table.insightType),
-    index("video_insights_library_id_idx").on(table.libraryId),
-    index("video_insights_video_id_idx").on(table.videoId),
-    index("video_insights_user_id_idx").on(table.userId),
-    index("video_insights_embedding_idx").using(
+    unique("content_insights_item_type_uniq").on(table.contentItemId, table.insightType),
+    index("content_insights_library_id_idx").on(table.libraryId),
+    index("content_insights_content_item_id_idx").on(table.contentItemId),
+    index("content_insights_user_id_idx").on(table.userId),
+    index("content_insights_embedding_idx").using(
       "hnsw",
       table.embedding.op("vector_cosine_ops"),
     ),
-    pgPolicy("video_insights_select_own", {
+    pgPolicy("content_insights_select_own", {
       for: "select",
       to: authenticatedRole,
       using: sql`auth.uid() = user_id`,
     }),
-    pgPolicy("video_insights_insert_own", {
+    pgPolicy("content_insights_insert_own", {
       for: "insert",
       to: authenticatedRole,
       withCheck: sql`auth.uid() = user_id`,
     }),
-    pgPolicy("video_insights_update_own", {
+    pgPolicy("content_insights_update_own", {
       for: "update",
       to: authenticatedRole,
       using: sql`auth.uid() = user_id`,
       withCheck: sql`auth.uid() = user_id`,
     }),
-    pgPolicy("video_insights_delete_own", {
+    pgPolicy("content_insights_delete_own", {
       for: "delete",
       to: authenticatedRole,
       using: sql`auth.uid() = user_id`,
@@ -394,4 +455,4 @@ export const videoInsights = pgTable(
   ],
 ).enableRLS();
 
-export type VideoInsight = typeof videoInsights.$inferSelect;
+export type ContentInsight = typeof contentInsights.$inferSelect;

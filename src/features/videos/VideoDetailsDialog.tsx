@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import type { ContentType } from "@/lib/sources/types";
+import { buildItemUrl } from "@/lib/sources/url";
 import type { LibraryVideoProgressItem } from "@/features/videos/types";
 
 type VideoDetailsDialogProps = {
@@ -66,7 +67,7 @@ export function VideoDetailsDialog({
   onOpenChange,
 }: VideoDetailsDialogProps) {
   const [copied, setCopied] = useState(false);
-  const itemUrl = video ? getItemUrl(video.externalId, video.contentType) : "";
+  const itemUrl = video ? buildItemUrl(video.externalId, video.contentType) : "";
   const itemCtaLabel = video ? getItemCtaLabel(video.contentType) : "Open item";
 
   function copyUrl() {
@@ -203,14 +204,6 @@ function MetaCell({ label, value }: { label: string; value: string }) {
       <p className="mt-0.5 break-words text-sm">{value}</p>
     </div>
   );
-}
-
-function getItemUrl(externalId: string, contentType: ContentType): string {
-  if (contentType === "youtube_video") {
-    return `https://www.youtube.com/watch?v=${encodeURIComponent(externalId)}`;
-  }
-
-  return externalId;
 }
 
 function getItemCtaLabel(contentType: ContentType): string {

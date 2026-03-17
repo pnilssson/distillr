@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { ContentType } from "@/lib/sources/types";
+import type { ContentAnchorType, ContentType } from "@/lib/sources/types";
 
 export type ChatMessageRole = "user" | "assistant";
 export type ChatMessageStatus = "completed" | "aborted" | "failed";
@@ -13,6 +13,12 @@ export type ChatUsage = {
   totalTokens: number;
 };
 
+export type ChatSourceAnchor = {
+  anchorType: ContentAnchorType;
+  label: string | null;
+  url: string;
+};
+
 export type ChatSourceItem = {
   itemId: string;
   externalId: string;
@@ -20,6 +26,7 @@ export type ChatSourceItem = {
   title: string;
   url: string;
   referenceCount: number;
+  anchors: ChatSourceAnchor[];
 };
 
 export type ChatSourcesRollup = {

@@ -37,7 +37,8 @@ export function ChatSources({ sources }: ChatSourcesProps) {
 
       <ol className="space-y-1.5">
         {visibleItems.map((item, index) => (
-          <li key={item.itemId} className="flex items-baseline gap-2 text-xs">
+          <li key={item.itemId} className="text-xs">
+            <div className="flex items-baseline gap-2">
             <span className="shrink-0 text-muted-foreground">{index + 1}.</span>
             <a
               href={item.url}
@@ -49,6 +50,23 @@ export function ChatSources({ sources }: ChatSourcesProps) {
               {item.title}
             </a>
             <span className="shrink-0 text-muted-foreground">({item.referenceCount})</span>
+            </div>
+
+            {item.anchors.length > 0 ? (
+              <div className="mt-1 flex flex-wrap gap-1.5 pl-5">
+                {item.anchors.map((anchor) => (
+                  <a
+                    key={`${item.itemId}-${anchor.anchorType}-${anchor.url}`}
+                    href={anchor.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded border border-border px-1.5 py-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+                  >
+                    {anchor.label ?? anchor.anchorType}
+                  </a>
+                ))}
+              </div>
+            ) : null}
           </li>
         ))}
       </ol>

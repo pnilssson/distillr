@@ -1,69 +1,69 @@
 # What is Distillr?
 
-Distillr is a **YouTube knowledge base SaaS**. Users add YouTube channels, playlists, or individual videos and Distillr extracts the transcripts, processes them with AI, and turns them into a persistent, searchable knowledge base they can chat with and export from.
+Distillr is a YouTube research tool. Users add YouTube channels, playlists, or individual videos and Distillr extracts the transcripts, processes them with AI, and turns them into a persistent, searchable knowledge base they can query and export from.
 
-The mental model: **not a transcript downloader. A second brain for video content.**
-
-Where competitors like Transcribr focus on extraction and file export, Distillr focuses on long-term knowledge accumulation. Users build Libraries over time, ask cross-video questions, and export structured knowledge - not raw transcripts.
+The core distinction: Distillr is not a transcript downloader. It is a research library that grows over time. Where tools like Transcribr focus on one-off extraction and file export, Distillr focuses on long-term accumulation. Users build libraries of sources they care about, ask questions across all of them at once, and get cited answers with timestamp links back to the original video.
 
 ---
 
 # The Problem We Solve
 
-YouTube is one of the richest knowledge sources on the internet, but it is fundamentally unsearchable and non-persistent. Watching 200 hours of content on a topic leaves you with no artifact. Nothing you can query, reference, or build on.
+YouTube is one of the richest knowledge sources on the internet. Thought leaders, domain experts, and niche creators publish thousands of hours of insight that never appears in search results, academic papers, or anywhere you can query it.
 
-Distillr turns video content into something durable: a personal knowledge base that understands what was said across hundreds of videos, can answer questions with compact timestamp-linked sources, and lets you export structured insights into your own tools.
+The workflow researchers use today is broken. Watch a video, copy the transcript, paste it into an LLM, ask a question. It works for one video. It collapses at ten. At fifty it is impossible. There is no memory across sessions, no cross-referencing between videos, no persistence.
+
+Distillr fixes this at the source. Add your channels and playlists once. Ask questions across all of them. Get answers with cited sources and timestamps. Export structured insights into your own tools.
 
 ---
 
-# Target Users (MVP)
+# Who Distillr Is For
 
-- **Researchers and analysts** building a knowledge base from expert channels in their field
-- **Content creators** mining competitors or inspirational channels for patterns and ideas
-- **Lifelong learners** who follow a set of channels and want to actually retain what they watch
-- **Consultants and writers** who need to reference and cite what thought leaders have said on a topic
+## Primary: Independent Analysts and Substack Writers
+
+These are people who publish original research or analysis and use YouTube as a primary source. They follow specific channels closely, need to quote and cite accurately, and currently have no good way to search or cross-reference across everything they have watched.
+
+This includes independent analysts publishing on Substack or Ghost, freelance researchers and consultants who write for clients, finance and tech and policy writers who treat YouTube as a reporting source, and podcasters or journalists who track specific speakers over time.
+
+The key insight about this group: they are already doing a version of this manually. They paste transcripts into ChatGPT. It breaks at volume. Distillr is not a new habit for them. It is a better version of something they already do.
+
+## Secondary: Content Creators
+
+Creators who mine competitor channels or inspirational channels for patterns, hooks, and angles. Higher volume users, less research-oriented. This is a natural Phase 2 audience once the core research use case is proven.
+
+---
+
+# What Makes Distillr Different
+
+Most AI tools answer questions from general knowledge. Distillr answers questions from a specific corpus the user owns and curates. The answers are grounded in real sources the user chose, cited with timestamps, not hallucinated from training data.
+
+The closest competitors are NotebookLM (Google) and Recall. NotebookLM does not persist libraries across sessions or support cross-notebook queries at scale. Recall treats YouTube as one of many source types without deep semantic indexing. Neither is built specifically for the YouTube-as-research-source use case.
+
+Distillr's defensible position is: one data type (YouTube), one primary audience (researchers and analysts), persistent and queryable at library scale.
 
 ---
 
 # Pricing Model
 
-## Plans
+| Plan    | Price  | Monthly videos | Total video cap | Monthly credits |
+| ------- | ------ | -------------- | --------------- | --------------- |
+| Free    | $0     | 10             | 50              | 100             |
+| Builder | $19/mo | 100            | 1,000           | 900             |
+| Pro     | $49/mo | 300            | Unlimited       | 2,500           |
 
-| Plan        | Price  | Monthly videos | Total video cap | Monthly credits |
-| ----------- | ------ | -------------- | --------------- | --------------- |
-| **Free**    | $0     | 10             | 50              | 100             |
-| **Builder** | $19/mo | 100            | 1,000           | 900             |
-| **Pro**     | $49/mo | 300            | Unlimited       | 2,500           |
+Credits are the universal unit for chat. Users choose their AI model per request and credit usage scales with model capability. Monthly credits reset on the billing anniversary and do not roll over. Builder and Pro users can top up with 500 credits for $9. Free users see an upgrade prompt instead.
 
-## Credits
+Deleting a video does not restore monthly or lifetime quota. Ingestion is the cost event: transcript fetch, embedding, and processing are spent at ingest time regardless of later deletion.
 
-Credits are the universal unit for chat. Users choose their AI model per request; credit usage scales with model capability so margin is protected regardless of which model a user picks.
-
-Monthly credit allowances reset on the billing cycle anniversary. Unused credits do not roll over. Top-up: 500 credits for $9, available to Builder and Pro via Polar one-time purchase. Free users see an upgrade prompt instead.
-
-Credits per model are set so the credit cost always covers actual LLM cost with margin. The ratio between models reflects their real cost ratio (for example `gpt-5.1` vs `gpt-5-mini`), so credit pricing scales with capability. Exact credit burn is controlled server-side by model pricing config and is reviewed whenever provider pricing changes.
-
-## Monthly Video Cap
-
-The monthly video cap limits new ingestion per billing cycle and resets on the billing anniversary. The total video cap is a lifetime ceiling on videos in the account.
-
-**Deleting a video does not restore monthly or lifetime quota.** Ingestion is the cost event - transcript fetch, embedding, and insight generation are spent at ingest time regardless of later deletion.
-
-## Principles
-
-- **Credits, not message counts** - users choose their model; credit costs per model are calibrated with at least 2x margin over actual API cost. Recalibrate if OpenAI pricing changes significantly.
-- **Monthly video caps** - reset each billing cycle. Predictable costs for both the user and the platform. Pro users with unlimited total videos still face a monthly ingestion rate limit.
-- **Balance safety over strict reservation** - chat requests are blocked when account balance is below 1 credit, and displayed balances are clamped to 0 so users cannot continue once depleted.
-- **Top-ups convert frustration into revenue** - surface at the exact moment of limit-hit, never proactively. Builder and Pro only; Free users see an upgrade prompt instead.
-- **Free plan** demonstrates core value within tight but honest limits. Tight enough to convert, generous enough to show the product works.
-- **Annual billing** (post-MVP): offer 2 months free framing (~17% discount). Improves cash flow significantly and increases LTV. Builder annual = $190/yr (~$15.83/mo equivalent). Pro annual = $490/yr (~$40.83/mo equivalent).
+Annual billing is planned post-MVP at a two-months-free discount (Builder $190/yr, Pro $490/yr).
 
 ---
 
-## Cost Governance (March 2026)
+# What Distillr Is Not
 
-- Ingestion cost is variable by transcript length, token volume, and downstream processing. Distillr does not treat ingestion as a fixed per-video cost.
-- Chat cost is token-based at OpenAI rates (`gpt-5-mini` and `gpt-5.1`) using input, cached input, and output token pricing.
-- Credit burn is controlled server-side with `POLAR_CHAT_CREDITS_PER_USD=100` and model-specific cost mapping.
-- Top-up pricing is calibrated for positive unit margin after tax and payment fees.
-- Pricing and limits are reviewed monthly against observed `$ai_generation` token/cost telemetry and billing fee data.
+Distillr is not a competitor to general-purpose LLMs like Claude, ChatGPT, or Gemini. Those answer from broad training data. Distillr answers from a specific corpus the user built and owns.
+
+Distillr is not a transcript downloader. The value is persistence, search, and cross-video querying, not the file.
+
+Distillr is not a second brain or PKM tool. It does not ask users to build a system or maintain a workflow. It asks them to add sources and start asking questions.
+
+Distillr is not for casual YouTube viewers. It is built for people with research intent and a specific set of sources they follow seriously.

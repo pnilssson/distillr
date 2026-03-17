@@ -10,8 +10,9 @@
  */
 
 export const CHAT_MODEL_OPTIONS = [
-  { id: "chat.fast", label: "Fast" },
-  { id: "chat.smart", label: "Smart" },
+  { id: "chat.fast", label: "Nano" },
+  { id: "chat.smart", label: "Mini" },
+  { id: "chat.pro", label: "Smart" },
 ] as const satisfies { id: string; label: string }[];
 
 export const CHAT_MODEL_IDS = CHAT_MODEL_OPTIONS.map((o) => o.id) as [

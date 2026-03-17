@@ -20,7 +20,8 @@ export type ModelAlias =
   | "embedding.default"
   | "ingestion.default"
   | "chat.fast"
-  | "chat.smart";
+  | "chat.smart"
+  | "chat.pro";
 
 type AIModelConfig = {
   provider: AIProvider;
@@ -46,26 +47,34 @@ function getModelCatalog(): Record<ModelAlias, AIModelConfig> {
       },
       "ingestion.default": {
         provider: "openai",
-        modelId: env.OPENAI_MODEL_INGESTION ?? "gpt-5-mini",
-        inputPricePerMillionUsd: 0.25,
-        cachedInputPricePerMillionUsd: 0.03,
-        outputPricePerMillionUsd: 2,
+        modelId: env.OPENAI_MODEL_INGESTION ?? "gpt-5.4-mini",
+        inputPricePerMillionUsd: 0.75,
+        cachedInputPricePerMillionUsd: 0.08,
+        outputPricePerMillionUsd: 4.5,
       },
       "chat.fast": {
         provider: "openai",
-        modelId: env.OPENAI_MODEL_CHAT_FAST ?? "gpt-5-mini",
-        inputPricePerMillionUsd: 0.25,
-        cachedInputPricePerMillionUsd: 0.03,
-        outputPricePerMillionUsd: 2,
+        modelId: env.OPENAI_MODEL_CHAT_FAST ?? "gpt-5.4-nano",
+        inputPricePerMillionUsd: 0.2,
+        cachedInputPricePerMillionUsd: 0.02,
+        outputPricePerMillionUsd: 1.25,
         maxOutputTokens: env.OPENAI_CHAT_MAX_OUTPUT_TOKENS_FAST ?? 1200,
       },
       "chat.smart": {
         provider: "openai",
-        modelId: env.OPENAI_MODEL_CHAT_SMART ?? "gpt-5.1",
-        inputPricePerMillionUsd: 1.25,
-        cachedInputPricePerMillionUsd: 0.13,
-        outputPricePerMillionUsd: 10,
+        modelId: env.OPENAI_MODEL_CHAT_SMART ?? "gpt-5.4-mini",
+        inputPricePerMillionUsd: 0.75,
+        cachedInputPricePerMillionUsd: 0.08,
+        outputPricePerMillionUsd: 4.5,
         maxOutputTokens: env.OPENAI_CHAT_MAX_OUTPUT_TOKENS_SMART ?? 1800,
+      },
+      "chat.pro": {
+        provider: "openai",
+        modelId: env.OPENAI_MODEL_CHAT_PRO ?? "gpt-5.4",
+        inputPricePerMillionUsd: 2.5,
+        cachedInputPricePerMillionUsd: 0.25,
+        outputPricePerMillionUsd: 15,
+        maxOutputTokens: env.OPENAI_CHAT_MAX_OUTPUT_TOKENS_PRO ?? 2400,
       },
     };
   }

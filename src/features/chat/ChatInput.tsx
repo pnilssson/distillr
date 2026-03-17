@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent, KeyboardEvent, RefObject } from "react";
-import { ArrowUp, Info, Square } from "lucide-react";
+import { ArrowUp, Settings, Square } from "lucide-react";
 
 import {
   Dialog,
@@ -57,6 +57,8 @@ export function ChatInput({
   onUpgrade,
   textareaRef,
 }: ChatInputProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   useEffect(() => {
     if (!value && textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -131,74 +133,79 @@ export function ChatInput({
 
         <div className="mt-2 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Select
-              value={mode}
-              onValueChange={(value) => onModeChange(value as ChatRequestMode)}
-              disabled={canStop}
-            >
-              <SelectTrigger className="h-8 w-32 text-xs text-muted-foreground" aria-label="Response mode">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Auto</SelectItem>
-                <SelectItem value="library">Use library</SelectItem>
-                <SelectItem value="chat">Chat only</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={model}
-              onValueChange={(value) => onModelChange(value as ChatModelId)}
-              disabled={canStop}
-            >
-              <SelectTrigger className="h-8 w-24 text-xs text-muted-foreground" aria-label="AI model">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CHAT_MODEL_OPTIONS.map((option) => (
-                  <SelectItem key={option.id} value={option.id}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Dialog>
+            <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
               <DialogTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted"
-                  aria-label="Learn about response modes"
+                  disabled={canStop}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+                  aria-label="Chat settings"
                 >
-                  <Info size={16} />
+                  <Settings size={16} />
                 </button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Response modes</DialogTitle>
+                  <DialogTitle>Chat settings</DialogTitle>
                   <DialogDescription>
-                    Choose how Distillr answers your next message.
+                    Configure how Distillr responds.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-3 text-sm">
-                  <div>
-                    <p className="font-medium">Auto</p>
+                <div className="space-y-5 text-sm">
+                  <div className="space-y-2">
+                    <label htmlFor="settings-mode" className="font-medium">
+                      Response mode
+                    </label>
                     <p className="text-muted-foreground">
-                      Chooses between library-grounded answers and chat-only replies based on your message.
+                      Controls whether Distillr searches your library when answering.
                     </p>
+                    <Select
+                      value={mode}
+                      onValueChange={(value) => onModeChange(value as ChatRequestMode)}
+                    >
+                      <SelectTrigger id="settings-mode" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Auto</SelectItem>
+                        <SelectItem value="library">Use library</SelectItem>
+                        <SelectItem value="chat">Chat only</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="space-y-1.5 text-xs text-muted-foreground">
+                      <p><span className="font-medium text-foreground">Auto</span> - Chooses between library-grounded answers and chat-only replies based on your message.</p>
+                      <p><span className="font-medium text-foreground">Use library</span> - Always searches ready videos in this library for grounded, source-linked answers.</p>
+                      <p><span className="font-medium text-foreground">Chat only</span> - Skips retrieval and uses recent chat history only. Best for brainstorming and drafting.</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">Use library</p>
+
+                  <div className="space-y-2">
+                    <label htmlFor="settings-model" className="font-medium">
+                      AI model
+                    </label>
                     <p className="text-muted-foreground">
-                      Always searches ready videos in this library and uses that evidence for grounded answers.
+                      Choose between speed and capability. Smarter models use more credits.
                     </p>
-                  </div>
-                  <div>
-                    <p className="font-medium">Chat only</p>
-                    <p className="text-muted-foreground">
-                      Skips library retrieval, but still uses recent chat history. Best for brainstorming, drafting,
-                      and rewrites.
-                    </p>
+                    <Select
+                      value={model}
+                      onValueChange={(value) => onModelChange(value as ChatModelId)}
+                    >
+                      <SelectTrigger id="settings-model" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CHAT_MODEL_OPTIONS.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="space-y-1.5 text-xs text-muted-foreground">
+                      <p><span className="font-medium text-foreground">Nano</span> - Fastest responses, lowest credit cost. Good for simple, quick questions.</p>
+                      <p><span className="font-medium text-foreground">Mini</span> - Balanced speed and capability. Recommended for most questions.</p>
+                      <p><span className="font-medium text-foreground">Smart</span> - Most capable model. Best for complex reasoning. Uses the most credits.</p>
+                    </div>
                   </div>
                 </div>
               </DialogContent>

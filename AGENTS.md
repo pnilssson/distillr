@@ -43,7 +43,7 @@ This file is the operational source of truth for agent behavior in this reposito
 - AI provider SDK: Vercel AI SDK with `@ai-sdk/openai` (extensible; add providers via `src/server/core/ai/providers.ts`)
 - Transcript extraction: TranscriptAPI
 - Embeddings: OpenAI `text-embedding-3-small` (alias `embedding.default`)
-- LLMs (MVP): OpenAI only - `gpt-5-mini` (fast) and `gpt-5.1` (smart) via alias-based config in `src/server/core/ai/models.ts`
+- LLMs (MVP): OpenAI only - `gpt-5.4-nano` (Nano/fast), `gpt-5.4-mini` (Mini/default), `gpt-5.4` (Smart/pro) via alias-based config in `src/server/core/ai/models.ts`
 
 ## Next.js Best Practices
 

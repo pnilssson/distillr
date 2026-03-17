@@ -8,9 +8,9 @@ Distillr chat answers questions over one library using hybrid retrieval plus str
 
 - Scope: one user, one library, ready videos only.
 - Modes: `auto | library | chat`.
-- Model tiers: `fast` (alias `chat.fast`) or `smart` (alias `chat.smart`), selected per request by the user. Defaults to `smart`.
+- Model tiers: `fast` (alias `chat.fast`, Nano), `smart` (alias `chat.smart`, Mini), or `pro` (alias `chat.pro`, Smart), selected per request by the user. Defaults to `smart` (Mini).
 - Transport: Vercel AI SDK v6 UI message stream protocol.
-- Models (MVP): OpenAI only. Provider/model resolved via `src/server/core/ai/models.ts`.
+- Models (MVP): OpenAI only - `gpt-5.4-nano` (Nano), `gpt-5.4-mini` (Mini, default), `gpt-5.4` (Smart). Provider/model resolved via `src/server/core/ai/models.ts`.
 
 ## Request Flow
 

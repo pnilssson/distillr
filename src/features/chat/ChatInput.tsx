@@ -202,8 +202,9 @@ export function ChatInput({
                       </SelectContent>
                     </Select>
                     <div className="space-y-1.5 text-xs text-muted-foreground">
-                      <p><span className="font-medium text-foreground">Fast</span> - Quicker responses, lower credit cost. Good for straightforward questions.</p>
-                      <p><span className="font-medium text-foreground">Smart</span> - More capable, better reasoning. Uses more credits per message.</p>
+                      <p><span className="font-medium text-foreground">Nano</span> - Fastest responses, lowest credit cost. Good for simple, quick questions.</p>
+                      <p><span className="font-medium text-foreground">Mini</span> - Balanced speed and capability. Recommended for most questions.</p>
+                      <p><span className="font-medium text-foreground">Smart</span> - Most capable model. Best for complex reasoning. Uses the most credits.</p>
                     </div>
                   </div>
                 </div>

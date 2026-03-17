@@ -9,6 +9,7 @@ export const sendChatMessageSchema = z.object({
     .min(1, "Message cannot be empty.")
     .max(4000, "Message must be 4000 characters or less."),
   mode: z.enum(["auto", "library", "chat"]).optional().default("auto"),
+  modelTier: z.enum(["fast", "smart"]).optional().default("smart"),
 });
 
 export const listChatMessagesQuerySchema = z.object({

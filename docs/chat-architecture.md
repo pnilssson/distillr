@@ -8,12 +8,13 @@ Distillr chat answers questions over one library using hybrid retrieval plus str
 
 - Scope: one user, one library, ready videos only.
 - Modes: `auto | library | chat`.
+- Model tiers: `fast` (gpt-5-mini) or `smart` (gpt-5.1), selected per request by the user. Defaults to `smart`.
 - Transport: Vercel AI SDK v6 UI message stream protocol.
 - Models (MVP): OpenAI only.
 
 ## Request Flow
 
-1. `POST /api/libraries/[libraryId]/chat/sessions/[sessionId]/messages` receives message and mode.
+1. `POST /api/libraries/[libraryId]/chat/sessions/[sessionId]/messages` receives message, mode, and modelTier.
 2. Service validates session ownership.
 3. Preflight billing check runs before model work.
 4. User message is persisted immediately.

@@ -30,7 +30,7 @@ import type {
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { isAppError, AppError } from "@/server/core/errors/app-error";
 import { embedTexts } from "@/server/core/openai/embeddings";
-import { getDefaultChatModel, getDefaultChatModelAlias } from "@/server/core/openai/models";
+import { getOpenAIModel } from "@/server/core/openai/models";
 import { inngest } from "@/server/inngest/client";
 
 const encoder = getEncoding("cl100k_base");
@@ -53,6 +53,7 @@ type StreamChatMessageParams = {
   sessionId: string;
   content: string;
   mode: ChatRequestMode;
+  modelTier: "fast" | "smart";
   abortSignal?: AbortSignal;
 };
 
@@ -71,8 +72,8 @@ export async function streamChatMessage(params: StreamChatMessageParams): Promis
     params.libraryId,
     params.sessionId,
   );
-  const generationModel = getDefaultChatModel();
-  const generationModelAlias = getDefaultChatModelAlias();
+  const generationModelAlias = params.modelTier === "fast" ? "chat.fast" as const : "chat.smart" as const;
+  const generationModel = getOpenAIModel(generationModelAlias);
 
   try {
     await checkAndDeductCredits({

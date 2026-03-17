@@ -87,6 +87,7 @@ export const POST = withApiAuth<ChatMessagesRouteProps>(async (request, { params
     sessionId,
     content: parsedBody.data.content,
     mode: parsedBody.data.mode,
+    modelTier: parsedBody.data.modelTier,
     abortSignal: request.signal,
   });
 });

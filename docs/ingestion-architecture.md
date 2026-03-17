@@ -79,7 +79,7 @@ Distillr ingests YouTube sources into retrieval-ready artifacts (`video_chunks`,
 - `src/server/inngest/functions/source-added.ts`
 - `src/server/inngest/functions/video-ingest.ts`
 - `src/server/ingestion/chunking.ts`
-- `src/server/ingestion/openai.ts`
+- `src/server/ingestion/ai.ts`
 
 ## Safe Change Checklist
 

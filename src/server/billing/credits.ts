@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { OpenAIModelAlias } from "@/server/core/openai/models";
+import type { ModelAlias } from "@/server/core/ai/models";
 import { AppError } from "@/server/core/errors/app-error";
 import { ensurePolarCustomerState } from "@/server/billing/polar/customers";
 import { buildBillingSnapshot } from "@/server/billing/polar/state";
@@ -10,7 +10,7 @@ type CheckAndDeductCreditsParams = {
   userEmail: string | null;
   userName?: string | null;
   modelId: string;
-  modelAlias: OpenAIModelAlias;
+  modelAlias: ModelAlias;
   operation: "chat_message";
 };
 

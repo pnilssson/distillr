@@ -1,13 +1,12 @@
 import "server-only";
 
 import { captureServerEvent } from "@/server/core/analytics/posthog";
-import { calculateOpenAICostUsd, getOpenAIModelById, type OpenAIModelAlias } from "@/server/core/openai/models";
+import { calculateCostUsd, getModel, type ModelAlias } from "@/server/core/ai/models";
 
 type TrackAIGenerationParams = {
   userId: string;
   operation: string;
-  modelId: string;
-  modelAlias?: OpenAIModelAlias;
+  modelAlias: ModelAlias;
   startedAtMs: number;
   inputTokens: number;
   outputTokens: number;
@@ -23,20 +22,19 @@ type TrackAIGenerationParams = {
 };
 
 export async function trackAIGeneration(params: TrackAIGenerationParams): Promise<void> {
-  const model = getOpenAIModelById(params.modelId);
+  const config = getModel(params.modelAlias);
   const totalTokens = params.totalTokens ?? params.inputTokens + params.outputTokens;
   const latencyMs = Date.now() - params.startedAtMs;
-  const costUsd = calculateOpenAICostUsd({
-    modelId: model.id,
+  const costUsd = calculateCostUsd(params.modelAlias, {
     inputTokens: params.inputTokens,
     outputTokens: params.outputTokens,
     cachedInputTokens: params.cachedInputTokens,
   });
 
   await captureServerEvent(params.userId, "$ai_generation", {
-    provider: "openai",
-    model: model.id,
-    model_id: model.id,
+    provider: config.provider,
+    model: config.modelId,
+    model_id: config.modelId,
     model_alias: params.modelAlias,
     operation: params.operation,
     tokens_in: params.inputTokens,

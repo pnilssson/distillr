@@ -1,6 +1,5 @@
 import "server-only";
 
-import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
   generateText,
@@ -14,8 +13,7 @@ import {
 import { z } from "zod";
 
 import { trackAIGeneration } from "@/server/core/analytics/ai-generation";
-import { env } from "@/server/core/env";
-import { getOpenAIModel, type OpenAIModelAlias } from "@/server/core/openai/models";
+import { getLanguageModel, getModel, type ModelAlias } from "@/server/core/ai/models";
 
 type ChatMessageMetadata = {
   sources?: unknown;
@@ -51,7 +49,7 @@ type StreamAssistantResponseParams = {
   userId: string;
   libraryId: string;
   sessionId: string;
-  modelAlias: OpenAIModelAlias;
+  modelAlias: ModelAlias;
   messages: UIMessage<ChatMessageMetadata>[];
   retrievalContext: string;
   assistantMode: "library" | "chat";
@@ -69,7 +67,7 @@ export async function classifyChatIntentRoute({
   question,
   history,
 }: ClassifyChatIntentParams): Promise<ChatIntentRoute> {
-  const model = getOpenAIModel("chat.fast");
+  const alias: ModelAlias = "chat.fast";
   const startedAt = Date.now();
 
   const historySnippet = history
@@ -80,7 +78,7 @@ export async function classifyChatIntentRoute({
   let result: Awaited<ReturnType<typeof generateText>>;
   try {
     result = await generateText({
-      model: openai(model.id),
+      model: getLanguageModel(alias),
       temperature: 0,
       maxOutputTokens: 120,
       output: Output.object({
@@ -116,8 +114,7 @@ export async function classifyChatIntentRoute({
     await trackAIGeneration({
       userId,
       operation: "chat_mode_classification",
-      modelId: model.id,
-      modelAlias: "chat.fast",
+      modelAlias: alias,
       startedAtMs: startedAt,
       inputTokens: usage?.inputTokens ?? 0,
       outputTokens: usage?.outputTokens ?? 0,
@@ -128,17 +125,13 @@ export async function classifyChatIntentRoute({
     throw error;
   }
 
-  const inputTokens = result.totalUsage.inputTokens ?? 0;
-  const outputTokens = result.totalUsage.outputTokens ?? 0;
-
   await trackAIGeneration({
     userId,
     operation: "chat_mode_classification",
-    modelId: model.id,
-    modelAlias: "chat.fast",
+    modelAlias: alias,
     startedAtMs: startedAt,
-    inputTokens,
-    outputTokens,
+    inputTokens: result.totalUsage.inputTokens ?? 0,
+    outputTokens: result.totalUsage.outputTokens ?? 0,
     totalTokens: result.totalUsage.totalTokens,
     status: "completed",
   });
@@ -151,7 +144,7 @@ export async function rewriteChatQueryForRetrieval({
   question,
   history,
 }: RewriteQueryParams): Promise<string> {
-  const model = getOpenAIModel("chat.fast");
+  const alias: ModelAlias = "chat.fast";
   const startedAt = Date.now();
 
   const historySnippet = history
@@ -160,7 +153,7 @@ export async function rewriteChatQueryForRetrieval({
     .join("\n");
 
   const result = await generateText({
-    model: openai(model.id),
+    model: getLanguageModel(alias),
     temperature: 0,
     maxOutputTokens: 120,
     system:
@@ -173,17 +166,14 @@ export async function rewriteChatQueryForRetrieval({
   });
 
   const rewritten = result.text.trim();
-  const inputTokens = result.totalUsage.inputTokens ?? 0;
-  const outputTokens = result.totalUsage.outputTokens ?? 0;
 
   await trackAIGeneration({
     userId,
     operation: "chat_query_rewrite",
-    modelId: model.id,
-    modelAlias: "chat.fast",
+    modelAlias: alias,
     startedAtMs: startedAt,
-    inputTokens,
-    outputTokens,
+    inputTokens: result.totalUsage.inputTokens ?? 0,
+    outputTokens: result.totalUsage.outputTokens ?? 0,
     totalTokens: result.totalUsage.totalTokens,
     status: "completed",
   });
@@ -192,7 +182,6 @@ export async function rewriteChatQueryForRetrieval({
 }
 
 export async function streamAssistantResponse(params: StreamAssistantResponseParams) {
-  const model = getOpenAIModel(params.modelAlias);
   const startedAt = Date.now();
 
   const modelMessages = await convertToModelMessages(
@@ -204,28 +193,24 @@ export async function streamAssistantResponse(params: StreamAssistantResponsePar
   );
 
   return streamText({
-    model: openai(model.id),
+    model: getLanguageModel(params.modelAlias),
     messages: modelMessages,
     abortSignal: params.abortSignal,
     temperature: 0.2,
-    maxOutputTokens: getMaxOutputTokensForAlias(params.modelAlias),
+    maxOutputTokens: getModel(params.modelAlias).maxOutputTokens,
     system: buildSystemPrompt({
       retrievalContext: params.retrievalContext,
       isWeakEvidence: params.isWeakEvidence,
       assistantMode: params.assistantMode,
     }),
     onFinish: async ({ text, finishReason, totalUsage }) => {
-      const inputTokens = totalUsage.inputTokens ?? 0;
-      const outputTokens = totalUsage.outputTokens ?? 0;
-
       await trackAIGeneration({
         userId: params.userId,
         operation: "chat_generation",
-        modelId: model.id,
         modelAlias: params.modelAlias,
         startedAtMs: startedAt,
-        inputTokens,
-        outputTokens,
+        inputTokens: totalUsage.inputTokens ?? 0,
+        outputTokens: totalUsage.outputTokens ?? 0,
         totalTokens: totalUsage.totalTokens,
         finishReason,
         outputCapped: finishReason === "length",
@@ -288,14 +273,6 @@ function buildSystemPrompt(params: {
     hasRetrievedContext ? params.retrievalContext : "(No strong evidence was retrieved)",
     "</retrieved_context>",
   ].join("\n\n");
-}
-
-function getMaxOutputTokensForAlias(alias: OpenAIModelAlias): number {
-  if (alias === "chat.smart") {
-    return env.OPENAI_CHAT_MAX_OUTPUT_TOKENS_SMART;
-  }
-
-  return env.OPENAI_CHAT_MAX_OUTPUT_TOKENS_FAST;
 }
 
 function mapFinishReasonToStatus(finishReason: FinishReason): "completed" | "aborted" | "failed" {

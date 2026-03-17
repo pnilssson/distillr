@@ -10,7 +10,7 @@ export default function PrivacyPolicyPage() {
     <>
       <h1>Privacy Policy</h1>
       <p className="lead">
-        <strong>Last updated: 16 March 2026</strong>
+        <strong>Last updated: 17 March 2026</strong>
       </p>
 
       <p>
@@ -51,9 +51,18 @@ export default function PrivacyPolicyPage() {
 
       <h3>Content you provide</h3>
       <p>
-        YouTube URLs, channel or playlist links, and the text of chat messages
-        you send within the Service are stored so that we can provide the Service
-        to you.
+        Content sources you add to the Service, any content extracted from those
+        sources, and the text of chat messages you send are stored so that we
+        can provide the Service to you. This content is processed by AI models
+        operated by third-party providers (see Section 4).
+      </p>
+      <p>
+        <strong>
+          Do not submit content containing confidential, proprietary, or
+          sensitive information
+        </strong>{" "}
+        that you are not authorised to share with third-party processors. We are
+        not responsible for any consequences resulting from such submissions.
       </p>
 
       <h3>Billing data</h3>
@@ -129,7 +138,7 @@ export default function PrivacyPolicyPage() {
           </tr>
           <tr>
             <td>OpenAI</td>
-            <td>AI transcript analysis and embeddings</td>
+            <td>AI content analysis and embeddings</td>
             <td>US</td>
           </tr>
           <tr>

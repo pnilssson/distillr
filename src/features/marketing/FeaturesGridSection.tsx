@@ -8,7 +8,7 @@ import {
   Youtube,
   Shield,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 const features = [
   {
@@ -43,21 +43,26 @@ const features = [
   },
 ];
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: "easeOut" as const },
-  },
-};
-
-const staggerContainer = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.07 } },
-};
-
 export function FeaturesGridSection() {
+  const shouldReduceMotion = !!useReducedMotion();
+  const fadeUp = {
+    hidden: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: shouldReduceMotion
+        ? { duration: 0.2 }
+        : { duration: 0.5, ease: "easeOut" as const },
+    },
+  };
+
+  const staggerContainer = {
+    hidden: {},
+    visible: {
+      transition: shouldReduceMotion ? undefined : { staggerChildren: 0.07 },
+    },
+  };
+
   return (
     <section
       id="features"
@@ -76,15 +81,8 @@ export function FeaturesGridSection() {
           Built for knowledge that compounds
         </h2>
         <p className="max-w-2xl leading-relaxed text-muted-foreground">
-          Most AI tools give you generic answers. Distillr builds a research
-          library from the YouTube channels and playlists you actually follow,
-          and lets you query all of it at once with cited, timestamp-linked
-          answers.
-          <br />
-          <br />
-          The manual version of this workflow already exists: watch a video,
-          copy the transcript, paste it into an LLM, ask a question. It breaks
-          at ten videos. Distillr does it properly, at scale, with memory.
+          Distillr turns the channels and playlists you already follow into a
+          private research library you can query in one place.
         </p>
 
         <div className="mt-8 inline-flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-xs font-medium text-foreground">
@@ -103,10 +101,16 @@ export function FeaturesGridSection() {
         {features.map(({ icon: Icon, title, desc }) => (
           <motion.div
             key={title}
-            className="flex flex-col gap-2 rounded-xl border bg-card p-5"
+            className="group relative flex flex-col gap-2 overflow-hidden rounded-xl border bg-card p-5"
             variants={fadeUp}
+            whileHover={
+              shouldReduceMotion
+                ? undefined
+                : { y: -6, scale: 1.01, transition: { duration: 0.22, ease: "easeOut" } }
+            }
           >
-            <Icon size={18} className="mb-1 text-muted-foreground" />
+            <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-primary/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            <Icon size={18} className="mb-1 text-muted-foreground transition-colors duration-200 group-hover:text-foreground" />
             <h3 className="text-sm font-medium">{title}</h3>
             <p className="text-sm leading-relaxed text-muted-foreground">
               {desc}
@@ -114,25 +118,6 @@ export function FeaturesGridSection() {
           </motion.div>
         ))}
       </motion.div>
-
-      <motion.aside
-        className="mt-10 rounded-xl border bg-card p-6 sm:p-7"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-80px" }}
-        variants={fadeUp}
-      >
-        <h3 className="text-sm font-semibold">Built for a specific kind of researcher</h3>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          You follow 10 to 20 YouTube channels seriously. Macro economists, tech
-          analysts, long-form interviewers, domain specialists. You take notes.
-          You paste transcripts. You lose track of what you heard and where.
-        </p>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Distillr is a library for those channels. Add them once. Query all of
-          them. Get the answer and the timestamp.
-        </p>
-      </motion.aside>
     </section>
   );
 }

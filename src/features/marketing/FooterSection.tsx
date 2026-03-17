@@ -11,7 +11,7 @@ export function FooterSection() {
   return (
     <footer className="border-t">
       <motion.div
-        className="mx-auto grid w-full max-w-5xl gap-10 px-6 py-10 text-sm text-muted-foreground md:grid-cols-[1.3fr_1fr_1fr]"
+        className="mx-auto grid w-full max-w-5xl gap-12 px-6 py-16 text-sm text-muted-foreground md:gap-x-20 md:gap-y-14 md:grid-cols-[1.75fr_0.9fr_0.9fr] lg:py-24"
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-40px" }}
@@ -30,9 +30,9 @@ export function FooterSection() {
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <p className="text-xs font-medium uppercase tracking-widest">Product</p>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5">
             <Link href="#how-it-works" className="transition-colors hover:text-foreground">
               How it works
             </Link>
@@ -48,9 +48,9 @@ export function FooterSection() {
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <p className="text-xs font-medium uppercase tracking-widest">Legal</p>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5">
             <Link
               href="/privacy"
               className="transition-colors hover:text-foreground"

@@ -123,7 +123,7 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
       </motion.div>
 
       <motion.div
-        className="mt-16 grid gap-4 pt-3 sm:grid-cols-3"
+        className="mt-16 grid gap-4 pt-3 sm:grid-cols-3 sm:items-center"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-80px" }}
@@ -134,7 +134,7 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
             key={plan.name}
             className={`relative flex flex-col rounded-xl p-6 ${
               plan.highlighted
-                ? "border-2 border-foreground bg-card pt-10"
+                ? "border-2 border-foreground bg-card pt-10 pb-7 sm:min-h-[530px] sm:justify-center"
                 : "border bg-card"
             }`}
             variants={fadeUp}

@@ -213,3 +213,18 @@
 .legal-content code {
   @apply font-mono text-xs bg-muted px-1 py-0.5 rounded;
 }
+
+@keyframes marketing-marquee {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marketing-marquee {
+  display: flex;
+  width: max-content;
+  animation: marketing-marquee 34s linear infinite;
+}

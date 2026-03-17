@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { EmbeddingModel, LanguageModel } from "ai";
+import type { LanguageModel } from "ai";
 
 import { env } from "@/server/core/env";
 import { getOpenAIProvider } from "@/server/core/ai/providers";
@@ -88,7 +88,7 @@ export function getLanguageModel(alias: ModelAlias): LanguageModel {
 }
 
 /** Returns the Vercel AI SDK EmbeddingModel for the given alias. */
-export function getEmbeddingModel(alias: ModelAlias): EmbeddingModel<string> {
+export function getEmbeddingModel(alias: ModelAlias) {
   const config = getModel(alias);
 
   switch (config.provider) {

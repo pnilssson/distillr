@@ -6,7 +6,7 @@ import {
   isPolarBillingEnabled,
 } from "@/server/billing/polar/config";
 import { ingestPolarEvent } from "@/server/billing/polar/client";
-import { calculateOpenAICostUsd } from "@/server/core/openai/models";
+import { calculateCostUsdByModelId } from "@/server/core/ai/models";
 import { env } from "@/server/core/env";
 
 export type ChatUsageRecordPayload = {
@@ -49,8 +49,7 @@ export async function ingestChatCreditsUsage(input: ChatUsageRecordPayload): Pro
     return 0;
   }
 
-  const costUsd = calculateOpenAICostUsd({
-    modelId: input.modelId,
+  const costUsd = calculateCostUsdByModelId(input.modelId, {
     inputTokens: input.inputTokens,
     outputTokens: input.outputTokens,
     cachedInputTokens: input.cachedInputTokens,

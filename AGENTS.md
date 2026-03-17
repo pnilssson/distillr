@@ -33,10 +33,10 @@ This file is the operational source of truth for agent behavior in this reposito
 - Client server-state: TanStack Query
 - Billing: Polar
 - Streaming: Vercel AI SDK v6 (`ai`, `@ai-sdk/react`)
-- AI provider SDK: `@ai-sdk/openai`
+- AI provider SDK: Vercel AI SDK with `@ai-sdk/openai` (extensible; add providers via `src/server/core/ai/providers.ts`)
 - Transcript extraction: TranscriptAPI
-- Embeddings: OpenAI `text-embedding-3-small`
-- LLMs (MVP): OpenAI only - `gpt-5-mini` (fast) and `gpt-5.1` (smart) via alias-based config
+- Embeddings: OpenAI `text-embedding-3-small` (alias `embedding.default`)
+- LLMs (MVP): OpenAI only - `gpt-5-mini` (fast) and `gpt-5.1` (smart) via alias-based config in `src/server/core/ai/models.ts`
 
 ## Next.js Best Practices
 

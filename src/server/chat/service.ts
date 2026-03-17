@@ -10,7 +10,7 @@ import {
   classifyChatIntentRoute,
   rewriteChatQueryForRetrieval,
   streamAssistantResponse,
-} from "@/server/chat/openai";
+} from "@/server/chat/ai";
 import {
   getChatSessionById,
   insertAssistantMessage,
@@ -29,8 +29,8 @@ import type {
 } from "@/server/chat/types";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { isAppError, AppError } from "@/server/core/errors/app-error";
-import { embedTexts } from "@/server/core/openai/embeddings";
-import { getOpenAIModel, type OpenAIModelAlias } from "@/server/core/openai/models";
+import { embedTexts } from "@/server/core/ai/embeddings";
+import { getModel, type ModelAlias } from "@/server/core/ai/models";
 import type { ChatModelId } from "@/lib/chat-models";
 import { inngest } from "@/server/inngest/client";
 
@@ -73,15 +73,15 @@ export async function streamChatMessage(params: StreamChatMessageParams): Promis
     params.libraryId,
     params.sessionId,
   );
-  const generationModelAlias = params.model as OpenAIModelAlias;
-  const generationModel = getOpenAIModel(generationModelAlias);
+  const generationModelAlias = params.model as ModelAlias;
+  const generationModel = getModel(generationModelAlias);
 
   try {
     await checkAndDeductCredits({
       userId: params.userId,
       userEmail: params.userEmail,
       userName: params.userName,
-      modelId: generationModel.id,
+      modelId: generationModel.modelId,
       modelAlias: generationModelAlias,
       operation: "chat_message",
     });
@@ -197,7 +197,7 @@ export async function streamChatMessage(params: StreamChatMessageParams): Promis
           libraryId: params.libraryId,
           sessionId: params.sessionId,
           content: text,
-          model: generationModel.id,
+          model: generationModel.modelId,
           status,
           effectiveMode,
           inputTokens: totalUsage.inputTokens ?? null,
@@ -231,7 +231,7 @@ export async function streamChatMessage(params: StreamChatMessageParams): Promis
                 libraryId: params.libraryId,
                 sessionId: params.sessionId,
                 assistantMessageId: insertedAssistantMessage.id,
-                modelId: generationModel.id,
+                modelId: generationModel.modelId,
                 inputTokens: totalUsage.inputTokens ?? 0,
                 outputTokens: totalUsage.outputTokens ?? 0,
                 totalTokens,

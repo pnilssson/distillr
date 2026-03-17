@@ -1,13 +1,12 @@
 import "server-only";
 
-import { openai } from "@ai-sdk/openai";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 
 import { trackAIGeneration } from "@/server/core/analytics/ai-generation";
-import { getOpenAIModel } from "@/server/core/openai/models";
+import { getLanguageModel } from "@/server/core/ai/models";
 
-export { embedTexts } from "@/server/core/openai/embeddings";
+export { embedTexts } from "@/server/core/ai/embeddings";
 
 const MAX_INSIGHTS_TRANSCRIPT_CHARS = 120_000;
 
@@ -36,7 +35,7 @@ export async function generateInsights(
   videoTitle: string,
   transcript: string,
 ): Promise<GeneratedInsights> {
-  const ingestionModel = getOpenAIModel("ingestion.default");
+  const alias = "ingestion.default" as const;
   const transcriptInput =
     transcript.length > MAX_INSIGHTS_TRANSCRIPT_CHARS
       ? transcript.slice(0, MAX_INSIGHTS_TRANSCRIPT_CHARS)
@@ -44,7 +43,7 @@ export async function generateInsights(
 
   const startedAt = Date.now();
   const result = await generateText({
-    model: openai(ingestionModel.id),
+    model: getLanguageModel(alias),
     temperature: 0.2,
     output: Output.object({
       name: "VideoIngestionInsights",
@@ -56,17 +55,13 @@ export async function generateInsights(
     prompt: [`Video title: ${videoTitle}`, "Transcript:", transcriptInput].join("\n\n"),
   });
 
-  const inputTokens = result.totalUsage.inputTokens ?? 0;
-  const outputTokens = result.totalUsage.outputTokens ?? 0;
-
   await trackAIGeneration({
     userId,
     operation: "ingestion_insights",
-    modelId: ingestionModel.id,
-    modelAlias: "ingestion.default",
+    modelAlias: alias,
     startedAtMs: startedAt,
-    inputTokens,
-    outputTokens,
+    inputTokens: result.totalUsage.inputTokens ?? 0,
+    outputTokens: result.totalUsage.outputTokens ?? 0,
     totalTokens: result.totalUsage.totalTokens,
   });
 

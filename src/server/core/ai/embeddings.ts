@@ -1,8 +1,9 @@
 import "server-only";
 
+import { embedMany } from "ai";
+
 import { trackAIGeneration } from "@/server/core/analytics/ai-generation";
-import { getOpenAIClient } from "@/server/core/openai/client";
-import { getOpenAIModel } from "@/server/core/openai/models";
+import { getEmbeddingModel } from "@/server/core/ai/models";
 
 const EMBEDDING_BATCH_SIZE = 100;
 
@@ -16,32 +17,27 @@ export async function embedTexts(
   }
 
   const embeddings: number[][] = [];
-  const embeddingModel = getOpenAIModel("embedding.default");
+  const model = getEmbeddingModel("embedding.default");
 
   for (let i = 0; i < inputs.length; i += EMBEDDING_BATCH_SIZE) {
     const batch = inputs.slice(i, i + EMBEDDING_BATCH_SIZE);
     const startedAt = Date.now();
 
-    const response = await getOpenAIClient().embeddings.create({
-      model: embeddingModel.id,
-      input: batch,
-    });
-
-    const inputTokens = response.usage.total_tokens ?? 0;
+    const result = await embedMany({ model, values: batch });
+    const tokens = result.usage.tokens;
 
     await trackAIGeneration({
       userId,
       operation: purpose,
-      modelId: embeddingModel.id,
       modelAlias: "embedding.default",
       startedAtMs: startedAt,
-      inputTokens,
+      inputTokens: tokens,
       outputTokens: 0,
-      totalTokens: inputTokens,
+      totalTokens: tokens,
     });
 
-    for (const item of response.data) {
-      embeddings.push(item.embedding);
+    for (const embedding of result.embeddings) {
+      embeddings.push(embedding);
     }
   }
 

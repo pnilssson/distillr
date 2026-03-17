@@ -9,7 +9,7 @@ import { videoChunks, videoInsights, videos } from "@/db/schema";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { classifyIngestionError } from "@/server/ingestion/errors";
 import { chunkTranscriptSegments } from "@/server/ingestion/chunking";
-import { embedTexts, generateInsights } from "@/server/ingestion/openai";
+import { embedTexts, generateInsights } from "@/server/ingestion/ai";
 import { fetchTranscript, TranscriptUnavailableError } from "@/server/ingestion/transcript";
 import { inngest } from "@/server/inngest/client";
 import { runIngestionStep } from "@/server/inngest/ingestion-step";

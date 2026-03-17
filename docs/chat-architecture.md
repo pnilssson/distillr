@@ -8,13 +8,13 @@ Distillr chat answers questions over one library using hybrid retrieval plus str
 
 - Scope: one user, one library, ready videos only.
 - Modes: `auto | library | chat`.
-- Model tiers: `fast` (gpt-5-mini) or `smart` (gpt-5.1), selected per request by the user. Defaults to `smart`.
+- Model tiers: `fast` (alias `chat.fast`) or `smart` (alias `chat.smart`), selected per request by the user. Defaults to `smart`.
 - Transport: Vercel AI SDK v6 UI message stream protocol.
-- Models (MVP): OpenAI only.
+- Models (MVP): OpenAI only. Provider/model resolved via `src/server/core/ai/models.ts`.
 
 ## Request Flow
 
-1. `POST /api/libraries/[libraryId]/chat/sessions/[sessionId]/messages` receives message, mode, and modelTier.
+1. `POST /api/libraries/[libraryId]/chat/sessions/[sessionId]/messages` receives message, mode, and model alias.
 2. Service validates session ownership.
 3. Preflight billing check runs before model work.
 4. User message is persisted immediately.
@@ -92,7 +92,7 @@ Finish reason mapping:
 
 ## Observability
 
-- Track OpenAI calls via `$ai_generation`.
+- Track AI calls via `$ai_generation` (provider, model, alias, tokens, latency, cost).
 - Track `chat_message_sent` when assistant message persists as `completed`.
 - Track `upgrade_prompt_shown` when preflight credits are insufficient.
 - Send technical exceptions to Sentry with context.
@@ -100,7 +100,7 @@ Finish reason mapping:
 ## Key Entry Points
 
 - `src/server/chat/service.ts`
-- `src/server/chat/openai.ts`
+- `src/server/chat/ai.ts`
 - `src/server/chat/retrieval.ts`
 - `src/server/chat/fusion.ts`
 - `src/server/chat/sources.ts`

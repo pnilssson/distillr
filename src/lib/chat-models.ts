@@ -2,8 +2,8 @@
  * Single source of truth for chat model options exposed to users.
  *
  * To add a new model:
- *   1. Add its alias to `OpenAIModelAlias` in src/server/core/openai/models.ts
- *      and map it to a model ID in `DEFAULT_MODELS` there.
+ *   1. Add its alias to `ModelAlias` and its config to the catalog in
+ *      src/server/core/ai/models.ts.
  *   2. Add an entry to CHAT_MODEL_OPTIONS below.
  *
  * Everything else (types, validation, UI) derives from this array automatically.

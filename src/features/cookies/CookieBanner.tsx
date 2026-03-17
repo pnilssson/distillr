@@ -17,16 +17,16 @@ export function CookieBanner() {
       <AnimatePresence>
         {showBanner && (
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background px-4 py-4 shadow-lg sm:px-6"
+            className="fixed right-4 bottom-4 z-50 w-[calc(100%-2rem)] max-w-md rounded-xl border bg-background p-4 shadow-xl sm:right-6 sm:bottom-6"
             role="dialog"
             aria-label="Cookie consent"
             aria-modal="false"
           >
-            <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4">
               <p className="text-sm text-muted-foreground">
                 We use cookies to keep you signed in and, with your permission,
                 to understand how Distillr is used.{" "}
@@ -38,7 +38,7 @@ export function CookieBanner() {
                 </Link>
               </p>
 
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"

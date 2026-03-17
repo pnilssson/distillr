@@ -19,7 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { ChatRequestMode } from "@/features/chat/types";
+import { CHAT_MODEL_OPTIONS } from "@/lib/chat-models";
+import type { ChatModelId, ChatRequestMode } from "@/features/chat/types";
 
 type ChatInputProps = {
   value: string;
@@ -29,6 +30,8 @@ type ChatInputProps = {
   onRetry: () => void;
   mode: ChatRequestMode;
   onModeChange: (mode: ChatRequestMode) => void;
+  model: ChatModelId;
+  onModelChange: (model: ChatModelId) => void;
   status: "ready" | "submitted" | "streaming" | "error";
   error: Error | null;
   canUpgrade: boolean;
@@ -45,6 +48,8 @@ export function ChatInput({
   onRetry,
   mode,
   onModeChange,
+  model,
+  onModelChange,
   status,
   error,
   canUpgrade,
@@ -138,6 +143,23 @@ export function ChatInput({
                 <SelectItem value="auto">Auto</SelectItem>
                 <SelectItem value="library">Use library</SelectItem>
                 <SelectItem value="chat">Chat only</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={model}
+              onValueChange={(value) => onModelChange(value as ChatModelId)}
+              disabled={canStop}
+            >
+              <SelectTrigger className="h-8 w-24 text-xs text-muted-foreground" aria-label="AI model">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CHAT_MODEL_OPTIONS.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 

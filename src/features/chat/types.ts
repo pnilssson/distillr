@@ -39,3 +39,5 @@ export type ChatMessageMetadata = {
 };
 
 export type ChatRequestMode = "auto" | "library" | "chat";
+
+export type { ChatModelId } from "@/lib/chat-models";

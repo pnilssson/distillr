@@ -13,8 +13,10 @@ import {
 import { useBillingState } from "@/features/billing/useBillingState";
 import { ChatInput } from "@/features/chat/ChatInput";
 import { ChatMessageList } from "@/features/chat/ChatMessageList";
+import { DEFAULT_CHAT_MODEL_ID } from "@/lib/chat-models";
 import type {
   ChatMessageMetadata,
+  ChatModelId,
   ChatRequestMode,
 } from "@/features/chat/types";
 
@@ -35,6 +37,7 @@ export function ChatView({
 
   const [input, setInput] = useState("");
   const [mode, setMode] = useState<ChatRequestMode>("auto");
+  const [model, setModel] = useState<ChatModelId>(DEFAULT_CHAT_MODEL_ID);
   const [abortedMessageId, setAbortedMessageId] = useState<string | null>(null);
   const [focusTick, setFocusTick] = useState(0);
 
@@ -65,6 +68,7 @@ export function ChatView({
             body: {
               content: extractTextContent(messageForContent),
               mode: typeof body?.mode === "string" ? body.mode : "auto",
+              model: typeof body?.model === "string" ? body.model : DEFAULT_CHAT_MODEL_ID,
             },
           };
         },
@@ -90,7 +94,7 @@ export function ChatView({
     }
 
     setAbortedMessageId(null);
-    sendMessage({ text: input }, { body: { mode } });
+    sendMessage({ text: input }, { body: { mode, model } });
     setInput("");
     setFocusTick((tick) => tick + 1);
   }
@@ -160,10 +164,12 @@ export function ChatView({
                 void stop();
               }}
               onRetry={() => {
-                void regenerate({ body: { mode } });
+                void regenerate({ body: { mode, model } });
               }}
               mode={mode}
               onModeChange={setMode}
+              model={model}
+              onModelChange={setModel}
               status={status}
               error={error ?? null}
               canUpgrade={canUpgrade}

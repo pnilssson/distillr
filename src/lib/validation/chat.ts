@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { CHAT_MODEL_IDS, DEFAULT_CHAT_MODEL_ID } from "@/lib/chat-models";
+
 export const createChatSessionSchema = z.object({}).strict().optional().default({});
 
 export const sendChatMessageSchema = z.object({
@@ -9,6 +11,7 @@ export const sendChatMessageSchema = z.object({
     .min(1, "Message cannot be empty.")
     .max(4000, "Message must be 4000 characters or less."),
   mode: z.enum(["auto", "library", "chat"]).optional().default("auto"),
+  model: z.enum(CHAT_MODEL_IDS).optional().default(DEFAULT_CHAT_MODEL_ID),
 });
 
 export const listChatMessagesQuerySchema = z.object({

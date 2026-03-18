@@ -14,8 +14,10 @@ type EmptyChatStateProps = {
 export function EmptyChatState({ onSuggestion }: EmptyChatStateProps) {
   return (
     <div className="mx-auto max-w-sm px-6 py-24 text-center">
-      <MessageSquare size={32} className="mx-auto" />
-      <h1 className="mt-4 text-lg font-semibold">Ask anything about this library</h1>
+      <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-2xl border bg-card">
+        <MessageSquare size={20} className="text-muted-foreground" aria-hidden="true" />
+      </div>
+      <h1 className="text-lg font-semibold">Ask anything about this library</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Questions are answered across all ready content in this library.
       </p>

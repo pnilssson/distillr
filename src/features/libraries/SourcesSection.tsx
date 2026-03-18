@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  ExternalLink,
   List,
   Loader2,
   MoreHorizontal,
@@ -114,12 +115,21 @@ function SourceRow({ source, libraryId, onDeleteRequest }: SourceRowProps) {
       </div>
 
       {/* Actions */}
+      <a
+        href={source.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Open ${label}`}
+        className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+      >
+        <ExternalLink size={13} aria-hidden="true" />
+      </a>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="size-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+            className="size-7 shrink-0"
             aria-label={`Actions for ${label}`}
           >
             <MoreHorizontal size={14} aria-hidden="true" />
@@ -181,7 +191,7 @@ export function SourcesSection({ libraryId, sources, isLoading }: Props) {
         </Button>
       </div>
 
-      <div className="rounded-xl border">
+      <div className="rounded-xl border bg-card">
         {isLoading ? (
           <div className="divide-y">
             {[0, 1].map((i) => (

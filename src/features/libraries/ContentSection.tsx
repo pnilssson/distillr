@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Clock, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, ExternalLink, Loader2, XCircle } from "lucide-react";
 
 import Image from "next/image";
 
@@ -130,25 +130,17 @@ function VideoRow({ video }: VideoRowProps) {
       <div className="shrink-0">
         <StatusChip status={video.status} failureReason={video.failureReason} />
       </div>
-    </div>
-  );
-}
 
-type ProcessingBannerProps = {
-  counts: LibraryVideosProgress["counts"];
-};
-
-function ProcessingBanner({ counts }: ProcessingBannerProps) {
-  const inFlight = counts.pending + counts.processing;
-  return (
-    <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900/50 dark:bg-blue-950/30">
-      <Loader2 size={13} className="shrink-0 animate-spin text-blue-500" aria-hidden="true" />
-      <p className="text-sm text-blue-700 dark:text-blue-400">
-        {inFlight === 1
-          ? "Processing 1 video..."
-          : `Processing ${inFlight} videos...`}
-        {counts.ready > 0 ? ` ${counts.ready} ready so far.` : ""}
-      </p>
+      {/* External link */}
+      <a
+        href={`https://www.youtube.com/watch?v=${video.externalId}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Watch ${video.title} on YouTube`}
+        className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+      >
+        <ExternalLink size={13} aria-hidden="true" />
+      </a>
     </div>
   );
 }
@@ -163,7 +155,6 @@ export function ContentSection({ videosData, isLoading }: Props) {
 
   const videos = videosData?.videos ?? [];
   const counts = videosData?.counts;
-  const inFlight = (counts?.pending ?? 0) + (counts?.processing ?? 0);
   const isActivelyProcessing = videosData?.isProcessing || videosData?.hasInFlight;
 
   const visibleVideos =
@@ -204,12 +195,7 @@ export function ContentSection({ videosData, isLoading }: Props) {
         ) : null}
       </div>
 
-      <div className="space-y-2">
-        {isActivelyProcessing && inFlight > 0 ? (
-          <ProcessingBanner counts={videosData!.counts} />
-        ) : null}
-
-        <div className="rounded-xl border">
+      <div className="rounded-xl border bg-card">
           {isLoading ? (
             <div className="divide-y">
               {[0, 1, 2].map((i) => (
@@ -254,7 +240,6 @@ export function ContentSection({ videosData, isLoading }: Props) {
             </>
           )}
         </div>
-      </div>
     </section>
   );
 }

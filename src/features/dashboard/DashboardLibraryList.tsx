@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Plus } from "lucide-react";
+import { ChevronRight, Library, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NewLibraryDialog } from "@/features/libraries/NewLibraryDialog";
 import type { DashboardLibraryItem } from "@/features/dashboard/types";
 
@@ -20,28 +19,37 @@ export function DashboardLibraryList({ libraries }: DashboardLibraryListProps) {
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
-          <CardTitle className="text-sm font-medium">
-            Libraries
-            <span className="ml-1.5 text-muted-foreground/70 tabular-nums">{libraries.length}</span>
-          </CardTitle>
+      <section aria-labelledby="dashboard-libraries-heading">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 id="dashboard-libraries-heading" className="text-sm font-semibold">
+              Libraries
+            </h2>
+            {libraries.length > 0 ? (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground tabular-nums">
+                {libraries.length}
+              </span>
+            ) : null}
+          </div>
+
           <Button
-            variant="ghost"
             size="sm"
-            className="h-7 gap-1 text-xs"
+            className="h-7 gap-1.5 text-xs"
             onClick={() => setDialogOpen(true)}
             aria-label="New library"
           >
             <Plus size={12} />
-            New
+            New library
           </Button>
-        </CardHeader>
-        <CardContent className="pb-2 pt-0">
+        </div>
+
+        <div className="rounded-xl border bg-card">
           {visibleLibraries.length === 0 ? (
-            <p className="py-2 text-xs text-muted-foreground">No libraries yet.</p>
+            <div className="px-6 py-10 text-center">
+              <p className="text-sm text-muted-foreground">No libraries yet.</p>
+            </div>
           ) : (
-            <ul role="list" className="-mx-2 divide-y divide-border">
+            <ul role="list" className="divide-y">
               {visibleLibraries.map((library) => {
                 const processingCount = library.videoPending + library.videoProcessing;
 
@@ -49,10 +57,14 @@ export function DashboardLibraryList({ libraries }: DashboardLibraryListProps) {
                   <li key={library.id}>
                     <Link
                       href={`/library/${library.id}`}
-                      className="group flex items-center justify-between gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                      className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
                     >
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-background">
+                        <Library size={14} className="text-muted-foreground" aria-hidden="true" />
+                      </div>
+
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{library.name}</p>
+                        <p className="truncate text-sm font-medium leading-snug">{library.name}</p>
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                           <span className="text-xs text-muted-foreground tabular-nums">
                             {library.videoTotal} video{library.videoTotal === 1 ? "" : "s"}
@@ -74,6 +86,7 @@ export function DashboardLibraryList({ libraries }: DashboardLibraryListProps) {
                           ) : null}
                         </div>
                       </div>
+
                       <ChevronRight
                         size={14}
                         className="shrink-0 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground"
@@ -84,14 +97,14 @@ export function DashboardLibraryList({ libraries }: DashboardLibraryListProps) {
               })}
             </ul>
           )}
+        </div>
 
-          {libraries.length > visibleLibraries.length ? (
-            <p className="mt-2 pb-1 text-center text-xs text-muted-foreground">
-              +{libraries.length - visibleLibraries.length} more libraries in the sidebar
-            </p>
-          ) : null}
-        </CardContent>
-      </Card>
+        {libraries.length > visibleLibraries.length ? (
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            +{libraries.length - visibleLibraries.length} more libraries in the sidebar
+          </p>
+        ) : null}
+      </section>
 
       <NewLibraryDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </>

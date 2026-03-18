@@ -84,6 +84,10 @@ This file is the operational source of truth for agent behavior in this reposito
 ## UI and Accessibility Invariants
 
 - Never directly modify files in `src/components/ui/`.
+- Preserve a single-product feel across authenticated surfaces (`/dashboard`, `/library/**`, chat, billing). New screens should feel like extensions of the same app, not separate products.
+- Keep core layout rhythm consistent across app pages: shared content widths, comparable header-to-content spacing, and aligned section spacing unless there is a clear product reason to diverge.
+- Reuse established UI patterns for equivalent information (for example metric cards, list headers, and row/list containers) before introducing new visual patterns.
+- If a visual divergence is intentional, document the reason in the same PR and keep interaction patterns consistent (focus states, hover behavior, empty states, and action placement).
 - Target WCAG 2.1 AA baseline.
 - Every input must have an associated label.
 - Link field errors with `aria-describedby`.

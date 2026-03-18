@@ -21,7 +21,7 @@ export function DashboardContent({ summary, billingState }: DashboardContentProp
         </p>
       </header>
 
-      <div className="mt-7 space-y-5">
+      <div className="mt-8 space-y-5">
         <DashboardStats totals={summary.totals} />
 
         <section className="grid grid-cols-1 gap-5 xl:grid-cols-3">

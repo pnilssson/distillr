@@ -42,6 +42,21 @@ Distillr's defensible position is: one data type (YouTube), one primary audience
 
 ---
 
+# Product Experience Principles
+
+Distillr should feel like one cohesive product from end to end. Users should never feel like they are jumping between separate tools when moving from dashboard to library to chat.
+
+Core principles for authenticated product surfaces:
+
+- Shared page rhythm: use a consistent content width and comparable vertical spacing for page headers, top metrics, and primary sections.
+- Reused UI language: equivalent information should use the same visual treatment across pages, especially metric cards, list headers, and list rows.
+- Familiar interactions: hover, focus, empty-state behavior, and action placement should stay predictable across surfaces.
+- Intentional divergence only: visual differences are allowed when they communicate a different job-to-be-done, not as incidental styling drift.
+
+These principles reduce cognitive load, strengthen trust, and make the product feel more polished as the surface area grows.
+
+---
+
 # Pricing Model
 
 | Plan    | Price  | Monthly videos | Total video cap | Monthly credits |

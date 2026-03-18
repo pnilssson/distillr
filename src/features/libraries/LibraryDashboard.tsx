@@ -91,7 +91,7 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
 
   return (
     <main className="flex h-full flex-1 flex-col overflow-y-auto">
-      <div className="mx-auto w-full max-w-4xl px-6 py-8">
+      <div className="mx-auto w-full max-w-6xl px-6 py-8">
         {/* Page header */}
         <div className="mb-8 flex items-start justify-between gap-4">
           <div className="min-w-0">

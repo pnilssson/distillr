@@ -1,5 +1,6 @@
 import { CheckCircle2, Database, MessageSquare } from "lucide-react";
 
+import { OverviewStatCard } from "@/components/OverviewStatCard";
 import type { SourceListItem } from "@/features/sources/types";
 import type { LibraryVideosProgress } from "@/features/videos/types";
 import type { ChatSessionListItem } from "@/features/chat/types";
@@ -9,26 +10,6 @@ type Props = {
   videosData: LibraryVideosProgress | undefined;
   sessions: ChatSessionListItem[];
 };
-
-type StatItemProps = {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  sub?: string;
-};
-
-function StatItem({ icon, label, value, sub }: StatItemProps) {
-  return (
-    <div className="flex items-start gap-3 rounded-xl border bg-card px-5 py-4">
-      <div className="mt-0.5 text-muted-foreground">{icon}</div>
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
-        <p className="mt-1 text-2xl font-semibold tabular-nums leading-none">{value}</p>
-        {sub ? <p className="mt-1 text-xs text-muted-foreground">{sub}</p> : null}
-      </div>
-    </div>
-  );
-}
 
 export function LibraryStatsBar({ sources, videosData, sessions }: Props) {
   const readyCount = videosData?.counts.ready ?? 0;
@@ -56,23 +37,23 @@ export function LibraryStatsBar({ sources, videosData, sessions }: Props) {
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      <StatItem
+      <OverviewStatCard
         icon={<Database size={16} />}
         label="Sources"
         value={String(sources.length)}
-        sub={sourceTypeBreakdown}
+        sublabel={sourceTypeBreakdown}
       />
-      <StatItem
+      <OverviewStatCard
         icon={<CheckCircle2 size={16} />}
         label="Content ready"
         value={totalCount > 0 ? `${readyCount} / ${totalCount}` : "0"}
-        sub={videoSub}
+        sublabel={videoSub}
       />
-      <StatItem
+      <OverviewStatCard
         icon={<MessageSquare size={16} />}
         label="Chat sessions"
         value={String(sessions.length)}
-        sub={sessions.length > 0 ? `${sessions.length} conversation${sessions.length !== 1 ? "s" : ""}` : undefined}
+        sublabel={sessions.length > 0 ? `${sessions.length} conversation${sessions.length !== 1 ? "s" : ""}` : undefined}
       />
     </div>
   );

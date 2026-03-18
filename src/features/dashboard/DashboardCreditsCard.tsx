@@ -36,7 +36,7 @@ export function DashboardCreditsCard({ billing }: DashboardCreditsCardProps) {
     return (
       <Card className="h-full">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Credits</CardTitle>
+          <CardTitle className="text-sm font-semibold">Credits</CardTitle>
           <CardDescription className="text-xs">
             {planSpec.label} plan - billing details unavailable right now
           </CardDescription>
@@ -62,7 +62,7 @@ export function DashboardCreditsCard({ billing }: DashboardCreditsCardProps) {
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium">Credits</CardTitle>
+        <CardTitle className="text-sm font-semibold">Credits</CardTitle>
         <CardDescription className="text-xs">
           {planSpec.label} plan - chat and ingestion limits
         </CardDescription>

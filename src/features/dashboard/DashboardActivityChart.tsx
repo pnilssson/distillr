@@ -29,7 +29,7 @@ export function DashboardActivityChart({ activityByDay }: DashboardActivityChart
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium">Ingestion activity</CardTitle>
+        <CardTitle className="text-sm font-semibold">Ingestion activity</CardTitle>
         <CardDescription className="text-xs">Videos added over the last 30 days</CardDescription>
       </CardHeader>
       <CardContent className="pt-0">

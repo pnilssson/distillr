@@ -55,7 +55,7 @@ export function LibraryStatsBar({ sources, videosData, sessions }: Props) {
   })();
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       <StatItem
         icon={<Database size={16} />}
         label="Sources"
@@ -64,7 +64,7 @@ export function LibraryStatsBar({ sources, videosData, sessions }: Props) {
       />
       <StatItem
         icon={<CheckCircle2 size={16} />}
-        label="Videos ready"
+        label="Content ready"
         value={totalCount > 0 ? `${readyCount} / ${totalCount}` : "0"}
         sub={videoSub}
       />

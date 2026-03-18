@@ -90,7 +90,7 @@ function SourceRow({ source, libraryId, onDeleteRequest }: SourceRowProps) {
   }
 
   return (
-    <div className="group flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted/50">
+    <div className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50">
       {/* Icon */}
       <div className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-background">
         <Icon size={14} className="text-muted-foreground" aria-hidden="true" />

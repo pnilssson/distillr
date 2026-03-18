@@ -81,7 +81,7 @@ function ChatRow({ session, libraryId, onDelete }: ChatRowProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="size-7 shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+              className="size-7 shrink-0"
               aria-label={`Actions for ${session.title}`}
             >
               <MoreHorizontal size={14} aria-hidden="true" />

@@ -25,8 +25,10 @@ export function EmptyDashboardState() {
   return (
     <>
       <div className="px-6 py-24 text-center max-w-sm mx-auto">
-        <Library size={32} className="mx-auto" />
-        <h1 className="mt-4 text-lg font-semibold">Start your first library</h1>
+        <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-2xl border bg-card">
+          <Library size={20} className="text-muted-foreground" aria-hidden="true" />
+        </div>
+        <h1 className="text-lg font-semibold">Start your first library</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Collect channels, playlists, or videos and chat across all of them.
         </p>

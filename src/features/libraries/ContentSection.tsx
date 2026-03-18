@@ -1,14 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Clock, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, ExternalLink, Loader2, XCircle } from "lucide-react";
 
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { ContentType } from "@/lib/sources/types";
 import type { LibraryVideoProgressItem, LibraryVideosProgress } from "@/features/videos/types";
+
+function getContentUrl(contentType: ContentType, externalId: string): string | null {
+  if (contentType === "youtube_video") {
+    return `https://www.youtube.com/watch?v=${externalId}`;
+  }
+  return null;
+}
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -90,6 +98,7 @@ type VideoRowProps = {
 
 function VideoRow({ video }: VideoRowProps) {
   const publishedDate = video.publishedAt ? timeAgo(video.publishedAt) : null;
+  const contentUrl = getContentUrl(video.contentType, video.externalId);
 
   return (
     <div className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/50">
@@ -130,25 +139,19 @@ function VideoRow({ video }: VideoRowProps) {
       <div className="shrink-0">
         <StatusChip status={video.status} failureReason={video.failureReason} />
       </div>
-    </div>
-  );
-}
 
-type ProcessingBannerProps = {
-  counts: LibraryVideosProgress["counts"];
-};
-
-function ProcessingBanner({ counts }: ProcessingBannerProps) {
-  const inFlight = counts.pending + counts.processing;
-  return (
-    <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900/50 dark:bg-blue-950/30">
-      <Loader2 size={13} className="shrink-0 animate-spin text-blue-500" aria-hidden="true" />
-      <p className="text-sm text-blue-700 dark:text-blue-400">
-        {inFlight === 1
-          ? "Processing 1 video..."
-          : `Processing ${inFlight} videos...`}
-        {counts.ready > 0 ? ` ${counts.ready} ready so far.` : ""}
-      </p>
+      {/* External link */}
+      {contentUrl ? (
+        <a
+          href={contentUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Open ${video.title}`}
+          className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <ExternalLink size={13} aria-hidden="true" />
+        </a>
+      ) : null}
     </div>
   );
 }
@@ -163,7 +166,6 @@ export function ContentSection({ videosData, isLoading }: Props) {
 
   const videos = videosData?.videos ?? [];
   const counts = videosData?.counts;
-  const inFlight = (counts?.pending ?? 0) + (counts?.processing ?? 0);
   const isActivelyProcessing = videosData?.isProcessing || videosData?.hasInFlight;
 
   const visibleVideos =
@@ -204,12 +206,7 @@ export function ContentSection({ videosData, isLoading }: Props) {
         ) : null}
       </div>
 
-      <div className="space-y-2">
-        {isActivelyProcessing && inFlight > 0 ? (
-          <ProcessingBanner counts={videosData!.counts} />
-        ) : null}
-
-        <div className="rounded-xl border">
+      <div className="rounded-xl border bg-card">
           {isLoading ? (
             <div className="divide-y">
               {[0, 1, 2].map((i) => (
@@ -254,7 +251,6 @@ export function ContentSection({ videosData, isLoading }: Props) {
             </>
           )}
         </div>
-      </div>
     </section>
   );
 }

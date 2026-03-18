@@ -25,7 +25,7 @@ function FirstRunState({ onAddSource }: { onAddSource: () => void }) {
   return (
     <div className="flex flex-1 items-center justify-center px-6 py-16">
       <div className="mx-auto max-w-sm text-center">
-        <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-2xl border bg-card shadow-sm">
+        <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-2xl border bg-card">
           <Layers size={20} className="text-muted-foreground" aria-hidden="true" />
         </div>
         <h2 className="text-lg font-semibold">Add your first source</h2>

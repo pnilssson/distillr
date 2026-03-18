@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  ChevronsUpDown,
   CreditCard,
   Home,
   LogOut,
@@ -33,7 +34,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -140,20 +140,15 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
       : canTopUp
         ? "Top up credits"
         : "Upgrade plan";
+  const accountLabel = userEmail || "Account";
+  const accountInitial = accountLabel.trim().charAt(0).toUpperCase() || "U";
+  const accountMetaLabel = typeof billing?.chatCreditsBalance === "number"
+    ? `${activePlanLabel} - ${billing.chatCreditsBalance} credits`
+    : `${activePlanLabel} plan`;
 
   function renderAccountMenuItems() {
     return (
       <>
-        <DropdownMenuLabel className="px-2 py-1.5">
-          <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
-          <p className="text-xs font-medium">{activePlanLabel}</p>
-          {typeof billing?.chatCreditsBalance === "number" ? (
-            <p className="text-xs text-muted-foreground">{billing.chatCreditsBalance} chat credits left</p>
-          ) : null}
-        </DropdownMenuLabel>
-
-        <DropdownMenuSeparator />
-
         <DropdownMenuItem
           className="cursor-pointer"
           onClick={() => { void handleManageBilling(); }}
@@ -313,18 +308,19 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
                 <button
                   type="button"
                   aria-label="Open account menu"
-                  className="flex w-full items-center gap-2 rounded-md border px-2 py-1.5 text-left transition-colors hover:bg-accent group-data-[collapsible=icon]:hidden"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:hidden"
                 >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
-                    <p className="text-xs font-medium">{activePlanLabel}</p>
-                    {typeof billing?.chatCreditsBalance === "number" ? (
-                      <p className="text-xs text-muted-foreground">
-                        {billing.chatCreditsBalance} chat credits left
-                      </p>
-                    ) : null}
+                  <div
+                    aria-hidden="true"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-[11px] font-semibold uppercase text-sidebar-accent-foreground"
+                  >
+                    {accountInitial}
                   </div>
-                  <MoreHorizontal size={16} className="shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-sidebar-foreground">{accountLabel}</p>
+                    <p className="truncate text-xs text-muted-foreground">{accountMetaLabel}</p>
+                  </div>
+                  <ChevronsUpDown size={14} className="shrink-0 text-muted-foreground" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="end" className="min-w-56">
@@ -337,9 +333,14 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
                 <button
                   type="button"
                   aria-label="Open account menu"
-                  className="hidden h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground group-data-[collapsible=icon]:inline-flex"
+                  className="hidden h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:inline-flex"
                 >
-                  <MoreHorizontal size={16} />
+                  <span
+                    aria-hidden="true"
+                    className="flex size-6 items-center justify-center rounded-full bg-sidebar-accent text-[10px] font-semibold uppercase text-sidebar-accent-foreground"
+                  >
+                    {accountInitial}
+                  </span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right" align="end" className="min-w-56">

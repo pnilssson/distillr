@@ -24,9 +24,9 @@ Because of this, rate limiting should focus on burst abuse protection and infras
 
 Plan caps are already defined in `docs/product.md` and enforced by discovered video counts during ingestion.
 
-- Free: 10 videos per month
-- Builder: 100 videos per month
-- Pro: 300 videos per month
+- Free: 15 indexed videos per month
+- Builder: 150 indexed videos per month
+- Pro: 500 indexed videos per month
 
 Since we already compute exactly how many videos will be queued and clamp by remaining allowance, weighting source requests by type (video, playlist, channel) adds friction without better cost control.
 

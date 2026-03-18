@@ -4,7 +4,10 @@ import { createBillingCheckoutSchema } from "@/lib/validation/billing";
 import {
   createPolarCheckoutSession,
 } from "@/server/billing/polar/client";
-import { ensurePolarCustomerState } from "@/server/billing/polar/customers";
+import {
+  ensurePolarCustomerProvisioned,
+  getPolarCustomerState,
+} from "@/server/billing/polar/customers";
 import { getDistillrProductIds } from "@/server/billing/polar/config";
 import { buildBillingSnapshot } from "@/server/billing/polar/state";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
@@ -28,23 +31,17 @@ export const POST = withApiAuth(async (request, { user }) => {
     );
   }
 
-  const state = await ensurePolarCustomerState({
+  await ensurePolarCustomerProvisioned({
     userId: user.id,
     email: user.email ?? null,
     name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
   });
 
-  if (!state) {
-    return NextResponse.json(
-      { error: "Billing is not available right now." },
-      { status: 503 },
-    );
-  }
-
   const target = parsed.data.target;
-  const billing = buildBillingSnapshot(state);
+  const state = await getPolarCustomerState(user.id);
+  const billing = state ? buildBillingSnapshot(state) : null;
 
-  if (target === "top_up_500" && !billing.hasTopUpAccess) {
+  if (target === "top_up_250" && !billing?.hasTopUpAccess) {
     return NextResponse.json(
       { error: "Top-ups are available on paid plans." },
       { status: 403 },
@@ -80,9 +77,9 @@ export const POST = withApiAuth(async (request, { user }) => {
     });
   }
 
-  if (target === "top_up_500") {
+  if (target === "top_up_250") {
     await captureServerEvent(user.id, "top_up_clicked", {
-      target: "top_up_500",
+      target: "top_up_250",
       source: "checkout",
     });
   }
@@ -90,7 +87,7 @@ export const POST = withApiAuth(async (request, { user }) => {
   return NextResponse.json({ url: session.url });
 });
 
-function getProductIdForTarget(target: "builder" | "pro" | "top_up_500"): string | null {
+function getProductIdForTarget(target: "builder" | "pro" | "top_up_250"): string | null {
   const products = getDistillrProductIds();
 
   if (target === "builder") {
@@ -101,7 +98,7 @@ function getProductIdForTarget(target: "builder" | "pro" | "top_up_500"): string
     return products.pro;
   }
 
-  return products.topUp500;
+  return products.topUp250;
 }
 
 function sanitizeReturnPath(value: string | undefined): string {

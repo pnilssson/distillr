@@ -43,7 +43,12 @@ const faqs = [
   {
     question: "What is the credit system?",
     answer:
-      "Credits are the unit used for AI chat. Each message costs credits depending on which AI model you choose, faster models cost fewer credits, more capable models cost more. Monthly credits reset on your billing date, and top-ups are available on paid plans.",
+      "Credits are the unit used for AI chat. Each message costs credits depending on which AI model you choose, faster models cost fewer credits, more capable models cost more. Monthly credits reset on your billing date. Paid plans can buy 250-credit top-ups for $5.",
+  },
+  {
+    question: "How are video limits counted?",
+    answer:
+      "Each indexed video counts as one video toward your monthly indexing allowance and your total stored video cap, regardless of video length.",
   },
   {
     question: "Does Distillr work with videos that have no subtitles?",

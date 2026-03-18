@@ -27,21 +27,21 @@ const softwareApplicationSchema = {
       price: String(BILLING_PLANS.free.monthlyPriceUsd),
       priceCurrency: "USD",
       name: BILLING_PLANS.free.label,
-      description: `${BILLING_PLANS.free.monthlyVideoLimit} videos/month, ${BILLING_PLANS.free.monthlyChatCredits} credits, 1 library`,
+      description: `Index up to ${BILLING_PLANS.free.monthlyVideoLimit} new videos each month, store up to ${BILLING_PLANS.free.lifetimeVideoLimit} indexed videos, ${BILLING_PLANS.free.monthlyChatCredits} AI chat credits each month, 1 library`,
     },
     {
       "@type": "Offer",
       price: String(BILLING_PLANS.builder.monthlyPriceUsd),
       priceCurrency: "USD",
       name: BILLING_PLANS.builder.label,
-      description: `${BILLING_PLANS.builder.monthlyVideoLimit} videos/month, ${BILLING_PLANS.builder.monthlyChatCredits} credits, unlimited libraries`,
+      description: `Index up to ${BILLING_PLANS.builder.monthlyVideoLimit} new videos each month, store up to ${BILLING_PLANS.builder.lifetimeVideoLimit} indexed videos, ${BILLING_PLANS.builder.monthlyChatCredits} AI chat credits each month, unlimited libraries`,
     },
     {
       "@type": "Offer",
       price: String(BILLING_PLANS.pro.monthlyPriceUsd),
       priceCurrency: "USD",
       name: BILLING_PLANS.pro.label,
-      description: `${BILLING_PLANS.pro.monthlyVideoLimit} videos/month, ${BILLING_PLANS.pro.monthlyChatCredits} credits, unlimited libraries, priority processing`,
+      description: `Index up to ${BILLING_PLANS.pro.monthlyVideoLimit} new videos each month, store unlimited indexed videos, ${BILLING_PLANS.pro.monthlyChatCredits} AI chat credits each month, unlimited libraries, priority processing`,
     },
   ],
 };
@@ -111,7 +111,15 @@ const faqSchema = {
       name: "What is the credit system?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Credits are the unit used for AI chat. Each message costs credits depending on which AI model you choose, faster models cost fewer credits, more capable models cost more. Monthly credits reset on your billing date, and top-ups are available on paid plans.",
+        text: "Credits are the unit used for AI chat. Each message costs credits depending on which AI model you choose, faster models cost fewer credits, more capable models cost more. Monthly credits reset on your billing date. Paid plans can buy 250-credit top-ups for $5.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How are video limits counted?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Each indexed video counts as one video toward your monthly indexing allowance and your total stored video cap, regardless of video length.",
       },
     },
     {

@@ -7,7 +7,7 @@ Distillr uses a Polar-first billing model. Polar is the source of truth for subs
 ## Scope
 
 - Plans: Free, Builder, Pro.
-- One-time top-up: `top_up_500`.
+- One-time top-up: `top_up_250`.
 - Usage dimensions:
   - chat credits consumed
   - videos ingested monthly
@@ -20,19 +20,21 @@ Plan limits:
 
 | Plan | Monthly chat credits | Monthly videos | Lifetime videos |
 | --- | --- | --- | --- |
-| Free | 100 | 10 | 50 |
-| Builder | 900 | 100 | 1000 |
-| Pro | 2500 | 300 | Unlimited |
+| Free | 50 | 15 | 100 |
+| Builder | 650 | 150 | 2000 |
+| Pro | 1800 | 500 | Unlimited |
 
 Top-up:
 
-- `top_up_500` adds 500 chat credits for $9.
+- `top_up_250` adds 250 chat credits for $5.
 - Top-ups are available only to paid plans (`builder`, `pro`).
 
 ## Customer State and Provisioning
 
 - Identity bridge: `external_customer_id = app user id`.
-- `ensurePolarCustomerState()` lazily ensures customer + free subscription baseline.
+- Provisioning runs on auth callback and selected write paths, not on passive read paths.
+- Provisioning checks existing subscriptions via Polar subscriptions API before creating a free baseline subscription.
+- Billing state reads are non-mutating and use Polar customer state snapshots.
 - Polar API requests are authenticated with organization access tokens and should not send `organization_id` in payloads.
 - Snapshot builder resolves:
   - effective plan

@@ -1,21 +1,15 @@
 import "server-only";
 
 import type { BillingState } from "@/lib/billing/types";
-import { ensurePolarCustomerState } from "@/server/billing/polar/customers";
+import { getPolarCustomerState } from "@/server/billing/polar/customers";
 import { buildBillingSnapshot } from "@/server/billing/polar/state";
 
 type GetBillingStateForUserInput = {
   userId: string;
-  email: string | null;
-  name: string | null;
 };
 
 export async function getBillingStateForUser(input: GetBillingStateForUserInput): Promise<BillingState> {
-  const state = await ensurePolarCustomerState({
-    userId: input.userId,
-    email: input.email,
-    name: input.name,
-  });
+  const state = await getPolarCustomerState(input.userId);
 
   if (!state) {
     return {

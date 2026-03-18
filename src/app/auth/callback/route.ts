@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 
+import { ensurePolarCustomerProvisioned } from "@/server/billing/polar/customers";
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
 
 const DEFAULT_REDIRECT_PATH = "/dashboard";
@@ -20,6 +22,29 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createSupabaseServerClient();
     await supabase.auth.exchangeCodeForSession(code);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      try {
+        await ensurePolarCustomerProvisioned({
+          userId: user.id,
+          email: user.email ?? null,
+          name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
+        });
+      } catch (error) {
+        Sentry.captureException(error, {
+          tags: {
+            area: "billing.provision_callback",
+          },
+          extra: {
+            userId: user.id,
+          },
+        });
+      }
+    }
   }
 
   const redirectPath = isSafeNextPath(nextPath) ? nextPath : DEFAULT_REDIRECT_PATH;

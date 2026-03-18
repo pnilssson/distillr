@@ -75,11 +75,17 @@ export function CookieConsentProvider({
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
 
   useEffect(() => {
-    const stored = loadConsent();
-    if (stored) {
-      setConsent(stored);
-      applyPosthogConsent(stored.analytics);
-    }
+    const timeoutId = window.setTimeout(() => {
+      const stored = loadConsent();
+      if (stored) {
+        setConsent(stored);
+        applyPosthogConsent(stored.analytics);
+      }
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   const persist = useCallback((next: CookieConsent) => {

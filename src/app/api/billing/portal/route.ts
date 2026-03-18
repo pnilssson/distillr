@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createBillingPortalSchema } from "@/lib/validation/billing";
 import { createPolarCustomerPortalSession } from "@/server/billing/polar/client";
-import { ensurePolarCustomerState } from "@/server/billing/polar/customers";
+import { ensurePolarCustomerProvisioned } from "@/server/billing/polar/customers";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { withApiAuth } from "@/server/core/auth/api";
 import { env } from "@/server/core/env";
@@ -24,18 +24,11 @@ export const POST = withApiAuth(async (request, { user }) => {
     );
   }
 
-  const state = await ensurePolarCustomerState({
+  await ensurePolarCustomerProvisioned({
     userId: user.id,
     email: user.email ?? null,
     name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
   });
-
-  if (!state) {
-    return NextResponse.json(
-      { error: "Billing is not available right now." },
-      { status: 503 },
-    );
-  }
 
   const appUrl = env.NEXT_PUBLIC_APP_URL;
   const returnPath = sanitizeReturnPath(parsed.data.returnPath);

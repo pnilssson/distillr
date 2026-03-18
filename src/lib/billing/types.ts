@@ -10,4 +10,4 @@ export type BillingState = {
   hasTopUpAccess: boolean;
 };
 
-export type BillingCheckoutTarget = "builder" | "pro" | "top_up_500";
+export type BillingCheckoutTarget = "builder" | "pro" | "top_up_250";

@@ -59,13 +59,15 @@ These principles reduce cognitive load, strengthen trust, and make the product f
 
 # Pricing Model
 
-| Plan    | Price  | Monthly videos | Total video cap | Monthly credits |
-| ------- | ------ | -------------- | --------------- | --------------- |
-| Free    | $0     | 10             | 50              | 100             |
-| Builder | $19/mo | 100            | 1,000           | 900             |
-| Pro     | $49/mo | 300            | Unlimited       | 2,500           |
+| Plan    | Price  | Monthly indexed videos | Total stored indexed videos | Monthly chat credits |
+| ------- | ------ | ---------------------- | --------------------------- | -------------------- |
+| Free    | $0     | 15                     | 100                         | 50                   |
+| Builder | $19/mo | 150                    | 2,000                       | 650                  |
+| Pro     | $49/mo | 500                    | Unlimited                   | 1,800                |
 
-Credits are the universal unit for chat. Users choose their AI model per request and credit usage scales with model capability. Monthly credits reset on the billing anniversary and do not roll over. Builder and Pro users can top up with 500 credits for $9. Free users see an upgrade prompt instead.
+Credits are the universal unit for chat. Users choose their AI model per request and credit usage scales with model capability. Monthly credits reset on the billing anniversary and do not roll over. Builder and Pro users can top up with 250 credits for $5. Free users see an upgrade prompt instead.
+
+Each indexed video counts as one video toward monthly indexing and total stored limits, regardless of video length.
 
 Deleting a video does not restore monthly or lifetime quota. Ingestion is the cost event: transcript fetch, embedding, and processing are spent at ingest time regardless of later deletion.
 

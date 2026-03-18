@@ -10,6 +10,8 @@ import type {
   PolarCustomerState,
   PolarEventIngestResponse,
   PolarIngestEvent,
+  PolarSubscription,
+  PolarSubscriptionListResponse,
 } from "@/server/billing/polar/types";
 
 const RETRYABLE_STATUSES = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
@@ -89,8 +91,8 @@ export async function createPolarFreeSubscription(input: {
   externalCustomerId: string;
   freeProductId: string;
   idempotencyKey?: string;
-}): Promise<void> {
-  await polarRequest(
+}): Promise<PolarSubscription> {
+  const subscription = await polarRequest<PolarSubscription>(
     "POST",
     "/v1/subscriptions/",
     {
@@ -101,6 +103,56 @@ export async function createPolarFreeSubscription(input: {
       idempotencyKey: input.idempotencyKey,
     },
   );
+
+  if (!subscription?.id) {
+    throw createPolarIntegrationError({
+      code: "POLAR_SUBSCRIPTION_CREATE_FAILED",
+      message: "Could not set up billing right now. Please try again.",
+    });
+  }
+
+  return subscription;
+}
+
+export async function listPolarSubscriptions(input: {
+  externalCustomerId: string;
+  productId?: string;
+  active?: boolean;
+  limit?: number;
+}): Promise<PolarSubscription[]> {
+  const subscriptions: PolarSubscription[] = [];
+  const pageSize = Math.min(Math.max(input.limit ?? 100, 1), 100);
+  let page = 1;
+  let maxPage = 1;
+
+  while (page <= maxPage) {
+    const params = new URLSearchParams({
+      external_customer_id: input.externalCustomerId,
+      page: String(page),
+      limit: String(pageSize),
+    });
+
+    if (input.productId) {
+      params.set("product_id", input.productId);
+    }
+
+    if (typeof input.active === "boolean") {
+      params.set("active", String(input.active));
+    }
+
+    const response = await polarRequest<PolarSubscriptionListResponse>(
+      "GET",
+      `/v1/subscriptions/?${params.toString()}`,
+    );
+
+    const items = response?.items ?? [];
+    subscriptions.push(...items);
+
+    maxPage = response?.pagination?.max_page ?? page;
+    page += 1;
+  }
+
+  return subscriptions;
 }
 
 export async function createPolarCheckoutSession(input: {

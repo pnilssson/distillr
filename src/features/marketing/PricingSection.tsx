@@ -22,9 +22,9 @@ const plans = [
     period: "/mo",
     tagline: "For researchers and power users",
     features: [
-      `${BILLING_PLANS.pro.monthlyVideoLimit} videos per month`,
+      formatMonthlyIndexLimit(BILLING_PLANS.pro.monthlyVideoLimit),
       formatLifetimeLimit(BILLING_PLANS.pro.lifetimeVideoLimit),
-      `${BILLING_PLANS.pro.monthlyChatCredits.toLocaleString("en-US")} credits / month`,
+      `${BILLING_PLANS.pro.monthlyChatCredits.toLocaleString("en-US")} AI chat credits each month`,
       "Unlimited libraries",
       "All export formats",
       "Priority processing",
@@ -42,15 +42,15 @@ const plans = [
     period: "/mo",
     tagline: "Your personal research stack",
     features: [
-      `${BILLING_PLANS.builder.monthlyVideoLimit} videos per month`,
+      formatMonthlyIndexLimit(BILLING_PLANS.builder.monthlyVideoLimit),
       formatLifetimeLimit(BILLING_PLANS.builder.lifetimeVideoLimit),
-      `${BILLING_PLANS.builder.monthlyChatCredits.toLocaleString("en-US")} credits / month`,
+      `${BILLING_PLANS.builder.monthlyChatCredits.toLocaleString("en-US")} AI chat credits each month`,
       "Unlimited libraries",
       "All export formats",
       "Credit top-ups available",
     ],
     missing: [
-      "Unlimited videos saved",
+      "Store unlimited indexed videos in your library",
       "Priority processing",
     ],
     cta: "Start building",
@@ -64,9 +64,9 @@ const plans = [
     period: null,
     tagline: "Try it out",
     features: [
-      `${BILLING_PLANS.free.monthlyVideoLimit} videos per month`,
+      formatMonthlyIndexLimit(BILLING_PLANS.free.monthlyVideoLimit),
       formatLifetimeLimit(BILLING_PLANS.free.lifetimeVideoLimit),
-      `${BILLING_PLANS.free.monthlyChatCredits.toLocaleString("en-US")} credits / month`,
+      `${BILLING_PLANS.free.monthlyChatCredits.toLocaleString("en-US")} AI chat credits each month`,
       "1 library",
       "TXT export",
     ],
@@ -206,8 +206,12 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
 
 function formatLifetimeLimit(value: number | null): string {
   if (value === null) {
-    return "Unlimited videos saved";
+    return "Store unlimited indexed videos in your library";
   }
 
-  return `Up to ${value.toLocaleString("en-US")} videos saved`;
+  return `Store up to ${value.toLocaleString("en-US")} indexed videos in your library`;
+}
+
+function formatMonthlyIndexLimit(value: number): string {
+  return `Index up to ${value.toLocaleString("en-US")} new videos each month`;
 }

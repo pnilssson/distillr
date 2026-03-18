@@ -17,8 +17,6 @@ export default async function DashboardPage() {
     getDashboardSummary(user.id),
     getBillingStateForUser({
       userId: user.id,
-      email: user.email ?? null,
-      name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
     }),
   ]);
 

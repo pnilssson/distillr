@@ -102,7 +102,7 @@ export function DashboardCreditsCard({ billing }: DashboardCreditsCardProps) {
           <div>
             <div className="mb-1.5 flex items-center justify-between gap-2">
               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                <Zap size={11} /> Monthly video quota
+                <Zap size={11} /> Monthly indexing allowance
               </span>
               <span className="text-xs tabular-nums">
                 {remainingVideos} / {maxMonthlyVideos}
@@ -114,7 +114,7 @@ export function DashboardCreditsCard({ billing }: DashboardCreditsCardProps) {
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={remainingVideosPercent}
-              aria-label="Monthly video quota remaining"
+              aria-label="Monthly indexing allowance remaining"
             >
               <div
                 className="h-full rounded-full bg-[var(--chart-1)] transition-all"

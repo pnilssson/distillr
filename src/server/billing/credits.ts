@@ -2,7 +2,10 @@ import "server-only";
 
 import type { ModelAlias } from "@/server/core/ai/models";
 import { AppError } from "@/server/core/errors/app-error";
-import { ensurePolarCustomerState } from "@/server/billing/polar/customers";
+import {
+  ensurePolarCustomerProvisioned,
+  getPolarCustomerState,
+} from "@/server/billing/polar/customers";
 import { buildBillingSnapshot } from "@/server/billing/polar/state";
 
 type CheckAndDeductCreditsParams = {
@@ -19,11 +22,13 @@ export async function checkAndDeductCredits(params: CheckAndDeductCreditsParams)
   void params.modelAlias;
   void params.operation;
 
-  const state = await ensurePolarCustomerState({
+  await ensurePolarCustomerProvisioned({
     userId: params.userId,
     email: params.userEmail,
     name: params.userName,
   });
+
+  const state = await getPolarCustomerState(params.userId);
 
   if (!state) {
     return;

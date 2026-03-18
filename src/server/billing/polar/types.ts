@@ -26,6 +26,28 @@ export type PolarCustomerState = {
   active_meters: PolarCustomerStateMeter[];
 };
 
+export type PolarSubscriptionStatus =
+  | "incomplete"
+  | "incomplete_expired"
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "canceled"
+  | "unpaid";
+
+export type PolarSubscription = {
+  id: string;
+  product_id: string;
+  status: PolarSubscriptionStatus;
+};
+
+export type PolarSubscriptionListResponse = {
+  items: PolarSubscription[];
+  pagination: {
+    max_page: number;
+  };
+};
+
 export type PolarCheckoutSession = {
   id: string;
   url: string;

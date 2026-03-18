@@ -85,7 +85,7 @@ export function LibraryChatSubMenu({ libraryId, onSessionSelect }: Props) {
       <SidebarMenuSub>
         {/* New chat action */}
         <SidebarMenuSubItem>
-          <SidebarMenuSubButton asChild size="sm">
+          <SidebarMenuSubButton asChild>
             <button
               type="button"
               onClick={() => { void handleNewChat(); }}
@@ -122,7 +122,7 @@ export function LibraryChatSubMenu({ libraryId, onSessionSelect }: Props) {
 
             return (
               <SidebarMenuSubItem key={session.id} className="group/chat-item">
-                <SidebarMenuSubButton asChild size="sm" isActive={isActive}>
+                <SidebarMenuSubButton asChild isActive={isActive}>
                   <Link
                     href={href}
                     onClick={() => { onSessionSelect?.(); }}

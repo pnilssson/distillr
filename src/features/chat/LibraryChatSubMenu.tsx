@@ -122,7 +122,7 @@ export function LibraryChatSubMenu({ libraryId, onSessionSelect }: Props) {
 
             return (
               <SidebarMenuSubItem key={session.id} className="group/chat-item">
-                <SidebarMenuSubButton asChild isActive={isActive} className="w-full">
+                <SidebarMenuSubButton asChild isActive={isActive}>
                   <Link
                     href={href}
                     onClick={() => { onSessionSelect?.(); }}

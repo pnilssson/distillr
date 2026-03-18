@@ -1,34 +1,14 @@
 import { NextResponse } from "next/server";
 
-import { ensurePolarCustomerState } from "@/server/billing/polar/customers";
-import { buildBillingSnapshot } from "@/server/billing/polar/state";
+import { getBillingStateForUser } from "@/server/billing/queries";
 import { withApiAuth } from "@/server/core/auth/api";
 
 export const GET = withApiAuth(async (_request, { user }) => {
-  const state = await ensurePolarCustomerState({
+  const billingState = await getBillingStateForUser({
     userId: user.id,
     email: user.email ?? null,
     name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
   });
 
-  if (!state) {
-    return NextResponse.json({
-      billingEnabled: false,
-      plan: "free",
-      chatCreditsBalance: null,
-      monthlyVideoBalance: null,
-      lifetimeVideoConsumed: null,
-      lifetimeVideoRemaining: null,
-      hasTopUpAccess: false,
-    });
-  }
-
-  const snapshot = buildBillingSnapshot(state);
-
-  return NextResponse.json({
-    billingEnabled: true,
-    ...snapshot,
-    lifetimeVideoRemaining:
-      Number.isFinite(snapshot.lifetimeVideoRemaining) ? snapshot.lifetimeVideoRemaining : null,
-  });
+  return NextResponse.json(billingState);
 });

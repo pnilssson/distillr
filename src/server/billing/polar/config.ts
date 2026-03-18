@@ -1,13 +1,15 @@
 import "server-only";
 
+import { BILLING_PLANS } from "@/lib/billing/plans";
+import type { BillingPlan } from "@/lib/billing/types";
 import { env } from "@/server/core/env";
 
-export type DistillrPlan = "free" | "builder" | "pro";
+export type DistillrPlan = BillingPlan;
 
 export const DISTILLR_LIFETIME_VIDEO_CAP_BY_PLAN: Record<DistillrPlan, number> = {
-  free: 50,
-  builder: 1000,
-  pro: Number.POSITIVE_INFINITY,
+  free: BILLING_PLANS.free.lifetimeVideoLimit ?? Number.POSITIVE_INFINITY,
+  builder: BILLING_PLANS.builder.lifetimeVideoLimit ?? Number.POSITIVE_INFINITY,
+  pro: BILLING_PLANS.pro.lifetimeVideoLimit ?? Number.POSITIVE_INFINITY,
 };
 
 export function isPolarBillingEnabled(): boolean {

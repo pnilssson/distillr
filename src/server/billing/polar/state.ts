@@ -1,5 +1,6 @@
 import "server-only";
 
+import { BILLING_PLANS } from "@/lib/billing/plans";
 import {
   DISTILLR_LIFETIME_VIDEO_CAP_BY_PLAN,
   rankPlan,
@@ -44,7 +45,7 @@ export function buildBillingSnapshot(state: PolarCustomerState): DistillrBilling
     monthlyVideoBalance: Math.max(0, Math.floor(monthly.balance)),
     lifetimeVideoConsumed,
     lifetimeVideoRemaining,
-    hasTopUpAccess: plan === "builder" || plan === "pro",
+    hasTopUpAccess: BILLING_PLANS[plan].hasTopUpAccess,
   };
 }
 

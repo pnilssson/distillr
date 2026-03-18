@@ -9,6 +9,7 @@ import { PricingSection } from "@/features/marketing/PricingSection";
 import { FaqSection } from "@/features/marketing/FaqSection";
 import { FinalCtaSection } from "@/features/marketing/FinalCtaSection";
 import { FooterSection } from "@/features/marketing/FooterSection";
+import { BILLING_PLANS } from "@/lib/billing/plans";
 import { JsonLd } from "@/components/json-ld";
 
 const softwareApplicationSchema = {
@@ -23,24 +24,24 @@ const softwareApplicationSchema = {
   offers: [
     {
       "@type": "Offer",
-      price: "0",
+      price: String(BILLING_PLANS.free.monthlyPriceUsd),
       priceCurrency: "USD",
-      name: "Free",
-      description: "10 videos/month, 100 credits, 1 library",
+      name: BILLING_PLANS.free.label,
+      description: `${BILLING_PLANS.free.monthlyVideoLimit} videos/month, ${BILLING_PLANS.free.monthlyChatCredits} credits, 1 library`,
     },
     {
       "@type": "Offer",
-      price: "19",
+      price: String(BILLING_PLANS.builder.monthlyPriceUsd),
       priceCurrency: "USD",
-      name: "Builder",
-      description: "100 videos/month, 900 credits, unlimited libraries",
+      name: BILLING_PLANS.builder.label,
+      description: `${BILLING_PLANS.builder.monthlyVideoLimit} videos/month, ${BILLING_PLANS.builder.monthlyChatCredits} credits, unlimited libraries`,
     },
     {
       "@type": "Offer",
-      price: "49",
+      price: String(BILLING_PLANS.pro.monthlyPriceUsd),
       priceCurrency: "USD",
-      name: "Pro",
-      description: "300 videos/month, 2500 credits, unlimited libraries, priority processing",
+      name: BILLING_PLANS.pro.label,
+      description: `${BILLING_PLANS.pro.monthlyVideoLimit} videos/month, ${BILLING_PLANS.pro.monthlyChatCredits} credits, unlimited libraries, priority processing`,
     },
   ],
 };

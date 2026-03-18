@@ -7,6 +7,8 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { createCheckoutSession } from "@/features/billing/api";
+import { BILLING_PLANS } from "@/lib/billing/plans";
+import type { BillingPlan } from "@/lib/billing/types";
 
 interface PricingSectionProps {
   isAuthenticated?: boolean;
@@ -14,14 +16,15 @@ interface PricingSectionProps {
 
 const plans = [
   {
+    plan: "pro" as BillingPlan,
     name: "Pro",
-    price: "$49",
+    price: `$${BILLING_PLANS.pro.monthlyPriceUsd}`,
     period: "/mo",
     tagline: "For researchers and power users",
     features: [
-      "300 videos per month",
-      "Unlimited videos saved",
-      "2,500 credits / month",
+      `${BILLING_PLANS.pro.monthlyVideoLimit} videos per month`,
+      formatLifetimeLimit(BILLING_PLANS.pro.lifetimeVideoLimit),
+      `${BILLING_PLANS.pro.monthlyChatCredits.toLocaleString("en-US")} credits / month`,
       "Unlimited libraries",
       "All export formats",
       "Priority processing",
@@ -33,14 +36,15 @@ const plans = [
     highlighted: false,
   },
   {
+    plan: "builder" as BillingPlan,
     name: "Builder",
-    price: "$19",
+    price: `$${BILLING_PLANS.builder.monthlyPriceUsd}`,
     period: "/mo",
     tagline: "Your personal research stack",
     features: [
-      "100 videos per month",
-      "Up to 1,000 videos saved",
-      "900 credits / month",
+      `${BILLING_PLANS.builder.monthlyVideoLimit} videos per month`,
+      formatLifetimeLimit(BILLING_PLANS.builder.lifetimeVideoLimit),
+      `${BILLING_PLANS.builder.monthlyChatCredits.toLocaleString("en-US")} credits / month`,
       "Unlimited libraries",
       "All export formats",
       "Credit top-ups available",
@@ -54,14 +58,15 @@ const plans = [
     highlighted: true,
   },
   {
+    plan: "free" as BillingPlan,
     name: "Free",
-    price: "$0",
+    price: `$${BILLING_PLANS.free.monthlyPriceUsd}`,
     period: null,
     tagline: "Try it out",
     features: [
-      "10 videos per month",
-      "Up to 50 videos saved",
-      "100 credits / month",
+      `${BILLING_PLANS.free.monthlyVideoLimit} videos per month`,
+      formatLifetimeLimit(BILLING_PLANS.free.lifetimeVideoLimit),
+      `${BILLING_PLANS.free.monthlyChatCredits.toLocaleString("en-US")} credits / month`,
       "1 library",
       "TXT export",
     ],
@@ -197,4 +202,12 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
 
     </section>
   );
+}
+
+function formatLifetimeLimit(value: number | null): string {
+  if (value === null) {
+    return "Unlimited videos saved";
+  }
+
+  return `Up to ${value.toLocaleString("en-US")} videos saved`;
 }

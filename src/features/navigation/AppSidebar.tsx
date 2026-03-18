@@ -50,6 +50,7 @@ import {
 import { useBillingState } from "@/features/billing/useBillingState";
 import { LibraryChatSubMenu } from "@/features/chat/LibraryChatSubMenu";
 import { hasPosthogClientConfig } from "@/lib/analytics/posthog-client-config";
+import { getBillingPlanLabel } from "@/lib/billing/plans";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
 
 type AppSidebarProps = {
@@ -75,8 +76,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   const billingQuery = useBillingState();
   const billing = billingQuery.data;
   const billingReady = !billingQuery.isPending;
-  const activePlanLabel =
-    billing?.plan === "pro" ? "Pro" : billing?.plan === "builder" ? "Builder" : "Free";
+  const activePlanLabel = billing ? getBillingPlanLabel(billing.plan) : "Free";
   const canTopUp = Boolean(billing?.hasTopUpAccess);
 
   useEffect(() => {

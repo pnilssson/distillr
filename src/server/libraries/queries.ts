@@ -29,7 +29,7 @@ export async function deleteLibrary(userId: string, libraryId: string) {
 
 export async function getLibraryById(userId: string, libraryId: string) {
   const [library] = await db
-    .select({ id: libraries.id })
+    .select({ id: libraries.id, name: libraries.name })
     .from(libraries)
     .where(and(eq(libraries.id, libraryId), eq(libraries.userId, userId)));
   return library ?? null;

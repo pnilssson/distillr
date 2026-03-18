@@ -136,6 +136,16 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
               </div>
             )}
 
+            {/* Chats */}
+            <ChatSection
+              libraryId={libraryId}
+              sessions={sessions}
+              isLoading={sessionsQuery.isPending}
+              isNewChatPending={createSessionMutation.isPending}
+              canChat={(videosQuery.data?.counts.ready ?? 0) > 0}
+              onNewChat={handleNewChat}
+            />
+
             {/* Sources */}
             <SourcesSection
               libraryId={libraryId}
@@ -147,16 +157,6 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
             <ContentSection
               videosData={videosQuery.data}
               isLoading={videosQuery.isPending}
-            />
-
-            {/* Chats */}
-            <ChatSection
-              libraryId={libraryId}
-              sessions={sessions}
-              isLoading={sessionsQuery.isPending}
-              isNewChatPending={createSessionMutation.isPending}
-              canChat={(videosQuery.data?.counts.ready ?? 0) > 0}
-              onNewChat={handleNewChat}
             />
           </div>
         )}

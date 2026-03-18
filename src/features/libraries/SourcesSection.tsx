@@ -115,15 +115,6 @@ function SourceRow({ source, libraryId, onDeleteRequest }: SourceRowProps) {
       </div>
 
       {/* Actions */}
-      <a
-        href={source.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`Open ${label}`}
-        className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-      >
-        <ExternalLink size={13} aria-hidden="true" />
-      </a>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -136,11 +127,18 @@ function SourceRow({ source, libraryId, onDeleteRequest }: SourceRowProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuItem asChild>
+            <a href={source.url} target="_blank" rel="noopener noreferrer">
+              <ExternalLink size={13} aria-hidden="true" />
+              Open source
+            </a>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={handleRefresh}
             disabled={refreshMutation.isPending}
           >
-            <RefreshCw size={13} className="mr-2" aria-hidden="true" />
+            <RefreshCw size={13} aria-hidden="true" />
             Refresh
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -148,7 +146,7 @@ function SourceRow({ source, libraryId, onDeleteRequest }: SourceRowProps) {
             onClick={() => onDeleteRequest(source)}
             className="text-destructive focus:text-destructive"
           >
-            <Trash2 size={13} className="mr-2" aria-hidden="true" />
+            <Trash2 size={13} aria-hidden="true" />
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -181,7 +179,6 @@ export function SourcesSection({ libraryId, sources, isLoading }: Props) {
           ) : null}
         </div>
         <Button
-          variant="outline"
           size="sm"
           className="h-7 gap-1.5 text-xs"
           onClick={() => setAddOpen(true)}

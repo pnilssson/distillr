@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Layers, Plus } from "lucide-react";
+import { Layers, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddSourceDialog } from "@/features/sources/AddSourceDialog";
 import { useSources } from "@/features/sources/useSources";
@@ -16,6 +23,8 @@ import { LibraryStatsBar } from "@/features/libraries/LibraryStatsBar";
 import { SourcesSection } from "@/features/libraries/SourcesSection";
 import { ContentSection } from "@/features/libraries/ContentSection";
 import { ChatSection } from "@/features/libraries/ChatSection";
+import { DeleteLibraryDialog } from "@/features/libraries/DeleteLibraryDialog";
+import { RenameLibraryDialog } from "@/features/libraries/RenameLibraryDialog";
 
 type Props = {
   libraryId: string;
@@ -57,6 +66,8 @@ function FirstRunState({ onAddSource }: { onAddSource: () => void }) {
 export function LibraryDashboard({ libraryId, libraryName }: Props) {
   const router = useRouter();
   const [addSourceOpen, setAddSourceOpen] = useState(false);
+  const [showRename, setShowRename] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
 
   const sourcesQuery = useSources(libraryId);
   const videosQuery = useLibraryVideos(libraryId);
@@ -94,6 +105,27 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
             </p>
           </div>
 
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8 shrink-0" aria-label="Library options">
+                <MoreHorizontal size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-40">
+              <DropdownMenuItem className="cursor-pointer" onClick={() => setShowRename(true)}>
+                <Pencil size={14} />
+                Rename library
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="cursor-pointer text-destructive focus:text-destructive"
+                onClick={() => setShowDelete(true)}
+              >
+                <Trash2 size={14} />
+                Delete library
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* First-run empty state */}
@@ -150,6 +182,20 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
         libraryId={libraryId}
         open={addSourceOpen}
         onOpenChange={setAddSourceOpen}
+      />
+
+      <RenameLibraryDialog
+        libraryId={libraryId}
+        libraryName={libraryName}
+        open={showRename}
+        onOpenChange={setShowRename}
+      />
+
+      <DeleteLibraryDialog
+        libraryId={libraryId}
+        libraryName={libraryName}
+        open={showDelete}
+        onOpenChange={setShowDelete}
       />
     </main>
   );

@@ -1,11 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Loader2, XCircle } from "lucide-react";
+import { ExternalLink, Loader2, MoreHorizontal, XCircle } from "lucide-react";
 
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ContentType } from "@/lib/sources/types";
@@ -117,7 +123,7 @@ function VideoRow({ video }: VideoRowProps) {
         <div className="h-[28px] w-[50px] shrink-0 rounded bg-muted" aria-hidden="true" />
       )}
 
-      {/* Title */}
+      {/* Title + meta */}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm leading-snug" title={video.title}>
           {video.title || video.externalId}
@@ -132,25 +138,35 @@ function VideoRow({ video }: VideoRowProps) {
           {publishedDate ? (
             <span className="shrink-0 text-xs text-muted-foreground">{publishedDate}</span>
           ) : null}
+          {(video.channelName || publishedDate) ? (
+            <span className="text-muted-foreground/40" aria-hidden="true">·</span>
+          ) : null}
+          <StatusChip status={video.status} failureReason={video.failureReason} />
         </div>
       </div>
 
-      {/* Status */}
-      <div className="shrink-0">
-        <StatusChip status={video.status} failureReason={video.failureReason} />
-      </div>
-
-      {/* External link */}
+      {/* Actions */}
       {contentUrl ? (
-        <a
-          href={contentUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`Open ${video.title}`}
-          className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
-          <ExternalLink size={13} aria-hidden="true" />
-        </a>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+              aria-label={`Actions for ${video.title}`}
+            >
+              <MoreHorizontal size={14} aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem asChild>
+              <a href={contentUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink size={13} aria-hidden="true" />
+                Open video
+              </a>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ) : null}
     </div>
   );
@@ -216,7 +232,6 @@ export function ContentSection({ videosData, isLoading }: Props) {
                     <Skeleton className="h-3.5 w-48" />
                     <Skeleton className="h-3 w-24" />
                   </div>
-                  <Skeleton className="h-3 w-14" />
                 </div>
               ))}
             </div>

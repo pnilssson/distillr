@@ -85,13 +85,16 @@ export function LibraryChatSubMenu({ libraryId, onSessionSelect }: Props) {
       <SidebarMenuSub>
         {/* New chat action */}
         <SidebarMenuSubItem>
-          <SidebarMenuSubButton
-            onClick={() => { void handleNewChat(); }}
-            disabled={createSessionMutation.isPending}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Plus size={12} aria-hidden="true" />
-            <span>{createSessionMutation.isPending ? "Starting..." : "New chat"}</span>
+          <SidebarMenuSubButton asChild>
+            <button
+              type="button"
+              onClick={() => { void handleNewChat(); }}
+              disabled={createSessionMutation.isPending}
+              className="text-muted-foreground hover:text-foreground disabled:opacity-60"
+            >
+              <Plus size={12} aria-hidden="true" />
+              <span>{createSessionMutation.isPending ? "Starting..." : "New chat"}</span>
+            </button>
           </SidebarMenuSubButton>
         </SidebarMenuSubItem>
 

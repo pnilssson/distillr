@@ -8,7 +8,15 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { ContentType } from "@/lib/sources/types";
 import type { LibraryVideoProgressItem, LibraryVideosProgress } from "@/features/videos/types";
+
+function getContentUrl(contentType: ContentType, externalId: string): string | null {
+  if (contentType === "youtube_video") {
+    return `https://www.youtube.com/watch?v=${externalId}`;
+  }
+  return null;
+}
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -90,6 +98,7 @@ type VideoRowProps = {
 
 function VideoRow({ video }: VideoRowProps) {
   const publishedDate = video.publishedAt ? timeAgo(video.publishedAt) : null;
+  const contentUrl = getContentUrl(video.contentType, video.externalId);
 
   return (
     <div className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/50">
@@ -132,15 +141,17 @@ function VideoRow({ video }: VideoRowProps) {
       </div>
 
       {/* External link */}
-      <a
-        href={`https://www.youtube.com/watch?v=${video.externalId}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`Watch ${video.title} on YouTube`}
-        className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-      >
-        <ExternalLink size={13} aria-hidden="true" />
-      </a>
+      {contentUrl ? (
+        <a
+          href={contentUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Open ${video.title}`}
+          className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <ExternalLink size={13} aria-hidden="true" />
+        </a>
+      ) : null}
     </div>
   );
 }

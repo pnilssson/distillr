@@ -43,19 +43,12 @@ import { DeleteLibraryDialog } from "@/features/libraries/DeleteLibraryDialog";
 import { RenameLibraryDialog } from "@/features/libraries/RenameLibraryDialog";
 import { LibraryListItem } from "@/features/libraries/types";
 import { useLibraries } from "@/features/libraries/useLibraries";
-import { AddSourceDialog } from "@/features/sources/AddSourceDialog";
-import { DeleteSourceDialog } from "@/features/sources/DeleteSourceDialog";
-import { SourceDetailsDialog } from "@/features/sources/SourceDetailsDialog";
-import { getSourceLabel, SourceSidebarItem } from "@/features/sources/SourceSidebarItem";
-import { SourceListItem } from "@/features/sources/types";
-import { useSources } from "@/features/sources/useSources";
 import {
   createCheckoutSession,
   createCustomerPortalSession,
 } from "@/features/billing/api";
 import { useBillingState } from "@/features/billing/useBillingState";
-import { ChatSidebarSection } from "@/features/chat/ChatSidebarSection";
-import { VideoSidebarSection } from "@/features/videos/VideoSidebarSection";
+import { LibraryChatSubMenu } from "@/features/chat/LibraryChatSubMenu";
 import { hasPosthogClientConfig } from "@/lib/analytics/posthog-client-config";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
 
@@ -69,9 +62,6 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [addingSource, setAddingSource] = useState(false);
-  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
-  const [deletingSource, setDeletingSource] = useState<SourceListItem | null>(null);
   const [deletingLibrary, setDeletingLibrary] = useState<LibraryListItem | null>(null);
   const [renamingLibrary, setRenamingLibrary] = useState<LibraryListItem | null>(null);
   const [billingAction, setBillingAction] = useState<"upgrade" | "topup" | "portal" | null>(null);
@@ -82,17 +72,12 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   const libraryIdMatch = pathname.match(/^\/library\/([^/]+)/);
   const activeLibraryId = libraryIdMatch?.[1] ?? null;
 
-  const sourcesQuery = useSources(activeLibraryId);
-  const sources = sourcesQuery.data ?? [];
   const billingQuery = useBillingState();
   const billing = billingQuery.data;
   const billingReady = !billingQuery.isPending;
   const activePlanLabel =
     billing?.plan === "pro" ? "Pro" : billing?.plan === "builder" ? "Builder" : "Free";
   const canTopUp = Boolean(billing?.hasTopUpAccess);
-  const selectedSource = selectedSourceId
-    ? (sources.find((source) => source.id === selectedSourceId) ?? null)
-    : null;
 
   useEffect(() => {
     if (!hasPosthogClientConfig()) {
@@ -171,9 +156,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
 
         <DropdownMenuItem
           className="cursor-pointer"
-          onClick={() => {
-            void handleManageBilling();
-          }}
+          onClick={() => { void handleManageBilling(); }}
           disabled={billingActionBlocked}
         >
           <CreditCard size={14} />
@@ -182,9 +165,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
 
         <DropdownMenuItem
           className="cursor-pointer"
-          onClick={() => {
-            void handleUpgradeOrTopUp();
-          }}
+          onClick={() => { void handleUpgradeOrTopUp(); }}
           disabled={billingActionBlocked}
         >
           <Plus size={14} />
@@ -195,9 +176,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
 
         <DropdownMenuItem
           className="cursor-pointer"
-          onClick={() => {
-            void handleSignOut();
-          }}
+          onClick={() => { void handleSignOut(); }}
         >
           <LogOut size={14} />
           <span>Sign out</span>
@@ -225,9 +204,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
                 <SidebarMenuButton asChild isActive={pathname === "/dashboard"}>
                   <Link
                     href="/dashboard"
-                    onClick={() => {
-                      closeMobileSidebar();
-                    }}
+                    onClick={() => { closeMobileSidebar(); }}
                   >
                     <Home size={16} />
                     <span>Home</span>
@@ -252,25 +229,32 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
             >
               <Plus size={16} />
             </SidebarGroupAction>
+
             <SidebarMenu>
-                {librariesQuery.isPending ? (
-                  <div className="space-y-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
-                    <Skeleton className="h-7 w-full" />
-                    <Skeleton className="h-7 w-full" />
-                    <Skeleton className="h-7 w-4/5" />
-                  </div>
-                ) : (
-                  libraries.map((library) => (
+              {librariesQuery.isPending ? (
+                <div className="space-y-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
+                  <Skeleton className="h-7 w-full" />
+                  <Skeleton className="h-7 w-full" />
+                  <Skeleton className="h-7 w-4/5" />
+                </div>
+              ) : (
+                libraries.map((library) => {
+                  const libraryHref = `/library/${library.id}`;
+                  const isThisLibraryActive = activeLibraryId === library.id;
+
+                  return (
                     <SidebarMenuItem key={library.id}>
                       <SidebarMenuButton
-                        isActive={
-                          pathname === `/library/${library.id}` ||
-                          pathname.startsWith(`/library/${library.id}/`)
-                        }
-                        onClick={() => router.push(`/library/${library.id}`)}
+                        asChild
+                        isActive={pathname === libraryHref}
                         className="group-data-[collapsible=icon]:hidden"
                       >
-                        <span className="truncate text-xs">{library.name}</span>
+                        <Link
+                          href={libraryHref}
+                          onClick={() => { closeMobileSidebar(); }}
+                        >
+                          <span className="truncate text-xs">{library.name}</span>
+                        </Link>
                       </SidebarMenuButton>
 
                       <DropdownMenu>
@@ -284,7 +268,10 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
                           </SidebarMenuAction>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent side="right" align="start" className="min-w-40">
-                          <DropdownMenuItem className="cursor-pointer" onClick={() => setRenamingLibrary(library)}>
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() => setRenamingLibrary(library)}
+                          >
                             <Pencil size={14} />
                             Rename library
                           </DropdownMenuItem>
@@ -298,67 +285,25 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </SidebarMenuItem>
-                  ))
-                )}
 
-                {!librariesQuery.isPending && libraries.length === 0 && (
-                  <p className="px-2 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-                    No libraries yet
-                  </p>
-                )}
+                      {isThisLibraryActive && (
+                        <LibraryChatSubMenu
+                          libraryId={library.id}
+                          onSessionSelect={closeMobileSidebar}
+                        />
+                      )}
+                    </SidebarMenuItem>
+                  );
+                })
+              )}
+
+              {!librariesQuery.isPending && libraries.length === 0 && (
+                <p className="px-2 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+                  No libraries yet
+                </p>
+              )}
             </SidebarMenu>
           </SidebarGroup>
-
-          {activeLibraryId && (
-            <>
-              <ChatSidebarSection
-                libraryId={activeLibraryId}
-                onSessionSelect={() => {
-                  closeMobileSidebar();
-                }}
-              />
-
-              <SidebarGroup className="shrink-0 group-data-[collapsible=icon]:hidden">
-                <SidebarGroupLabel className="pr-8">
-                  Sources
-                  {!sourcesQuery.isPending ? (
-                    <span className="ml-1.5 tabular-nums text-muted-foreground/60">
-                      {sources.length}
-                    </span>
-                  ) : null}
-                </SidebarGroupLabel>
-                <SidebarGroupAction
-                  onClick={() => setAddingSource(true)}
-                  aria-label="Add source"
-                >
-                  <Plus size={16} />
-                </SidebarGroupAction>
-
-                <SidebarMenu>
-                  {sourcesQuery.isPending ? (
-                    <div className="space-y-2 px-2 py-1">
-                      <Skeleton className="h-6 w-full" />
-                      <Skeleton className="h-6 w-full" />
-                      <Skeleton className="h-6 w-4/5" />
-                    </div>
-                  ) : (
-                    sources.map((source) => (
-                      <SourceSidebarItem key={source.id} source={source} onSelect={setSelectedSourceId} />
-                    ))
-                  )}
-
-                  {!sourcesQuery.isPending && sources.length === 0 && (
-                    <p className="px-2 py-1 text-xs text-muted-foreground">
-                      No sources yet
-                    </p>
-                  )}
-                </SidebarMenu>
-              </SidebarGroup>
-
-              <VideoSidebarSection libraryId={activeLibraryId} />
-            </>
-          )}
         </SidebarContent>
 
         <SidebarFooter className="px-3 py-3">
@@ -406,43 +351,6 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
       </Sidebar>
 
       <NewLibraryDialog open={dialogOpen} onOpenChange={setDialogOpen} />
-
-      {activeLibraryId && (
-        <AddSourceDialog
-          libraryId={activeLibraryId}
-          open={addingSource}
-          onOpenChange={setAddingSource}
-        />
-      )}
-
-      {activeLibraryId && (
-        <SourceDetailsDialog
-          libraryId={activeLibraryId}
-          source={selectedSource}
-          open={Boolean(selectedSourceId && selectedSource)}
-          onOpenChange={(open) => {
-            if (!open) {
-              setSelectedSourceId(null);
-            }
-          }}
-          onDelete={(source) => {
-            setDeletingSource(source);
-            setSelectedSourceId(null);
-          }}
-        />
-      )}
-
-      {activeLibraryId && deletingSource && (
-        <DeleteSourceDialog
-          libraryId={activeLibraryId}
-          sourceId={deletingSource.id}
-          sourceLabel={getSourceLabel(deletingSource)}
-          open={Boolean(deletingSource)}
-          onOpenChange={(open) => {
-            if (!open) setDeletingSource(null);
-          }}
-        />
-      )}
 
       {deletingLibrary && (
         <DeleteLibraryDialog

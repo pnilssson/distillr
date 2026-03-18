@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Layers, Plus, Sparkles } from "lucide-react";
+import { Layers, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -94,22 +94,6 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
             </p>
           </div>
 
-          {hasSources ? (
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                size="sm"
-                className="gap-1.5"
-                onClick={() => { void handleNewChat(); }}
-                disabled={
-                  createSessionMutation.isPending ||
-                  (videosQuery.data?.counts.ready ?? 0) === 0
-                }
-              >
-                <Sparkles size={13} aria-hidden="true" />
-                {createSessionMutation.isPending ? "Starting..." : "New chat"}
-              </Button>
-            </div>
-          ) : null}
         </div>
 
         {/* First-run empty state */}

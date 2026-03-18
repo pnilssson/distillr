@@ -8,7 +8,7 @@ import { CenteredSpinner } from "@/components/CenteredSpinner";
 import { NewLibraryDialog } from "@/features/libraries/NewLibraryDialog";
 import { useLibraries } from "@/features/libraries/useLibraries";
 
-export function DashboardHome() {
+export function EmptyDashboardState() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const librariesQuery = useLibraries();

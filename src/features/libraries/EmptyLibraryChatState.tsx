@@ -10,11 +10,11 @@ import { useChatSessions } from "@/features/chat/useChatSessions";
 import { useCreateChatSession } from "@/features/chat/useCreateChatSession";
 import { useLibraryVideos } from "@/features/videos/useLibraryVideos";
 
-type LibraryChatGatewayProps = {
+type EmptyLibraryChatStateProps = {
   libraryId: string;
 };
 
-export function LibraryChatGateway({ libraryId }: LibraryChatGatewayProps) {
+export function EmptyLibraryChatState({ libraryId }: EmptyLibraryChatStateProps) {
   const router = useRouter();
   const videosQuery = useLibraryVideos(libraryId);
   const sessionsQuery = useChatSessions(libraryId);

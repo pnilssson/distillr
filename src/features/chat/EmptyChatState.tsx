@@ -1,3 +1,5 @@
+import { MessageSquare } from "lucide-react";
+
 const SUGGESTIONS = [
   "What are the main themes across these sources?",
   "What tools or tactics are mentioned most?",
@@ -11,9 +13,10 @@ type EmptyChatStateProps = {
 
 export function EmptyChatState({ onSuggestion }: EmptyChatStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <h2 className="text-base font-semibold">Ask anything about this library</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <div className="mx-auto max-w-sm px-6 py-24 text-center">
+      <MessageSquare size={32} className="mx-auto" />
+      <h1 className="mt-4 text-lg font-semibold">Ask anything about this library</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
         Questions are answered across all ready content in this library.
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-2">

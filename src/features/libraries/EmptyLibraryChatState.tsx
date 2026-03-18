@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -9,11 +10,11 @@ import { useChatSessions } from "@/features/chat/useChatSessions";
 import { useCreateChatSession } from "@/features/chat/useCreateChatSession";
 import { useLibraryVideos } from "@/features/videos/useLibraryVideos";
 
-type LibraryChatGatewayProps = {
+type EmptyLibraryChatStateProps = {
   libraryId: string;
 };
 
-export function LibraryChatGateway({ libraryId }: LibraryChatGatewayProps) {
+export function EmptyLibraryChatState({ libraryId }: EmptyLibraryChatStateProps) {
   const router = useRouter();
   const videosQuery = useLibraryVideos(libraryId);
   const sessionsQuery = useChatSessions(libraryId);
@@ -44,7 +45,8 @@ export function LibraryChatGateway({ libraryId }: LibraryChatGatewayProps) {
 
   return (
     <div className="mx-auto max-w-sm px-6 py-24 text-center">
-      <h1 className="text-lg font-semibold">Your library is ready</h1>
+      <Sparkles size={32} className="mx-auto" />
+      <h1 className="mt-4 text-lg font-semibold">Your library is ready</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Ask questions across all {videosData.counts.ready} ready{" "}
         {videosData.counts.ready === 1 ? "video" : "videos"}.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Clock, ExternalLink, Loader2, XCircle } from "lucide-react";
+import { Clock, ExternalLink, Loader2, XCircle } from "lucide-react";
 
 import Image from "next/image";
 
@@ -60,8 +60,8 @@ function StatusChip({ status, failureReason }: StatusChipProps) {
 
   if (status === "ready") {
     return (
-      <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-500">
-        <CheckCircle2 size={11} aria-hidden="true" />
+      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
         Ready
       </span>
     );

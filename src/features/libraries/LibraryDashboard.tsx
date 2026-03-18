@@ -15,6 +15,7 @@ import { useCreateChatSession } from "@/features/chat/useCreateChatSession";
 import { LibraryStatsBar } from "@/features/libraries/LibraryStatsBar";
 import { SourcesSection } from "@/features/libraries/SourcesSection";
 import { ContentSection } from "@/features/libraries/ContentSection";
+import { ChatSection } from "@/features/libraries/ChatSection";
 
 type Props = {
   libraryId: string;
@@ -96,15 +97,6 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
           {hasSources ? (
             <div className="flex shrink-0 items-center gap-2">
               <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setAddSourceOpen(true)}
-              >
-                <Plus size={13} aria-hidden="true" />
-                Add source
-              </Button>
-              <Button
                 size="sm"
                 className="gap-1.5"
                 onClick={() => { void handleNewChat(); }}
@@ -133,7 +125,7 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
                 sessions={sessions}
               />
             ) : (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="rounded-xl border bg-card px-5 py-4">
                     <Skeleton className="h-3 w-16" />
@@ -155,6 +147,16 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
             <ContentSection
               videosData={videosQuery.data}
               isLoading={videosQuery.isPending}
+            />
+
+            {/* Chats */}
+            <ChatSection
+              libraryId={libraryId}
+              sessions={sessions}
+              isLoading={sessionsQuery.isPending}
+              isNewChatPending={createSessionMutation.isPending}
+              canChat={(videosQuery.data?.counts.ready ?? 0) > 0}
+              onNewChat={handleNewChat}
             />
           </div>
         )}

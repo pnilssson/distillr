@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 
 import { requireUserOrRedirect } from "@/server/core/auth/user";
 import { getLibraryById } from "@/server/libraries/queries";
-import { EmptyLibraryChatState } from "@/features/libraries/EmptyLibraryChatState";
-import { EmptyLibraryState } from "@/features/sources/EmptyLibraryState";
+import { LibraryDashboard } from "@/features/libraries/LibraryDashboard";
 
 type LibraryPageProps = {
   params: Promise<{ libraryId: string }>;
@@ -19,12 +18,5 @@ export default async function LibraryPage({ params }: LibraryPageProps) {
     notFound();
   }
 
-  return (
-    <main className="flex h-full flex-1 flex-col">
-      <div className="flex flex-1 items-center justify-center">
-        <EmptyLibraryState libraryId={libraryId} />
-        <EmptyLibraryChatState libraryId={libraryId} />
-      </div>
-    </main>
-  );
+  return <LibraryDashboard libraryId={libraryId} libraryName={library.name} />;
 }

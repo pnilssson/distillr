@@ -252,8 +252,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
             >
               <Plus size={16} />
             </SidebarGroupAction>
-            <div className="max-h-40 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
-              <SidebarMenu>
+            <SidebarMenu>
                 {librariesQuery.isPending ? (
                   <div className="space-y-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
                     <Skeleton className="h-7 w-full" />
@@ -308,8 +307,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
                     No libraries yet
                   </p>
                 )}
-              </SidebarMenu>
-            </div>
+            </SidebarMenu>
           </SidebarGroup>
 
           {activeLibraryId && (
@@ -337,27 +335,25 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
                   <Plus size={16} />
                 </SidebarGroupAction>
 
-                <div className="max-h-32 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
-                  <SidebarMenu>
-                    {sourcesQuery.isPending ? (
-                      <div className="space-y-2 px-2 py-1">
-                        <Skeleton className="h-6 w-full" />
-                        <Skeleton className="h-6 w-full" />
-                        <Skeleton className="h-6 w-4/5" />
-                      </div>
-                    ) : (
-                      sources.map((source) => (
-                        <SourceSidebarItem key={source.id} source={source} onSelect={setSelectedSourceId} />
-                      ))
-                    )}
+                <SidebarMenu>
+                  {sourcesQuery.isPending ? (
+                    <div className="space-y-2 px-2 py-1">
+                      <Skeleton className="h-6 w-full" />
+                      <Skeleton className="h-6 w-full" />
+                      <Skeleton className="h-6 w-4/5" />
+                    </div>
+                  ) : (
+                    sources.map((source) => (
+                      <SourceSidebarItem key={source.id} source={source} onSelect={setSelectedSourceId} />
+                    ))
+                  )}
 
-                    {!sourcesQuery.isPending && sources.length === 0 && (
-                      <p className="px-2 py-1 text-xs text-muted-foreground">
-                        No sources yet
-                      </p>
-                    )}
-                  </SidebarMenu>
-                </div>
+                  {!sourcesQuery.isPending && sources.length === 0 && (
+                    <p className="px-2 py-1 text-xs text-muted-foreground">
+                      No sources yet
+                    </p>
+                  )}
+                </SidebarMenu>
               </SidebarGroup>
 
               <VideoSidebarSection libraryId={activeLibraryId} />

@@ -30,35 +30,33 @@ export function VideoSidebarSection({ libraryId }: VideoSidebarSectionProps) {
             <span className="ml-1.5 tabular-nums text-muted-foreground/60">{videos.length}</span>
           ) : null}
         </SidebarGroupLabel>
-        <div className="max-h-40 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
-          <SidebarMenu>
-            {videosQuery.isPending ? (
-              <div className="space-y-2 px-2 py-1">
-                <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-6 w-4/5" />
-              </div>
-            ) : null}
+        <SidebarMenu>
+          {videosQuery.isPending ? (
+            <div className="space-y-2 px-2 py-1">
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-4/5" />
+            </div>
+          ) : null}
 
-            {!videosQuery.isPending && videos.length > 0
-              ? videos.map((video) => (
-                  <VideoSidebarItem key={video.id} video={video} onSelect={setSelectedVideoId} />
-                ))
-              : null}
+          {!videosQuery.isPending && videos.length > 0
+            ? videos.map((video) => (
+                <VideoSidebarItem key={video.id} video={video} onSelect={setSelectedVideoId} />
+              ))
+            : null}
 
-            {!videosQuery.isPending && !videosQuery.isError && isPreparing ? (
-              <p className="px-2 py-1 text-xs text-muted-foreground">Preparing videos</p>
-            ) : null}
+          {!videosQuery.isPending && !videosQuery.isError && isPreparing ? (
+            <p className="px-2 py-1 text-xs text-muted-foreground">Preparing videos</p>
+          ) : null}
 
-            {!videosQuery.isPending && !videosQuery.isError && !isPreparing && videos.length === 0 ? (
-              <p className="px-2 py-1 text-xs text-muted-foreground">No videos yet</p>
-            ) : null}
+          {!videosQuery.isPending && !videosQuery.isError && !isPreparing && videos.length === 0 ? (
+            <p className="px-2 py-1 text-xs text-muted-foreground">No videos yet</p>
+          ) : null}
 
-            {videosQuery.isError ? (
-              <p className="px-2 py-1 text-xs text-destructive">Could not load videos.</p>
-            ) : null}
-          </SidebarMenu>
-        </div>
+          {videosQuery.isError ? (
+            <p className="px-2 py-1 text-xs text-destructive">Could not load videos.</p>
+          ) : null}
+        </SidebarMenu>
       </SidebarGroup>
 
       <VideoDetailsDialog

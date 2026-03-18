@@ -45,7 +45,7 @@ export function EmptyLibraryChatState({ libraryId }: EmptyLibraryChatStateProps)
 
   return (
     <div className="mx-auto max-w-sm px-6 py-24 text-center">
-      <Sparkles size={32} className="mx-auto text-muted-foreground/40" />
+      <Sparkles size={32} className="mx-auto" />
       <h1 className="mt-4 text-lg font-semibold">Your library is ready</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Ask questions across all {videosData.counts.ready} ready{" "}

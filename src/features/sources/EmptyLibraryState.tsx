@@ -35,7 +35,7 @@ export function EmptyLibraryState({ libraryId }: EmptyLibraryStateProps) {
       return (
         <>
           <div className="mx-auto max-w-sm px-6 py-24 text-center">
-            <Video size={32} className="mx-auto text-muted-foreground/40" />
+            <Video size={32} className="mx-auto" />
             <h1 className="mt-4 text-lg font-semibold">No videos found yet</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               We could not find videos to ingest from your current sources. Try adding another source.
@@ -62,7 +62,7 @@ export function EmptyLibraryState({ libraryId }: EmptyLibraryStateProps) {
       return (
         <>
           <div className="mx-auto max-w-sm px-6 py-24 text-center">
-            <Video size={32} className="mx-auto text-muted-foreground/40" />
+            <Video size={32} className="mx-auto" />
             <h1 className="mt-4 text-lg font-semibold">No ready videos yet</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Videos are still being prepared or could not be processed. Add another source to keep building your
@@ -88,7 +88,7 @@ export function EmptyLibraryState({ libraryId }: EmptyLibraryStateProps) {
   return (
     <>
       <div className="mx-auto max-w-sm px-6 py-24 text-center">
-        <Video size={32} className="mx-auto text-muted-foreground/40" />
+        <Video size={32} className="mx-auto" />
         <h1 className="mt-4 text-lg font-semibold">Add your first source</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Add YouTube channels, playlists, or videos and chat across all of them.

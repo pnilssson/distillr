@@ -67,24 +67,18 @@ export async function buildSourcesRollup(params: BuildSourcesRollupParams): Prom
     const uniqueAnchorKeys = anchorKeyByItem.get(item.videoId) ?? new Set<string>();
     anchorKeyByItem.set(item.videoId, uniqueAnchorKeys);
 
-    const anchorsForChunk = chunkAnchors.get(item.id) ?? [];
-    for (const anchor of anchorsForChunk) {
-      if (sourceItem.anchors.length >= MAX_ANCHORS_PER_ITEM) {
-        break;
+    const firstAnchor = (chunkAnchors.get(item.id) ?? [])[0];
+    if (firstAnchor && sourceItem.anchors.length < MAX_ANCHORS_PER_ITEM) {
+      const anchorUrl = buildAnchorUrl(item.externalId, item.contentType, firstAnchor.urlFragment);
+      const dedupeKey = `${firstAnchor.anchorType}:${anchorUrl}`;
+      if (!uniqueAnchorKeys.has(dedupeKey)) {
+        sourceItem.anchors.push({
+          anchorType: firstAnchor.anchorType,
+          label: firstAnchor.label,
+          url: anchorUrl,
+        });
+        uniqueAnchorKeys.add(dedupeKey);
       }
-
-      const anchorUrl = buildAnchorUrl(item.externalId, item.contentType, anchor.urlFragment);
-      const dedupeKey = `${anchor.anchorType}:${anchorUrl}`;
-      if (uniqueAnchorKeys.has(dedupeKey)) {
-        continue;
-      }
-
-      sourceItem.anchors.push({
-        anchorType: anchor.anchorType,
-        label: anchor.label,
-        url: anchorUrl,
-      });
-      uniqueAnchorKeys.add(dedupeKey);
     }
   }
 

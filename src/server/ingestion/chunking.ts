@@ -97,16 +97,10 @@ function countTokens(text: string): number {
 }
 
 function collectChunkAnchors(segments: ContentSegment[]): ContentAnchor[] {
-  const deduped = new Map<string, ContentAnchor>();
-
   for (const segment of segments) {
-    for (const anchor of segment.anchors) {
-      const key = `${anchor.anchorType}:${anchor.anchorKey}`;
-      if (!deduped.has(key)) {
-        deduped.set(key, anchor);
-      }
+    if (segment.anchors.length > 0) {
+      return [segment.anchors[0]];
     }
   }
-
-  return [...deduped.values()];
+  return [];
 }

@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 
 import { ensurePolarCustomerProvisioned } from "@/server/billing/polar/customers";
+import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
 
+const NEW_USER_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 const DEFAULT_REDIRECT_PATH = "/dashboard";
 
 function isSafeNextPath(path: string | null): path is string {
@@ -28,6 +30,14 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser();
 
     if (user) {
+      const isNewUser = Date.now() - new Date(user.created_at).getTime() < NEW_USER_WINDOW_MS;
+
+      if (isNewUser) {
+        captureServerEvent(user.id, "user_signed_up", {
+          auth_method: "magic_link",
+        });
+      }
+
       try {
         await ensurePolarCustomerProvisioned({
           userId: user.id,

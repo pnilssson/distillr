@@ -8,10 +8,24 @@ import { env } from "@/server/core/env";
 let posthogClient: PostHog | null = null;
 let hasReportedMissingPosthogServerConfig = false;
 
+type CaptureServerEventOptions = {
+  immediate?: boolean;
+};
+
+type PosthogClientWithImmediateCapture = PostHog & {
+  captureImmediate?: (payload: {
+    distinctId: string;
+    event: string;
+    properties?: Record<string, unknown>;
+  }) => Promise<unknown>;
+  flush?: () => Promise<unknown>;
+};
+
 export async function captureServerEvent(
   distinctId: string,
   event: string,
   properties?: Record<string, unknown>,
+  options?: CaptureServerEventOptions,
 ) {
   if (!env.NEXT_PUBLIC_POSTHOG_KEY || !env.POSTHOG_HOST) {
     reportMissingPosthogServerConfig();
@@ -21,11 +35,30 @@ export async function captureServerEvent(
   const client = getPosthogClient();
 
   try {
-    client.capture({
+    const payload = {
       distinctId,
       event,
       properties,
-    });
+    };
+
+    if (options?.immediate) {
+      const clientWithImmediateCapture = client as PosthogClientWithImmediateCapture;
+
+      if (typeof clientWithImmediateCapture.captureImmediate === "function") {
+        await clientWithImmediateCapture.captureImmediate(payload);
+        return;
+      }
+
+      client.capture(payload);
+
+      if (typeof clientWithImmediateCapture.flush === "function") {
+        await clientWithImmediateCapture.flush();
+      }
+
+      return;
+    }
+
+    client.capture(payload);
   } catch (error) {
     Sentry.captureException(error, {
       tags: {

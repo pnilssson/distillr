@@ -3,10 +3,11 @@ import * as Sentry from "@sentry/nextjs";
 
 import { ensurePolarCustomerProvisioned } from "@/server/billing/polar/customers";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
+import { markSignupTrackedOnFirstAuth } from "@/server/core/auth/lifecycle";
 import { createSupabaseServerClient } from "@/server/core/supabase/server";
 
-const NEW_USER_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 const DEFAULT_REDIRECT_PATH = "/dashboard";
+const AUTH_FAILURE_REDIRECT_PATH = "/login";
 
 function isSafeNextPath(path: string | null): path is string {
   if (!path) {
@@ -20,21 +21,59 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const nextPath = requestUrl.searchParams.get("next");
+  let redirectPath = isSafeNextPath(nextPath) ? nextPath : DEFAULT_REDIRECT_PATH;
 
   if (code) {
     const supabase = await createSupabaseServerClient();
-    await supabase.auth.exchangeCodeForSession(code);
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (exchangeError) {
+      Sentry.captureException(exchangeError, {
+        tags: {
+          area: "auth.callback.exchange_code",
+        },
+      });
+    }
 
     const {
       data: { user },
+      error: getUserError,
     } = await supabase.auth.getUser();
 
-    if (user) {
-      const isNewUser = Date.now() - new Date(user.created_at).getTime() < NEW_USER_WINDOW_MS;
+    if (getUserError) {
+      Sentry.captureException(getUserError, {
+        tags: {
+          area: "auth.callback.get_user",
+        },
+      });
+      redirectPath = AUTH_FAILURE_REDIRECT_PATH;
+    }
 
-      if (isNewUser) {
-        captureServerEvent(user.id, "user_signed_up", {
-          auth_method: "magic_link",
+    if (user) {
+      try {
+        const isFirstAuth = await markSignupTrackedOnFirstAuth(user.id);
+
+        if (isFirstAuth) {
+          await captureServerEvent(
+            user.id,
+            "user_signed_up",
+            {
+              auth_method: "magic_link",
+              idempotency_key: `auth_callback:${user.id}:user_signed_up`,
+            },
+            {
+              immediate: true,
+            },
+          );
+        }
+      } catch (error) {
+        Sentry.captureException(error, {
+          tags: {
+            area: "auth.callback.lifecycle",
+          },
+          extra: {
+            userId: user.id,
+          },
         });
       }
 
@@ -54,10 +93,10 @@ export async function GET(request: Request) {
           },
         });
       }
+    } else {
+      redirectPath = AUTH_FAILURE_REDIRECT_PATH;
     }
   }
-
-  const redirectPath = isSafeNextPath(nextPath) ? nextPath : DEFAULT_REDIRECT_PATH;
 
   return NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
 }

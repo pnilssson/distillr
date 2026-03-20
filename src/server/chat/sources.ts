@@ -26,6 +26,12 @@ type StoredChunkAnchor = {
   anchorType: ChatSourceAnchor["anchorType"];
   label: string | null;
   urlFragment: string | null;
+  startValue: number | null;
+};
+
+type SourceAnchorCandidate = ChatSourceAnchor & {
+  startValue: number | null;
+  seenOrder: number;
 };
 
 export async function buildSourcesRollup(params: BuildSourcesRollupParams): Promise<ChatSourcesRollup> {
@@ -38,6 +44,7 @@ export async function buildSourcesRollup(params: BuildSourcesRollupParams): Prom
   const chunkAnchors = await getChunkAnchors(params.userId, params.libraryId, params.evidence);
   const grouped = new Map<string, ChatSourceItem>();
   const anchorKeyByItem = new Map<string, Set<string>>();
+  const anchorCandidatesByItem = new Map<string, SourceAnchorCandidate[]>();
 
   for (const item of params.evidence) {
     const existing = grouped.get(item.videoId);
@@ -66,20 +73,35 @@ export async function buildSourcesRollup(params: BuildSourcesRollupParams): Prom
 
     const uniqueAnchorKeys = anchorKeyByItem.get(item.videoId) ?? new Set<string>();
     anchorKeyByItem.set(item.videoId, uniqueAnchorKeys);
+    const anchorCandidates = anchorCandidatesByItem.get(item.videoId) ?? [];
+    anchorCandidatesByItem.set(item.videoId, anchorCandidates);
 
     const firstAnchor = (chunkAnchors.get(item.id) ?? [])[0];
-    if (firstAnchor && sourceItem.anchors.length < MAX_ANCHORS_PER_ITEM) {
+    if (firstAnchor) {
       const anchorUrl = buildAnchorUrl(item.externalId, item.contentType, firstAnchor.urlFragment);
       const dedupeKey = `${firstAnchor.anchorType}:${anchorUrl}`;
       if (!uniqueAnchorKeys.has(dedupeKey)) {
-        sourceItem.anchors.push({
+        anchorCandidates.push({
           anchorType: firstAnchor.anchorType,
           label: firstAnchor.label,
           url: anchorUrl,
+          startValue: firstAnchor.startValue,
+          seenOrder: anchorCandidates.length,
         });
         uniqueAnchorKeys.add(dedupeKey);
       }
     }
+  }
+
+  for (const [itemId, sourceItem] of grouped.entries()) {
+    sourceItem.anchors = [...(anchorCandidatesByItem.get(itemId) ?? [])]
+      .sort(compareSourceAnchorCandidates)
+      .slice(0, MAX_ANCHORS_PER_ITEM)
+      .map(({ anchorType, label, url }) => ({
+        anchorType,
+        label,
+        url,
+      }));
   }
 
   const items = [...grouped.values()].sort((a, b) => {
@@ -139,6 +161,7 @@ async function getChunkAnchors(
       anchorType: row.anchorType,
       label: row.label,
       urlFragment: row.urlFragment,
+      startValue: row.startValue,
     });
     anchorsByChunk.set(row.contentChunkId, existing);
   }
@@ -148,4 +171,15 @@ async function getChunkAnchors(
 
 function isAnchorType(value: string): value is ChatSourceAnchor["anchorType"] {
   return isContentAnchorType(value);
+}
+
+function compareSourceAnchorCandidates(a: SourceAnchorCandidate, b: SourceAnchorCandidate): number {
+  const aStart = a.startValue ?? Number.POSITIVE_INFINITY;
+  const bStart = b.startValue ?? Number.POSITIVE_INFINITY;
+
+  if (aStart !== bStart) {
+    return aStart - bStart;
+  }
+
+  return a.seenOrder - b.seenOrder;
 }

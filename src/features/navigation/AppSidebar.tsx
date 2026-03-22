@@ -8,11 +8,13 @@ import {
   CreditCard,
   Home,
   LogOut,
+  MessageSquarePlus,
   MoreHorizontal,
   Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
+import * as Sentry from "@sentry/nextjs";
 import posthog from "posthog-js";
 import { toast } from "sonner";
 import {
@@ -146,6 +148,13 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
     ? `${activePlanLabel} - ${billing.chatCreditsBalance} credits`
     : `${activePlanLabel} plan`;
 
+  async function handleSendFeedback() {
+    const feedback = Sentry.getFeedback();
+    const form = await feedback?.createForm();
+    form?.appendToDom();
+    form?.open();
+  }
+
   function renderAccountMenuItems() {
     return (
       <>
@@ -165,6 +174,16 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
         >
           <Plus size={14} />
           <span>{upgradeBillingLabel}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => { void handleSendFeedback(); }}
+        >
+          <MessageSquarePlus size={14} />
+          <span>Send feedback</span>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

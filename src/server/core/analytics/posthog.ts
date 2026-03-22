@@ -3,6 +3,7 @@ import "server-only";
 import * as Sentry from "@sentry/nextjs";
 import { PostHog } from "posthog-node";
 
+import { isLocalhostUrl } from "@/lib/analytics/posthog-runtime";
 import { env } from "@/server/core/env";
 
 let posthogClient: PostHog | null = null;
@@ -27,6 +28,10 @@ export async function captureServerEvent(
   properties?: Record<string, unknown>,
   options?: CaptureServerEventOptions,
 ) {
+  if (isPosthogServerDisabled()) {
+    return;
+  }
+
   if (!env.NEXT_PUBLIC_POSTHOG_KEY || !env.POSTHOG_HOST) {
     reportMissingPosthogServerConfig();
     return;
@@ -72,6 +77,14 @@ export async function captureServerEvent(
 
     console.error("PostHog capture failed", { event, distinctId, error });
   }
+}
+
+function isPosthogServerDisabled(): boolean {
+  if (process.env.NODE_ENV !== "production") {
+    return true;
+  }
+
+  return isLocalhostUrl(env.NEXT_PUBLIC_APP_URL);
 }
 
 function reportMissingPosthogServerConfig() {

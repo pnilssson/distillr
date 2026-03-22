@@ -9,6 +9,8 @@ import {
 } from "react";
 import posthog from "posthog-js";
 
+import { isPosthogClientEnabled } from "@/lib/analytics/posthog-client-config";
+
 const CONSENT_KEY = "distillr-cookie-consent";
 const CONSENT_VERSION = "1";
 
@@ -39,6 +41,10 @@ export function useCookieConsent() {
 }
 
 function applyPosthogConsent(analytics: boolean) {
+  if (!isPosthogClientEnabled()) {
+    return;
+  }
+
   if (analytics) {
     posthog.opt_in_capturing();
   } else {

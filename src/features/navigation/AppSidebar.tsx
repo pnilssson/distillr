@@ -51,7 +51,7 @@ import {
 } from "@/features/billing/api";
 import { useBillingState } from "@/features/billing/useBillingState";
 import { LibraryChatSubMenu } from "@/features/chat/LibraryChatSubMenu";
-import { hasPosthogClientConfig } from "@/lib/analytics/posthog-client-config";
+import { isPosthogClientEnabled } from "@/lib/analytics/posthog-client-config";
 import { getBillingPlanLabel } from "@/lib/billing/plans";
 import { createSupabaseBrowserClient } from "@/server/core/supabase/browser";
 
@@ -82,7 +82,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   const canTopUp = Boolean(billing?.hasTopUpAccess);
 
   useEffect(() => {
-    if (!hasPosthogClientConfig()) {
+    if (!isPosthogClientEnabled()) {
       return;
     }
 
@@ -93,7 +93,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
 
-    if (hasPosthogClientConfig()) {
+    if (isPosthogClientEnabled()) {
       posthog.reset();
     }
 

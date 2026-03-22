@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import posthog from "posthog-js";
 
-import { hasPosthogClientConfig } from "@/lib/analytics/posthog-client-config";
+import { isPosthogClientEnabled } from "@/lib/analytics/posthog-client-config";
 
 Sentry.init({
   dsn: "https://fb48c176663a73a4cccd20c24618b4d7@o4508629590081536.ingest.de.sentry.io/4511027373080656",
@@ -30,7 +30,7 @@ Sentry.init({
   // See sentry.server.config.ts for rationale.
 });
 
-if (hasPosthogClientConfig()) {
+if (isPosthogClientEnabled()) {
   posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
     api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST!,
     defaults: "2026-01-30",

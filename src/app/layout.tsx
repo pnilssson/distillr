@@ -47,6 +47,7 @@ const siteName = "Distillr";
 const title = "Distillr - Your YouTube research, finally searchable.";
 const description =
   "Distillr builds a research library from the YouTube channels and playlists you actually follow. Ask questions across your sources and get cited answers with timestamp links.";
+const socialImagePath = "/opengraph-image?v=2";
 
 export const metadata: Metadata = {
   metadataBase: getMetadataBase(),
@@ -66,11 +67,20 @@ export const metadata: Metadata = {
     siteName,
     title,
     description,
+    images: [
+      {
+        url: socialImagePath,
+        width: 1200,
+        height: 630,
+        alt: "Distillr - YouTube research library",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title,
     description,
+    images: [socialImagePath],
   },
   robots: {
     index: true,

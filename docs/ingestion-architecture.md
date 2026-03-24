@@ -67,7 +67,7 @@ All files in `src/server/**` are server-only.
 - Billing-aware gating:
   - resolves monthly and lifetime remaining allowances from Polar customer state
   - queues only allowed count
-  - leaves over-limit rows deferred for later cycles (no terminal failure marking)
+  - marks over-limit rows `failed` with clear quota reasons (for example `Monthly ingestion limit reached.`)
 
 ## Auto Sync (`source-sync-scan` + `source-sync`)
 

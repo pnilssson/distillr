@@ -69,7 +69,6 @@ function ChatRow({ session, libraryId, onDelete }: ChatRowProps) {
             <span className="text-xs text-muted-foreground">
               {session.messageCount} {session.messageCount === 1 ? "message" : "messages"}
             </span>
-            <span className="text-muted-foreground/40" aria-hidden="true">·</span>
             <span className="text-xs text-muted-foreground">{ago}</span>
           </div>
         </div>

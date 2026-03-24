@@ -128,7 +128,7 @@ export const sourceAdded = inngest.createFunction(
           sourceId: source.id,
           discovered: 0,
           queued: 0,
-          deferred: 0,
+          blocked: 0,
         };
       }
 
@@ -160,7 +160,7 @@ export const sourceAdded = inngest.createFunction(
         sourceId: source.id,
         discovered: queuePlan.dedupedCount,
         queued: queuePlan.queuedCount,
-        deferred: queuePlan.deferredCount,
+        blocked: queuePlan.blockedCount,
       };
     } catch (error) {
       const decision = classifyIngestionError(error);

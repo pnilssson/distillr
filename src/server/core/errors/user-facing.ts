@@ -1,5 +1,12 @@
 import "server-only";
 
+import {
+  MONTHLY_INGESTION_LIMIT_REACHED_REASON,
+  PLAN_VIDEO_LIMIT_REACHED_REASON,
+  isMonthlyIngestionLimitReason,
+  isPlanVideoLimitReason,
+} from "@/server/ingestion/failure-reasons";
+
 export function isTranscriptUnavailableMessage(message: string): boolean {
   const normalized = message.toLowerCase();
 
@@ -43,16 +50,12 @@ export function sanitizeVideoFailureReasonForUser(reason: string | null): string
     return "Processing is temporarily busy. Please try again.";
   }
 
-  if (normalized.includes("monthly video ingestion limit")) {
-    return "You have reached your monthly video ingestion limit.";
+  if (isMonthlyIngestionLimitReason(normalized)) {
+    return MONTHLY_INGESTION_LIMIT_REACHED_REASON;
   }
 
-  if (normalized.includes("total video limit")) {
-    return "You have reached your total video limit for this plan.";
-  }
-
-  if (normalized.includes("video ingestion limit for this plan")) {
-    return "You have reached your video ingestion limit for this plan.";
+  if (isPlanVideoLimitReason(normalized)) {
+    return PLAN_VIDEO_LIMIT_REACHED_REASON;
   }
 
   return "This video could not be processed. Please try again.";

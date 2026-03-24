@@ -136,7 +136,7 @@ export const sourceSync = inngest.createFunction(
         status: "synced",
         discovered: queuePlan.dedupedCount,
         queued: queuePlan.queuedCount,
-        deferred: queuePlan.deferredCount,
+        blocked: queuePlan.blockedCount,
       };
     } catch (error) {
       const decision = classifyIngestionError(error);

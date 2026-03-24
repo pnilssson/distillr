@@ -78,7 +78,7 @@ This file is the operational source of truth for agent behavior in this reposito
 
 - Source auto-sync is opt-in and disabled by default.
 - Auto-sync applies only to channel and playlist sources.
-- If ingestion allowance is exhausted, newly discovered items remain deferred for later cycles instead of being marked terminal failed.
+- If ingestion allowance is exhausted, newly discovered items are marked failed with a clear quota reason so they are not shown as actively processing.
 
 ## Retrieval Invariants
 

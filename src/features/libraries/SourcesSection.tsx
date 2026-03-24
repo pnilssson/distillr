@@ -75,6 +75,18 @@ function SourceStatusDot({ status }: { status: SourceListItem["status"] }) {
   );
 }
 
+function AutoSyncStatus({ enabled }: { enabled: boolean }) {
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <span
+        className={enabled ? "size-1.5 rounded-full bg-emerald-500" : "size-1.5 rounded-full bg-muted-foreground/40"}
+        aria-hidden="true"
+      />
+      Auto-sync {enabled ? "on" : "off"}
+    </span>
+  );
+}
+
 function SourceRow({ source, libraryId, onDeleteRequest }: SourceRowProps) {
   const refreshMutation = useRefreshSource();
   const autoSyncMutation = useSetSourceAutoSync();
@@ -136,15 +148,9 @@ function SourceRow({ source, libraryId, onDeleteRequest }: SourceRowProps) {
           <span className="text-xs text-muted-foreground">
             {SOURCE_TYPE_LABELS[source.sourceType]}
           </span>
-          <span className="text-muted-foreground/40" aria-hidden="true">·</span>
           <SourceStatusDot status={source.status} />
           {supportsAutoSync ? (
-            <>
-              <span className="text-muted-foreground/40" aria-hidden="true">·</span>
-              <span className="text-xs text-muted-foreground">
-                Auto-sync {source.autoSyncEnabled ? "on" : "off"}
-              </span>
-            </>
+            <AutoSyncStatus enabled={source.autoSyncEnabled} />
           ) : null}
         </div>
       </div>

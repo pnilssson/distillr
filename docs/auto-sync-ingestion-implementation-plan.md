@@ -8,7 +8,7 @@ This implementation must:
 
 - keep auto-sync off by default
 - support playlist and channel sources only
-- defer newly discovered items when users are out of monthly ingestion quota
+- mark newly discovered over-limit items as failed with a quota reason
 - correctly support overlapping sources in the same library
 
 ## Product Decisions
@@ -17,7 +17,7 @@ This implementation must:
 - Only `youtube_playlist` and `youtube_channel` can enable auto-sync.
 - `youtube_video` sources are never auto-synced.
 - Scheduler runs hourly, target cadence per source is every 4 hours with jitter.
-- If monthly quota is exhausted, items wait for future sync cycles instead of being marked failed.
+- If monthly quota is exhausted, items are marked failed with a clear quota reason and can be retried by future planning cycles.
 - One content item can belong to multiple sources in the same library.
 
 ## Architecture Overview
@@ -27,7 +27,7 @@ This implementation must:
 - Add source sync metadata (enable flag, next/last sync timestamps, failure counters, cursor state).
 - Replace single-source ownership assumptions with a source-to-content-item join model.
 - Keep `content_items` library-deduped by identity.
-- Introduce a non-terminal deferred state for discovered items blocked by quota.
+- Reuse `failed` for quota-blocked items with explicit quota failure reasons.
 
 ### 2) Workflow split
 
@@ -44,8 +44,8 @@ This implementation must:
 ### 4) Quota-aware admission behavior
 
 - Admission checks still use billing allowances.
-- Items blocked by quota are retained in a waiting state and retried on later sync cycles.
-- Quota exhaustion is not a terminal item failure state.
+- Items blocked by quota are marked failed with reason `Monthly ingestion limit reached.`
+- Quota-blocked failed items remain eligible for retry when source planning runs again.
 
 ### 5) UX/API behavior
 
@@ -62,7 +62,7 @@ This implementation must:
 
 ### 7) Observability
 
-- Track sync lifecycle events (queued, started, completed, failed, deferred).
+- Track sync lifecycle events (queued, started, completed, failed).
 - Capture technical details in logs and Sentry; keep UI copy provider-agnostic.
 
 ## Implementation Phases
@@ -70,7 +70,7 @@ This implementation must:
 1. Data model foundation
 2. Provider incremental sync contracts
 3. Inngest scheduler + per-source sync function
-4. Quota deferral behavior
+4. Quota failure-reason behavior
 5. API + UI toggle and status surfaces
 6. Docs updates and validation
 
@@ -78,7 +78,7 @@ This implementation must:
 
 1. Auto-sync is opt-in and off by default.
 2. New playlist/channel videos are auto-discovered for enabled sources.
-3. Quota-blocked items are deferred and retried in future cycles.
+3. Quota-blocked items are marked failed with explicit quota reasons.
 4. Overlapping sources in a library are modeled without ownership conflicts.
 5. Deleting one source does not remove shared content still referenced by another source.
 6. Background sync does not churn source processing UX state.

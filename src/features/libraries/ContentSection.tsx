@@ -132,14 +132,8 @@ function VideoRow({ video }: VideoRowProps) {
           {video.channelName ? (
             <span className="truncate text-xs text-muted-foreground">{video.channelName}</span>
           ) : null}
-          {publishedDate && video.channelName ? (
-            <span className="text-muted-foreground/40" aria-hidden="true">·</span>
-          ) : null}
           {publishedDate ? (
             <span className="shrink-0 text-xs text-muted-foreground">{publishedDate}</span>
-          ) : null}
-          {(video.channelName || publishedDate) ? (
-            <span className="text-muted-foreground/40" aria-hidden="true">·</span>
           ) : null}
           <StatusChip status={video.status} failureReason={video.failureReason} />
         </div>

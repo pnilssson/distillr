@@ -1,6 +1,6 @@
 import "server-only";
 
-import { sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { NonRetriableError } from "inngest";
 
 import { db } from "@/db";
@@ -8,6 +8,10 @@ import { contentItems, sourceContentItems } from "@/db/schema";
 import { getPolarCustomerState } from "@/server/billing/polar/customers";
 import { isPolarBillingEnabled } from "@/server/billing/polar/config";
 import { buildBillingSnapshot } from "@/server/billing/polar/state";
+import {
+  MONTHLY_INGESTION_LIMIT_REACHED_REASON,
+  PLAN_VIDEO_LIMIT_REACHED_REASON,
+} from "@/server/ingestion/failure-reasons";
 import { isContentType, type ContentType, type DiscoveredItem } from "@/server/ingestion/providers/types";
 
 export const VIDEO_DB_BATCH_SIZE = 100;
@@ -39,7 +43,7 @@ type QueueRow = {
 export type QueuePlan = {
   dedupedCount: number;
   queuedCount: number;
-  deferredCount: number;
+  blockedCount: number;
   rowsToQueue: QueueRow[];
 };
 
@@ -55,7 +59,7 @@ export async function planAndQueueSourceItems(
     return {
       dedupedCount: 0,
       queuedCount: 0,
-      deferredCount: 0,
+      blockedCount: 0,
       rowsToQueue: [],
     };
   }
@@ -147,12 +151,34 @@ export async function planAndQueueSourceItems(
     id: row.id,
     contentType: row.contentType,
   }));
-  const deferredCount = queueCandidates.length - rowsToQueue.length;
+  const overflowRows = queueCandidates.slice(allowedCount);
+
+  if (overflowRows.length > 0) {
+    const overflowReason = getOverflowReason(allowance);
+
+    await db
+      .update(contentItems)
+      .set({
+        status: "failed",
+        failureReason: overflowReason,
+        updatedAt: sql`now()`,
+      })
+      .where(
+        and(
+          eq(contentItems.userId, source.userId),
+          eq(contentItems.libraryId, source.libraryId),
+          inArray(
+            contentItems.id,
+            overflowRows.map((row) => row.id),
+          ),
+        ),
+      );
+  }
 
   return {
     dedupedCount: dedupedItems.length,
     queuedCount: rowsToQueue.length,
-    deferredCount,
+    blockedCount: overflowRows.length,
     rowsToQueue,
   };
 }
@@ -221,4 +247,16 @@ function normalizeContentTypeForEvent(contentType: string): ContentType {
   }
 
   throw new NonRetriableError(`Unsupported content type: ${contentType}`);
+}
+
+function getOverflowReason(allowance: IngestionAllowance): string {
+  if (allowance.monthlyRemaining <= 0) {
+    return MONTHLY_INGESTION_LIMIT_REACHED_REASON;
+  }
+
+  if (allowance.lifetimeRemaining <= 0) {
+    return PLAN_VIDEO_LIMIT_REACHED_REASON;
+  }
+
+  return PLAN_VIDEO_LIMIT_REACHED_REASON;
 }

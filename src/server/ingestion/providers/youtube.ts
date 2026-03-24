@@ -10,6 +10,8 @@ import {
   type DiscoveryResult,
   type DiscoveredItem,
   type FetchedContent,
+  type IncrementalDiscoveryParams,
+  type IncrementalDiscoveryResult,
   type SourceType,
 } from "@/server/ingestion/providers/types";
 
@@ -18,6 +20,7 @@ const YOUTUBE_MAX_PAGE_SIZE = 50;
 const YOUTUBE_VIDEO_BATCH_SIZE = 50;
 const MAX_PLAYLIST_VIDEOS = 1000;
 const MAX_PLAYLIST_PAGES = 20;
+const SYNC_OVERLAP_VIDEOS = 12;
 const TRANSCRIPT_API_URL = "https://transcriptapi.com/api/v2/youtube/transcript";
 
 type YoutubePlaylistItemsResponse = {
@@ -119,6 +122,9 @@ export const youtubeDiscovery: ContentDiscovery = {
   async discover(url, sourceType) {
     return discoverFromYouTube(url, sourceType);
   },
+  async discoverIncremental(input) {
+    return discoverIncrementalFromYouTube(input);
+  },
 };
 
 export const youtubeFetcher: ContentFetcher = {
@@ -165,6 +171,97 @@ async function discoverFromYouTube(url: string, sourceType: SourceType): Promise
     sourceAuthorName: primaryItem?.authorName ?? null,
     sourceTitle: null,
   };
+}
+
+type PlaylistIncrementalResult = {
+  ids: string[];
+  headExternalId: string | null;
+};
+
+type YouTubeSyncCursor =
+  | {
+      kind: "youtube_playlist";
+      playlistId: string;
+      headExternalId: string | null;
+    }
+  | {
+      kind: "youtube_channel";
+      uploadsPlaylistId: string;
+      headExternalId: string | null;
+    };
+
+async function discoverIncrementalFromYouTube(
+  input: IncrementalDiscoveryParams,
+): Promise<IncrementalDiscoveryResult> {
+  const { url, sourceType, cursor } = input;
+
+  if (sourceType === "youtube_video") {
+    const full = await discoverFromYouTube(url, sourceType);
+    return {
+      ...full,
+      nextCursor: null,
+    };
+  }
+
+  if (sourceType === "youtube_playlist") {
+    const playlistId = extractPlaylistId(url);
+    if (!playlistId) {
+      throw new YouTubeDiscoveryError("Could not parse YouTube playlist ID from URL.", true);
+    }
+
+    const parsedCursor = parseYouTubeSyncCursor(cursor, sourceType);
+    const incremental = await fetchPlaylistVideoIdsIncremental(
+      playlistId,
+      parsedCursor?.headExternalId ?? null,
+    );
+    const playlistMetadata = await fetchPlaylistMetadata(playlistId);
+    const items = incremental.ids.length > 0 ? await fetchVideoMetadata(incremental.ids) : [];
+
+    return {
+      items,
+      sourceAuthorName: playlistMetadata?.authorName ?? items[0]?.authorName ?? null,
+      sourceTitle: playlistMetadata?.title ?? null,
+      nextCursor: {
+        kind: "youtube_playlist",
+        playlistId,
+        headExternalId: incremental.headExternalId,
+      },
+    };
+  }
+
+  if (sourceType === "youtube_channel") {
+    const parsedCursor = parseYouTubeSyncCursor(cursor, sourceType);
+    const cursorUploadsPlaylistId =
+      parsedCursor?.kind === "youtube_channel" ? parsedCursor.uploadsPlaylistId : null;
+    const cursorHeadExternalId =
+      parsedCursor?.kind === "youtube_channel" ? parsedCursor.headExternalId : null;
+    const uploadsPlaylistId =
+      cursorUploadsPlaylistId ?? (await resolveUploadsPlaylistId(url));
+
+    if (!uploadsPlaylistId) {
+      throw new YouTubeDiscoveryError("Could not resolve YouTube channel uploads playlist.", true);
+    }
+
+    const incremental = await fetchPlaylistVideoIdsIncremental(
+      uploadsPlaylistId,
+      cursorHeadExternalId,
+    );
+    const items = incremental.ids.length > 0 ? await fetchVideoMetadata(incremental.ids) : [];
+
+    return {
+      items,
+      sourceAuthorName: items[0]?.authorName ?? null,
+      sourceTitle: null,
+      nextCursor: {
+        kind: "youtube_channel",
+        uploadsPlaylistId,
+        headExternalId: incremental.headExternalId,
+      },
+    };
+  }
+
+  const exhaustiveCheck: never = sourceType;
+  throw new YouTubeDiscoveryError(`Unsupported source type: ${exhaustiveCheck}`, true);
 }
 
 async function fetchYouTubeContent(externalId: string): Promise<FetchedContent> {
@@ -288,6 +385,116 @@ async function fetchPlaylistVideoIds(playlistId: string): Promise<string[]> {
   }
 
   return Array.from(ids).slice(0, MAX_PLAYLIST_VIDEOS);
+}
+
+async function fetchPlaylistVideoIdsIncremental(
+  playlistId: string,
+  stopAtVideoId: string | null,
+): Promise<PlaylistIncrementalResult> {
+  const ids: string[] = [];
+  const dedupe = new Set<string>();
+  let pageToken: string | undefined;
+  let page = 0;
+  let stopMarkerIndex: number | null = null;
+
+  while (page < MAX_PLAYLIST_PAGES && ids.length < MAX_PLAYLIST_VIDEOS) {
+    page += 1;
+
+    const response = await fetchYouTube<YoutubePlaylistItemsResponse>("playlistItems", {
+      part: "contentDetails",
+      playlistId,
+      maxResults: String(YOUTUBE_MAX_PAGE_SIZE),
+      pageToken,
+    });
+
+    for (const item of response.items ?? []) {
+      const videoId = item.contentDetails?.videoId;
+      if (!videoId) {
+        continue;
+      }
+
+      if (!dedupe.has(videoId)) {
+        dedupe.add(videoId);
+        ids.push(videoId);
+      }
+
+      if (stopAtVideoId && videoId === stopAtVideoId) {
+        stopMarkerIndex = ids.findIndex((id) => id === stopAtVideoId);
+        break;
+      }
+
+      if (ids.length >= MAX_PLAYLIST_VIDEOS) {
+        break;
+      }
+    }
+
+    if (stopMarkerIndex !== null || !response.nextPageToken || ids.length >= MAX_PLAYLIST_VIDEOS) {
+      break;
+    }
+
+    pageToken = response.nextPageToken;
+  }
+
+  if (stopMarkerIndex !== null) {
+    const bounded = ids.slice(0, stopMarkerIndex + 1 + SYNC_OVERLAP_VIDEOS);
+
+    return {
+      ids: bounded,
+      headExternalId: ids[0] ?? stopAtVideoId,
+    };
+  }
+
+  return {
+    ids,
+    headExternalId: ids[0] ?? stopAtVideoId,
+  };
+}
+
+function parseYouTubeSyncCursor(
+  cursor: Record<string, unknown> | null,
+  sourceType: "youtube_playlist" | "youtube_channel",
+): YouTubeSyncCursor | null {
+  if (!cursor || typeof cursor !== "object") {
+    return null;
+  }
+
+  if (sourceType === "youtube_playlist") {
+    const kind = cursor.kind;
+    const playlistId = cursor.playlistId;
+    const headExternalId = cursor.headExternalId;
+
+    if (
+      kind === "youtube_playlist" &&
+      typeof playlistId === "string" &&
+      (typeof headExternalId === "string" || headExternalId === null)
+    ) {
+      return {
+        kind,
+        playlistId,
+        headExternalId,
+      };
+    }
+
+    return null;
+  }
+
+  const kind = cursor.kind;
+  const uploadsPlaylistId = cursor.uploadsPlaylistId;
+  const headExternalId = cursor.headExternalId;
+
+  if (
+    kind === "youtube_channel" &&
+    typeof uploadsPlaylistId === "string" &&
+    (typeof headExternalId === "string" || headExternalId === null)
+  ) {
+    return {
+      kind,
+      uploadsPlaylistId,
+      headExternalId,
+    };
+  }
+
+  return null;
 }
 
 async function fetchPlaylistMetadata(

@@ -1,10 +1,10 @@
 import "server-only";
 
 import * as Sentry from "@sentry/nextjs";
-import { and, desc, eq, gte, inArray, isNotNull, lt, or } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, lt, or, sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { chatMessages, contentItems } from "@/db/schema";
+import { chatMessages, contentItems, sourceContentItems } from "@/db/schema";
 import {
   ingestChatCreditsUsage,
   ingestVideoUsage,
@@ -307,12 +307,19 @@ export const billingUsageReconcile = inngest.createFunction(
           .select({
             userId: contentItems.userId,
             libraryId: contentItems.libraryId,
-            sourceId: contentItems.sourceId,
+            sourceId: sql<string>`min(${sourceContentItems.sourceId})`,
             videoId: contentItems.id,
             updatedAt: contentItems.updatedAt,
           })
           .from(contentItems)
+          .innerJoin(sourceContentItems, eq(sourceContentItems.contentItemId, contentItems.id))
           .where(whereClause)
+          .groupBy(
+            contentItems.userId,
+            contentItems.libraryId,
+            contentItems.id,
+            contentItems.updatedAt,
+          )
           .orderBy(desc(contentItems.updatedAt), desc(contentItems.id))
           .limit(RECONCILIATION_BATCH_SIZE);
         },

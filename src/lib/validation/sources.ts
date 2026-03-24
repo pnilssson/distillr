@@ -73,6 +73,7 @@ export const addSourceSchema = z.object({
         (v) => parseSourceUrl(v) !== null,
         "Must be a valid YouTube video, playlist, or channel URL.",
       ),
+  autoSyncEnabled: z.boolean().optional(),
 });
 
 export type AddSourceInput = z.infer<typeof addSourceSchema>;

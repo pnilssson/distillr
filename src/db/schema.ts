@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   doublePrecision,
   index,
   integer,
@@ -177,8 +178,15 @@ export const sources = pgTable(
     sourceKey: text("source_key").notNull(),
     sourceType: text("source_type").notNull(), // 'youtube_video' | 'youtube_playlist' | 'youtube_channel'
     status: text("status").notNull().default("processing"), // 'processing' | 'ready' | 'failed'
+    autoSyncEnabled: boolean("auto_sync_enabled").notNull().default(false),
     channelName: text("channel_name"),
     title: text("title"),
+    syncCursor: jsonb("sync_cursor").$type<Record<string, unknown> | null>(),
+    nextSyncAt: timestamp("next_sync_at", { withTimezone: true }),
+    lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+    lastSyncErrorAt: timestamp("last_sync_error_at", { withTimezone: true }),
+    consecutiveSyncFailures: integer("consecutive_sync_failures").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -218,9 +226,6 @@ export const contentItems = pgTable(
     libraryId: uuid("library_id")
       .notNull()
       .references(() => libraries.id, { onDelete: "cascade" }),
-    sourceId: uuid("source_id")
-      .notNull()
-      .references(() => sources.id, { onDelete: "cascade" }),
     externalId: text("external_id").notNull(),
     contentType: text("content_type").notNull(),
     title: text("title").notNull(),
@@ -250,7 +255,6 @@ export const contentItems = pgTable(
       table.externalId,
     ),
     index("content_items_library_id_idx").on(table.libraryId),
-    index("content_items_source_id_idx").on(table.sourceId),
     pgPolicy("content_items_select_own", {
       for: "select",
       to: authenticatedRole,
@@ -276,6 +280,59 @@ export const contentItems = pgTable(
 ).enableRLS();
 
 export type ContentItem = typeof contentItems.$inferSelect;
+
+export const sourceContentItems = pgTable(
+  "source_content_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull(),
+    libraryId: uuid("library_id")
+      .notNull()
+      .references(() => libraries.id, { onDelete: "cascade" }),
+    sourceId: uuid("source_id")
+      .notNull()
+      .references(() => sources.id, { onDelete: "cascade" }),
+    contentItemId: uuid("content_item_id")
+      .notNull()
+      .references(() => contentItems.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    unique("source_content_items_source_item_uniq").on(table.sourceId, table.contentItemId),
+    index("source_content_items_library_id_idx").on(table.libraryId),
+    index("source_content_items_source_id_idx").on(table.sourceId),
+    index("source_content_items_content_item_id_idx").on(table.contentItemId),
+    index("source_content_items_user_id_idx").on(table.userId),
+    pgPolicy("source_content_items_select_own", {
+      for: "select",
+      to: authenticatedRole,
+      using: sql`auth.uid() = user_id`,
+    }),
+    pgPolicy("source_content_items_insert_own", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: sql`auth.uid() = user_id`,
+    }),
+    pgPolicy("source_content_items_update_own", {
+      for: "update",
+      to: authenticatedRole,
+      using: sql`auth.uid() = user_id`,
+      withCheck: sql`auth.uid() = user_id`,
+    }),
+    pgPolicy("source_content_items_delete_own", {
+      for: "delete",
+      to: authenticatedRole,
+      using: sql`auth.uid() = user_id`,
+    }),
+  ],
+).enableRLS();
+
+export type SourceContentItem = typeof sourceContentItems.$inferSelect;
 
 export const contentChunks = pgTable(
   "content_chunks",

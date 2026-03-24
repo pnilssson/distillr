@@ -14,6 +14,13 @@ export const inngest = new Inngest({
         sourceId: string;
       };
     };
+    "source.sync.requested": {
+      data: {
+        userId: string;
+        libraryId: string;
+        sourceId: string;
+      };
+    };
     "video.ingest": {
       data: {
         userId: string;

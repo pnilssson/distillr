@@ -27,6 +27,16 @@ export type DiscoveryResult = {
   sourceTitle: string | null;
 };
 
+export type IncrementalDiscoveryResult = DiscoveryResult & {
+  nextCursor: Record<string, unknown> | null;
+};
+
+export type IncrementalDiscoveryParams = {
+  url: string;
+  sourceType: SourceType;
+  cursor: Record<string, unknown> | null;
+};
+
 export type ContentAnchor = {
   anchorKey: string;
   anchorType: ContentAnchorType;
@@ -52,6 +62,7 @@ export type FetchedContent = {
 
 export interface ContentDiscovery {
   discover(url: string, sourceType: SourceType): Promise<DiscoveryResult>;
+  discoverIncremental?(input: IncrementalDiscoveryParams): Promise<IncrementalDiscoveryResult>;
 }
 
 export interface ContentFetcher {

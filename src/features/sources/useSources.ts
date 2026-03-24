@@ -14,7 +14,15 @@ export function useSources(libraryId: string | null) {
         return false;
       }
 
-      return sources.some((source) => source.status === "processing") ? 3000 : false;
+      if (sources.some((source) => source.status === "processing")) {
+        return 3000;
+      }
+
+      if (sources.some((source) => source.autoSyncEnabled)) {
+        return 60000;
+      }
+
+      return false;
     },
   });
 }

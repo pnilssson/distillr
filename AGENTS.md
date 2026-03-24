@@ -72,6 +72,13 @@ This file is the operational source of truth for agent behavior in this reposito
 - All writes go through server boundaries (Route Handlers or server code), never direct client-to-database writes.
 - Preserve tenant isolation with `user_id` and RLS across sensitive tables.
 - Keep sensitive keys server-only.
+- Model source ownership as many-to-many (`sources` ↔ `content_items`) so overlapping playlist/channel sources in one library cannot overwrite ownership.
+
+## Source Sync Invariants
+
+- Source auto-sync is opt-in and disabled by default.
+- Auto-sync applies only to channel and playlist sources.
+- If ingestion allowance is exhausted, newly discovered items remain deferred for later cycles instead of being marked terminal failed.
 
 ## Retrieval Invariants
 

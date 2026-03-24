@@ -7,6 +7,7 @@ import {
   Copy,
   ExternalLink,
   List,
+  Repeat,
   Trash2,
   User,
   Video,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import type { SourceListItem } from "@/features/sources/types";
+import { useSetSourceAutoSync } from "@/features/sources/useSetSourceAutoSync";
 import { useRefreshSource } from "@/features/sources/useRefreshSource";
 
 type SourceDetailsDialogProps = {
@@ -90,8 +92,10 @@ export function SourceDetailsDialog({
 }: SourceDetailsDialogProps) {
   const [copied, setCopied] = useState(false);
   const refreshMutation = useRefreshSource();
+  const autoSyncMutation = useSetSourceAutoSync();
 
   const refreshDisabled = !source || source.status === "processing" || refreshMutation.isPending;
+  const supportsAutoSync = source ? source.sourceType !== "youtube_video" : false;
 
   function copyUrl() {
     if (!source) {
@@ -148,6 +152,18 @@ export function SourceDetailsDialog({
                   value={SOURCE_TYPE_META[source.sourceType].label}
                 />
                 <MetaCell label="Added to library" value={formatDateTime(source.createdAt)} />
+                {supportsAutoSync ? (
+                  <MetaCell
+                    label="Auto-sync"
+                    value={source.autoSyncEnabled ? "Enabled" : "Disabled"}
+                  />
+                ) : null}
+                {supportsAutoSync ? (
+                  <MetaCell
+                    label="Last sync"
+                    value={source.lastSyncedAt ? formatDateTime(source.lastSyncedAt) : "Never"}
+                  />
+                ) : null}
               </div>
 
               {source.status === "failed" ? (
@@ -163,6 +179,54 @@ export function SourceDetailsDialog({
                     This source could not be ingested. Try refreshing first, or remove it and add
                     it again.
                   </p>
+                </div>
+              ) : null}
+
+              <Separator />
+
+              {supportsAutoSync ? (
+                <div className="space-y-2.5 rounded-lg border border-border/70 bg-muted/30 px-3 py-3">
+                  <p className="text-sm font-medium">Auto-sync</p>
+                  <p className="text-xs text-muted-foreground">
+                    Automatically check this source for newly published videos.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    disabled={autoSyncMutation.isPending}
+                    onClick={() => {
+                      if (!source) {
+                        return;
+                      }
+
+                      autoSyncMutation.mutate(
+                        {
+                          libraryId,
+                          sourceId: source.id,
+                          enabled: !source.autoSyncEnabled,
+                        },
+                        {
+                          onSuccess: () => {
+                            toast.success(source.autoSyncEnabled ? "Auto-sync disabled." : "Auto-sync enabled.");
+                          },
+                        },
+                      );
+                    }}
+                  >
+                    <Repeat aria-hidden="true" />
+                    {autoSyncMutation.isPending
+                      ? "Updating..."
+                      : source.autoSyncEnabled
+                        ? "Disable auto-sync"
+                        : "Enable auto-sync"}
+                  </Button>
+                  {autoSyncMutation.isError ? (
+                    <p className="text-sm text-destructive" role="alert">
+                      {autoSyncMutation.error.message}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
 

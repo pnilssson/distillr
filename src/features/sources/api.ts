@@ -55,3 +55,27 @@ export async function refreshSource(libraryId: string, sourceId: string): Promis
     throw new Error(getApiErrorMessage(payload, "Could not refresh source. Please try again."));
   }
 }
+
+export async function setSourceAutoSync(
+  libraryId: string,
+  sourceId: string,
+  enabled: boolean,
+): Promise<SourceListItem> {
+  const response = await fetch(`/api/libraries/${libraryId}/sources/${sourceId}/auto-sync`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled }),
+  });
+
+  const payload = await parseJsonResponse<{ source: SourceListItem } | { error: string }>(response);
+
+  if (!response.ok) {
+    throw new Error(getApiErrorMessage(payload, "Could not update auto-sync setting."));
+  }
+
+  if (!payload || !("source" in payload)) {
+    throw new Error("Could not update auto-sync setting.");
+  }
+
+  return payload.source;
+}

@@ -28,6 +28,7 @@ This project is pre-user. Clean architecture is prioritized over preserving old 
 - Item classification: `contentType`.
 - Source classification: provider-qualified `sourceType` values.
 - Item uniqueness in `content_items`: `(library_id, content_type, external_id)`.
+- Source ownership is many-to-many via `source_content_items`.
 
 Current provider-qualified source types:
 
@@ -40,6 +41,7 @@ Current provider-qualified source types:
 Provider code lives in `src/server/ingestion/providers/`.
 
 - `types.ts` defines canonical provider contracts (`ContentDiscovery`, `ContentFetcher`, `ContentSegment`, `ContentAnchor`, `FetchedContent`).
+- Discovery supports both full (`discover`) and incremental (`discoverIncremental`) paths.
 - `registry.ts` resolves discovery/fetcher implementations by `sourceType`/`contentType`.
 - `youtube.ts` contains YouTube-specific discovery and fetching.
 
@@ -49,8 +51,10 @@ All files in `src/server/**` are server-only.
 
 1. User adds source via API.
 2. API validates source URL and enqueues `source.added`.
-3. `source-added` resolves provider discovery from registry, discovers items, upserts `content_items`, applies allowance gating, then enqueues `video.ingest`.
-4. `video-ingest` resolves provider fetcher from registry and processes one item to `ready` or terminal `failed`.
+3. `source-added` performs full discovery, upserts `content_items`, upserts `source_content_items`, applies allowance gating, and enqueues `video.ingest` for admitted items.
+4. Scheduled `source-sync-scan` finds due auto-sync sources and enqueues `source.sync.requested`.
+5. `source-sync` performs incremental discovery for playlist/channel sources, upserts `content_items` + `source_content_items`, applies allowance gating, and enqueues `video.ingest` for admitted items.
+6. `video-ingest` resolves provider fetcher and processes one item to `ready` or terminal `failed`.
 
 ## Source Planning (`source.added`)
 
@@ -58,11 +62,26 @@ All files in `src/server/**` are server-only.
 - Concurrency: serialized per user (`limit: 1`, key `event.data.userId`) to prevent over-queue races.
 - Discovery: provider `discover(url, sourceType)` returns normalized discovered items.
 - Upsert strategy: idempotent upsert keyed by `(library_id, content_type, external_id)`.
+- Ownership upsert: idempotent source-item upsert keyed by `(source_id, content_item_id)`.
 - Queue eligibility: rows currently `pending` or `failed` can be re-queued.
 - Billing-aware gating:
   - resolves monthly and lifetime remaining allowances from Polar customer state
   - queues only allowed count
-  - marks overflow rows `failed` with provider-agnostic limit reasons
+  - leaves over-limit rows deferred for later cycles (no terminal failure marking)
+
+## Auto Sync (`source-sync-scan` + `source-sync`)
+
+- Scanner function: `src/server/inngest/functions/source-sync-scan.ts`
+  - cron cadence: hourly
+  - selects due auto-sync-enabled playlist/channel sources
+  - enqueues `source.sync.requested` in batches
+- Per-source function: `src/server/inngest/functions/source-sync.ts`
+  - concurrency: serialized per user (`limit: 1`, key `event.data.userId`) to avoid overlapping queue races
+  - guardrails: skips disabled, unsupported, not-due, or currently processing sources
+  - discovery: uses provider `discoverIncremental` when available
+  - updates source sync metadata (`nextSyncAt`, `lastCheckedAt`, `lastSyncedAt`, failure counters, cursor)
+- Auto-sync is opt-in and disabled by default.
+- Auto-sync applies only to playlist and channel sources.
 
 ## Per-Item Processing (`video.ingest`)
 
@@ -84,6 +103,7 @@ All files in `src/server/**` are server-only.
 - `content_chunks` upsert target: `(content_item_id, chunk_index)`.
 - `content_chunk_anchors` upsert target: `(content_chunk_id, anchor_key)`.
 - `content_insights` upsert target: `(content_item_id, insight_type)`.
+- `source_content_items` upsert target: `(source_id, content_item_id)`.
 - Stale chunk/anchor/insight rows are deleted when a later run yields fewer records.
 - Retries converge on latest provider-derived state, not duplicate rows.
 
@@ -101,6 +121,7 @@ All files in `src/server/**` are server-only.
 - Status values: `pending`, `processing`, `ready`, `failed`.
 - Counts and settled/in-flight flags drive sidebar polling and progress UI.
 - Source refresh uses `POST /api/libraries/[libraryId]/sources/[sourceId]/retry` and reuses `source.added` planning.
+- Source auto-sync toggles use `PATCH /api/libraries/[libraryId]/sources/[sourceId]/auto-sync`.
 
 ## Key Invariants
 
@@ -114,9 +135,12 @@ All files in `src/server/**` are server-only.
 
 - `src/app/api/libraries/[libraryId]/sources/route.ts`
 - `src/server/inngest/functions/source-added.ts`
+- `src/server/inngest/functions/source-sync-scan.ts`
+- `src/server/inngest/functions/source-sync.ts`
 - `src/server/inngest/functions/video-ingest.ts`
 - `src/server/ingestion/providers/types.ts`
 - `src/server/ingestion/providers/registry.ts`
+- `src/server/ingestion/source-planner.ts`
 - `src/server/ingestion/chunking.ts`
 - `src/server/ingestion/ai.ts`
 
@@ -125,7 +149,7 @@ All files in `src/server/**` are server-only.
 When changing ingestion behavior:
 
 1. Preserve idempotent upsert semantics.
-2. Preserve per-user queue safety for `source.added`.
+2. Preserve queue safety for source planning and auto-sync execution.
 3. Preserve provider-agnostic user messaging.
 4. Do not add compatibility aliases or fallback paths.
 5. Verify `npm run typecheck`, `npm run lint`, and `npm run build`.

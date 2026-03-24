@@ -7,6 +7,7 @@ import {
   Loader2,
   MoreHorizontal,
   Plus,
+  Repeat,
   RefreshCw,
   Trash2,
   User,
@@ -27,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AddSourceDialog } from "@/features/sources/AddSourceDialog";
 import { DeleteSourceDialog } from "@/features/sources/DeleteSourceDialog";
 import { getSourceLabel } from "@/features/sources/SourceSidebarItem";
+import { useSetSourceAutoSync } from "@/features/sources/useSetSourceAutoSync";
 import { useRefreshSource } from "@/features/sources/useRefreshSource";
 import type { SourceListItem } from "@/features/sources/types";
 
@@ -75,9 +77,12 @@ function SourceStatusDot({ status }: { status: SourceListItem["status"] }) {
 
 function SourceRow({ source, libraryId, onDeleteRequest }: SourceRowProps) {
   const refreshMutation = useRefreshSource();
+  const autoSyncMutation = useSetSourceAutoSync();
   const Icon = SOURCE_TYPE_ICONS[source.sourceType] ?? Video;
   const label = getSourceLabel(source);
   const isResolvingName = source.status === "processing" && !source.channelName && !source.title;
+  const supportsAutoSync = source.sourceType !== "youtube_video";
+  const isAutoSyncUpdating = autoSyncMutation.isPending;
 
   function handleRefresh() {
     refreshMutation.mutate(
@@ -85,6 +90,28 @@ function SourceRow({ source, libraryId, onDeleteRequest }: SourceRowProps) {
       {
         onSuccess: () => toast.success("Source refresh queued."),
         onError: (err) => toast.error(err.message),
+      },
+    );
+  }
+
+  function handleToggleAutoSync() {
+    if (!supportsAutoSync) {
+      return;
+    }
+
+    autoSyncMutation.mutate(
+      {
+        libraryId,
+        sourceId: source.id,
+        enabled: !source.autoSyncEnabled,
+      },
+      {
+        onSuccess: () => {
+          toast.success(source.autoSyncEnabled ? "Auto-sync disabled." : "Auto-sync enabled.");
+        },
+        onError: (err) => {
+          toast.error(err.message);
+        },
       },
     );
   }
@@ -111,6 +138,14 @@ function SourceRow({ source, libraryId, onDeleteRequest }: SourceRowProps) {
           </span>
           <span className="text-muted-foreground/40" aria-hidden="true">·</span>
           <SourceStatusDot status={source.status} />
+          {supportsAutoSync ? (
+            <>
+              <span className="text-muted-foreground/40" aria-hidden="true">·</span>
+              <span className="text-xs text-muted-foreground">
+                Auto-sync {source.autoSyncEnabled ? "on" : "off"}
+              </span>
+            </>
+          ) : null}
         </div>
       </div>
 
@@ -133,10 +168,22 @@ function SourceRow({ source, libraryId, onDeleteRequest }: SourceRowProps) {
               Open source
             </a>
           </DropdownMenuItem>
+          {supportsAutoSync ? (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleToggleAutoSync}
+                disabled={isAutoSyncUpdating}
+              >
+                <Repeat size={13} aria-hidden="true" />
+                {source.autoSyncEnabled ? "Disable auto-sync" : "Enable auto-sync"}
+              </DropdownMenuItem>
+            </>
+          ) : null}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={handleRefresh}
-            disabled={refreshMutation.isPending}
+            disabled={refreshMutation.isPending || isAutoSyncUpdating}
           >
             <RefreshCw size={13} aria-hidden="true" />
             Refresh

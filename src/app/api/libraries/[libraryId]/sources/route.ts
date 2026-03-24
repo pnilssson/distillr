@@ -80,6 +80,7 @@ export const POST = withApiAuth<SourcesRouteProps>(async (request, { params, use
     parsedUrl.sourceKey,
     parsedUrl.sourceType,
     "processing",
+    parsedUrl.sourceType !== "youtube_video" && (parsed.data.autoSyncEnabled ?? false),
     null,
     null,
   );

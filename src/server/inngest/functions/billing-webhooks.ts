@@ -8,6 +8,7 @@ import {
   type DistillrPlan,
 } from "@/server/billing/polar/config";
 import {
+  createPolarFreeSubscription,
   listPolarSubscriptions,
   revokePolarSubscription,
 } from "@/server/billing/polar/client";
@@ -113,13 +114,30 @@ export const billingWebhookReceived = inngest.createFunction(
       };
     }
 
+    if (eventType === "subscription.revoked") {
+      let sideEffects = 0;
+
+      if (userId) {
+        const reprovisioned = await step.run("reprovision-free-if-needed", async () => {
+          return reprovisionFreeSubscriptionIfNeeded(userId);
+        });
+        sideEffects += reprovisioned ? 1 : 0;
+      }
+
+      return {
+        status: "processed",
+        eventType,
+        webhookId,
+        sideEffects,
+      };
+    }
+
     if (
       eventType === "customer.state_changed" ||
       eventType === "subscription.created" ||
       eventType === "subscription.updated" ||
       eventType === "subscription.active" ||
       eventType === "subscription.canceled" ||
-      eventType === "subscription.revoked" ||
       eventType === "subscription.uncanceled" ||
       eventType === "subscription.past_due"
     ) {
@@ -305,6 +323,32 @@ function readArray(value: unknown): unknown[] {
 
 function readString(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+async function reprovisionFreeSubscriptionIfNeeded(userId: string): Promise<boolean> {
+  const products = getDistillrProductIds();
+  const freeProductId = products.free;
+
+  if (!freeProductId) return false;
+
+  const subscriptions = await listPolarSubscriptions({
+    externalCustomerId: userId,
+    active: true,
+  });
+
+  const hasActiveDistillrSubscription = subscriptions.some((subscription) =>
+    resolvePlanByProductId(subscription.product_id),
+  );
+
+  if (hasActiveDistillrSubscription) return false;
+
+  await createPolarFreeSubscription({
+    externalCustomerId: userId,
+    freeProductId,
+    idempotencyKey: `distillr-free-reprovision-${userId}-${Date.now()}`,
+  });
+
+  return true;
 }
 
 async function revokeLowerTierSubscriptions(

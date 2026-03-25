@@ -67,6 +67,8 @@ These principles reduce cognitive load, strengthen trust, and make the product f
 
 Credits are the universal unit for chat. Users choose their AI model per request and credit usage scales with model capability. Monthly credits reset on the billing anniversary and do not roll over. Builder and Pro users can top up with 100 credits for $3. Free users see an upgrade prompt instead.
 
+Export entitlements are plan-gated. Free supports TXT export only. Builder and Pro support TXT, Markdown, and PDF export.
+
 Each indexed video counts as one video toward monthly indexing and total stored limits, regardless of video length.
 
 Deleting a video does not restore monthly or lifetime quota. Ingestion is the cost event: transcript fetch, embedding, and processing are spent at ingest time regardless of later deletion.

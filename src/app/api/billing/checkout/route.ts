@@ -41,6 +41,7 @@ export const POST = withApiAuth(async (request, { user }) => {
   });
 
   const target = parsed.data.target;
+  const source = parsed.data.source ?? "checkout";
   const state = await getPolarCustomerState(user.id);
   const billing = state ? buildBillingSnapshot(state) : null;
 
@@ -83,12 +84,12 @@ export const POST = withApiAuth(async (request, { user }) => {
   if (isPlanUpgrade) {
     await captureServerEvent(user.id, "upgrade_clicked", {
       target_plan: target,
-      source: "checkout",
+      source,
     });
   } else {
     await captureServerEvent(user.id, "top_up_clicked", {
       target,
-      source: "checkout",
+      source,
     });
   }
 

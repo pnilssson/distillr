@@ -38,12 +38,12 @@ const faqs = [
   {
     question: "Can I export my knowledge base data?",
     answer:
-      "Yes. Distillr supports exports in Markdown, PDF, TXT, and full chat log formats, ready for Notion, Obsidian, or any note-taking tool you use.",
+      "Yes. Free supports TXT exports. Builder and Pro support TXT, Markdown, and PDF exports for chat sessions and content items.",
   },
   {
     question: "What is the credit system?",
     answer:
-      "Credits are the unit used for AI chat. Each message costs credits depending on which AI model you choose, faster models cost fewer credits, more capable models cost more. Monthly credits reset on your billing date. Paid plans can buy 250-credit top-ups for $5.",
+      "Credits are the unit used for AI chat. Each message costs credits depending on which AI model you choose, faster models cost fewer credits, more capable models cost more. Monthly credits reset on your billing date. Paid plans can buy 100-credit top-ups for $3.",
   },
   {
     question: "How are video limits counted?",

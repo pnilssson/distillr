@@ -142,9 +142,7 @@ export async function streamChatMessage(params: StreamChatMessageParams): Promis
     evidence: [],
     isWeakEvidence: false,
   };
-  let sourcesRollup: ChatSourcesRollup = {
-    items: [],
-  };
+  let sourcesRollup: ChatSourcesRollup | null = null;
 
   if (effectiveMode === "library") {
     const rewrittenQuery = await rewriteChatQueryForRetrieval({
@@ -167,11 +165,13 @@ export async function streamChatMessage(params: StreamChatMessageParams): Promis
 
     fusion = fuseRetrievalCandidates(retrievalCandidates);
     contextSelection = buildRetrievalContext(fusion.evidence, RETRIEVAL_CONTEXT_TOKEN_BUDGET);
-    sourcesRollup = await buildSourcesRollup({
+    const builtSourcesRollup = await buildSourcesRollup({
       userId: params.userId,
       libraryId: params.libraryId,
       evidence: contextSelection.selectedEvidence,
     });
+
+    sourcesRollup = builtSourcesRollup.items.length > 0 ? builtSourcesRollup : null;
   }
 
   const messagesForModel = await getMessagesForModel({
@@ -282,7 +282,7 @@ export async function streamChatMessage(params: StreamChatMessageParams): Promis
     messageMetadata: ({ part }) => {
       if (part.type === "finish") {
         return {
-          sources: sourcesRollup,
+          sources: sourcesRollup ?? undefined,
           effectiveMode,
         };
       }

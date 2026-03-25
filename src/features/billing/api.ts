@@ -1,5 +1,9 @@
 import { getApiErrorMessage, parseJsonResponse } from "@/lib/http/response";
-import type { BillingCheckoutTarget, BillingState } from "@/features/billing/types";
+import type {
+  BillingCheckoutSource,
+  BillingCheckoutTarget,
+  BillingState,
+} from "@/features/billing/types";
 
 export async function fetchBillingState(): Promise<BillingState> {
   const response = await fetch("/api/billing/state", {
@@ -22,6 +26,7 @@ export async function fetchBillingState(): Promise<BillingState> {
 export async function createCheckoutSession(
   target: BillingCheckoutTarget,
   returnPath?: string,
+  source: BillingCheckoutSource = "checkout",
 ): Promise<string> {
   const response = await fetch("/api/billing/checkout", {
     method: "POST",
@@ -31,6 +36,7 @@ export async function createCheckoutSession(
     body: JSON.stringify({
       target,
       returnPath,
+      source,
     }),
   });
 

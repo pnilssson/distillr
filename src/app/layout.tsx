@@ -8,40 +8,25 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CookieBanner } from "@/features/cookies/CookieBanner";
 import { CookieConsentProvider } from "@/features/cookies/CookieConsentProvider";
 import { JsonLd } from "@/components/json-ld";
+import { getAppBaseUrl, getAppUrl } from "@/lib/site/url";
 import "./globals.css";
 
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "Distillr",
-  url: "https://distillr.co",
+  url: getAppUrl("/"),
   description:
     "Your YouTube research, finally searchable. Add your sources, ask anything, and get cited answers with timestamp links.",
   potentialAction: {
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: "https://distillr.co/login",
+      urlTemplate: getAppUrl("/login"),
     },
     "query-input": "required name=search_term_string",
   },
 };
-
-function getMetadataBase() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-
-  if (!appUrl) {
-    throw new Error("NEXT_PUBLIC_APP_URL must be set.");
-  }
-
-  const normalizedUrl = appUrl.startsWith("http") ? appUrl : `https://${appUrl}`;
-
-  try {
-    return new URL(normalizedUrl);
-  } catch {
-    throw new Error("NEXT_PUBLIC_APP_URL must be a valid URL.");
-  }
-}
 
 const siteName = "Distillr";
 const title = "Distillr - Your YouTube research, finally searchable.";
@@ -50,7 +35,7 @@ const description =
 const socialImagePath = "/opengraph-image?v=2";
 
 export const metadata: Metadata = {
-  metadataBase: getMetadataBase(),
+  metadataBase: getAppBaseUrl(),
   title: {
     default: title,
     template: "%s | Distillr",

@@ -9,6 +9,7 @@ import {
   getDistillrMeterIds,
 } from "@/server/billing/polar/config";
 import type { PolarCustomerState } from "@/server/billing/polar/types";
+import type { ExportFormat } from "@/lib/exports/types";
 
 type MeterSnapshot = {
   balance: number;
@@ -23,6 +24,7 @@ export type DistillrBillingSnapshot = {
   lifetimeVideoConsumed: number;
   lifetimeVideoRemaining: number;
   hasTopUpAccess: boolean;
+  allowedExportFormats: ExportFormat[];
 };
 
 export function buildBillingSnapshot(state: PolarCustomerState): DistillrBillingSnapshot {
@@ -46,6 +48,7 @@ export function buildBillingSnapshot(state: PolarCustomerState): DistillrBilling
     lifetimeVideoConsumed,
     lifetimeVideoRemaining,
     hasTopUpAccess: BILLING_PLANS[plan].hasTopUpAccess,
+    allowedExportFormats: BILLING_PLANS[plan].allowedExportFormats,
   };
 }
 

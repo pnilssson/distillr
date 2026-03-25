@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { BillingState } from "@/lib/billing/types";
+import { BILLING_PLANS } from "@/lib/billing/plans";
 import { getPolarCustomerState } from "@/server/billing/polar/customers";
 import { buildBillingSnapshot } from "@/server/billing/polar/state";
 
@@ -20,6 +21,7 @@ export async function getBillingStateForUser(input: GetBillingStateForUserInput)
       lifetimeVideoConsumed: null,
       lifetimeVideoRemaining: null,
       hasTopUpAccess: false,
+      allowedExportFormats: BILLING_PLANS.free.allowedExportFormats,
     };
   }
 
@@ -34,5 +36,6 @@ export async function getBillingStateForUser(input: GetBillingStateForUserInput)
     lifetimeVideoRemaining:
       Number.isFinite(snapshot.lifetimeVideoRemaining) ? snapshot.lifetimeVideoRemaining : null,
     hasTopUpAccess: snapshot.hasTopUpAccess,
+    allowedExportFormats: snapshot.allowedExportFormats,
   };
 }

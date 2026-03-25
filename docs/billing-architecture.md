@@ -24,6 +24,14 @@ Plan limits:
 | Builder | 250 | 150 | 1000 |
 | Pro | 750 | 450 | Unlimited |
 
+Export format entitlements:
+
+| Plan | Allowed export formats |
+| --- | --- |
+| Free | txt |
+| Builder | txt, md, pdf |
+| Pro | txt, md, pdf |
+
 Top-up:
 
 - `top_up_tier_1` adds 100 chat credits for $3.
@@ -42,6 +50,7 @@ Top-up:
   - monthly video balance
   - lifetime consumed/remaining
   - top-up eligibility
+  - allowed export formats
 
 ## Enforcement Points
 
@@ -49,6 +58,7 @@ Top-up:
 - Snapshot normalization clamps negative balances to `0` before app enforcement.
 - Source planning: ingestion queue is clipped by monthly and lifetime remaining allowances.
 - Overflow videos are marked failed with provider-agnostic limit reasons.
+- Export routes enforce plan-gated export formats server-side.
 
 ## Checkout and Portal Flows
 
@@ -121,6 +131,8 @@ All properties should remain snake_case and provider-agnostic.
 - `src/app/api/billing/checkout/route.ts`
 - `src/app/api/billing/portal/route.ts`
 - `src/app/api/billing/state/route.ts`
+- `src/app/api/libraries/[libraryId]/chat/sessions/[sessionId]/export/route.ts`
+- `src/app/api/libraries/[libraryId]/content-items/[contentItemId]/export/route.ts`
 - `src/app/api/webhooks/polar/route.ts`
 - `src/server/inngest/functions/billing-usage.ts`
 - `src/server/inngest/functions/billing-webhooks.ts`

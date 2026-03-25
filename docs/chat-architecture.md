@@ -131,6 +131,8 @@ Finish reason mapping:
 - Server uses `consumeSseStream` so finish callbacks run on abort/disconnect.
 - Sidebar session list refreshes after stream finish to reflect title/recency updates.
 - Sources UI renders item-level links and optional anchor links, and may collapse long lists behind a reveal interaction.
+- Chat session exports are available at `GET /api/libraries/[libraryId]/chat/sessions/[sessionId]/export?format=txt|md|pdf`.
+- Export route ownership checks match chat message ownership checks and applies billing export entitlements.
 
 ## Observability
 
@@ -149,6 +151,7 @@ Finish reason mapping:
 - `src/server/chat/queries.ts`
 - `src/features/chat/ChatSources.tsx`
 - `src/app/api/libraries/[libraryId]/chat/sessions/[sessionId]/messages/route.ts`
+- `src/app/api/libraries/[libraryId]/chat/sessions/[sessionId]/export/route.ts`
 
 ## Safe Change Checklist
 

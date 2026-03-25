@@ -124,7 +124,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
     setBillingAction(canTopUp ? "topup" : "upgrade");
 
     try {
-      const url = await createCheckoutSession(target, pathname);
+      const url = await createCheckoutSession(target, pathname, "sidebar");
       window.location.assign(url);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not start checkout right now.");

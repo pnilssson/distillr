@@ -1,4 +1,5 @@
 import type { BillingPlan } from "@/lib/billing/types";
+import type { ExportFormat } from "@/lib/exports/types";
 
 export type BillingPlanSpec = {
   label: string;
@@ -7,6 +8,7 @@ export type BillingPlanSpec = {
   monthlyVideoLimit: number;
   lifetimeVideoLimit: number | null;
   hasTopUpAccess: boolean;
+  allowedExportFormats: ExportFormat[];
 };
 
 export const BILLING_PLANS: Record<BillingPlan, BillingPlanSpec> = {
@@ -17,6 +19,7 @@ export const BILLING_PLANS: Record<BillingPlan, BillingPlanSpec> = {
     monthlyVideoLimit: 15,
     lifetimeVideoLimit: 100,
     hasTopUpAccess: false,
+    allowedExportFormats: ["txt"],
   },
   builder: {
     label: "Builder",
@@ -25,6 +28,7 @@ export const BILLING_PLANS: Record<BillingPlan, BillingPlanSpec> = {
     monthlyVideoLimit: 150,
     lifetimeVideoLimit: 1000,
     hasTopUpAccess: true,
+    allowedExportFormats: ["txt", "md", "pdf"],
   },
   pro: {
     label: "Pro",
@@ -33,6 +37,7 @@ export const BILLING_PLANS: Record<BillingPlan, BillingPlanSpec> = {
     monthlyVideoLimit: 450,
     lifetimeVideoLimit: null,
     hasTopUpAccess: true,
+    allowedExportFormats: ["txt", "md", "pdf"],
   },
 };
 
@@ -46,4 +51,8 @@ export function getBillingPlanLabel(plan: BillingPlan): string {
 
 export function isFreePrice(plan: BillingPlan): boolean {
   return BILLING_PLANS[plan].monthlyPriceUsd === 0;
+}
+
+export function canPlanUseExportFormat(plan: BillingPlan, format: ExportFormat): boolean {
+  return BILLING_PLANS[plan].allowedExportFormats.includes(format);
 }

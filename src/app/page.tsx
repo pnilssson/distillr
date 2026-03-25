@@ -11,6 +11,7 @@ import { FinalCtaSection } from "@/features/marketing/FinalCtaSection";
 import { FooterSection } from "@/features/marketing/FooterSection";
 import { BILLING_PLANS } from "@/lib/billing/plans";
 import { JsonLd } from "@/components/json-ld";
+import { getAppUrl } from "@/lib/site/url";
 
 const softwareApplicationSchema = {
   "@context": "https://schema.org",
@@ -18,7 +19,7 @@ const softwareApplicationSchema = {
   name: "Distillr",
   applicationCategory: "ProductivityApplication",
   operatingSystem: "Web",
-  url: "https://distillr.co",
+  url: getAppUrl("/"),
   description:
     "Distillr turns the YouTube channels and playlists you follow into a searchable research library. Ask questions across your sources and get cited answers with timestamp links.",
   offers: [
@@ -103,7 +104,7 @@ const faqSchema = {
       name: "Can I export my knowledge base data?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Distillr supports exports in Markdown, PDF, TXT, and full chat log formats, ready for Notion, Obsidian, or any note-taking tool you use.",
+        text: "Yes. Free supports TXT exports. Builder and Pro support TXT, Markdown, and PDF exports for chat sessions and content items.",
       },
     },
     {
@@ -111,7 +112,7 @@ const faqSchema = {
       name: "What is the credit system?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Credits are the unit used for AI chat. Each message costs credits depending on which AI model you choose, faster models cost fewer credits, more capable models cost more. Monthly credits reset on your billing date. Paid plans can buy 250-credit top-ups for $5.",
+        text: "Credits are the unit used for AI chat. Each message costs credits depending on which AI model you choose, faster models cost fewer credits, more capable models cost more. Monthly credits reset on your billing date. Paid plans can buy 100-credit top-ups for $3.",
       },
     },
     {

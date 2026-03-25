@@ -4,8 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { type UIMessage, DefaultChatTransport } from "ai";
 import { useQueryClient } from "@tanstack/react-query";
+import { Download, Lock } from "lucide-react";
 import { toast } from "sonner";
 
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   createCheckoutSession,
   fetchBillingState,
@@ -13,7 +21,9 @@ import {
 import { useBillingState } from "@/features/billing/useBillingState";
 import { ChatInput } from "@/features/chat/ChatInput";
 import { ChatMessageList } from "@/features/chat/ChatMessageList";
+import { downloadChatSessionExport } from "@/features/exports/api";
 import { DEFAULT_CHAT_MODEL_ID } from "@/lib/chat-models";
+import type { ExportFormat } from "@/lib/exports/types";
 import type {
   ChatMessageMetadata,
   ChatModelId,
@@ -40,9 +50,11 @@ export function ChatView({
   const [model, setModel] = useState<ChatModelId>(DEFAULT_CHAT_MODEL_ID);
   const [abortedMessageId, setAbortedMessageId] = useState<string | null>(null);
   const [focusTick, setFocusTick] = useState(0);
+  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
 
   const checkoutTarget = billingQuery.data?.hasTopUpAccess ? "top_up_tier_1" : "builder";
   const upgradeLabel = checkoutTarget === "top_up_tier_1" ? "Top up" : "Upgrade";
+  const allowedExportFormats = billingQuery.data?.allowedExportFormats ?? ["txt"];
 
   const { messages, sendMessage, stop, regenerate, status, error, clearError } =
     useChat<UIMessage<ChatMessageMetadata>>({
@@ -108,7 +120,7 @@ export function ChatView({
     setFocusTick((tick) => tick + 1);
   }
 
-  async function handleUpgrade() {
+  async function handleUpgrade(source: "chat" | "export" = "chat") {
     try {
       const billingState = await queryClient.ensureQueryData({
         queryKey: ["billing", "state"],
@@ -119,6 +131,7 @@ export function ChatView({
       const url = await createCheckoutSession(
         target,
         `/library/${libraryId}/chat/${sessionId}`,
+        source,
       );
       window.location.assign(url);
     } catch (upgradeError) {
@@ -130,6 +143,28 @@ export function ChatView({
     }
   }
 
+  async function handleExport(format: ExportFormat) {
+    const hasAccess = allowedExportFormats.includes(format);
+    setExportingFormat(format);
+
+    try {
+      await downloadChatSessionExport({
+        libraryId,
+        sessionId,
+        format,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not export right now.";
+      toast.error(message);
+
+      if (!hasAccess || isPaidExportErrorMessage(message)) {
+        await handleUpgrade("export");
+      }
+    } finally {
+      setExportingFormat(null);
+    }
+  }
+
   const canUpgrade = isInsufficientCreditsError(error);
 
   return (
@@ -137,6 +172,38 @@ export function ChatView({
       className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden"
       aria-label="Chat"
     >
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="mx-auto flex w-full max-w-2xl items-center justify-end px-4 py-2.5">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Download size={14} aria-hidden="true" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {(["txt", "md", "pdf"] as ExportFormat[]).map((format) => {
+                const hasAccess = allowedExportFormats.includes(format);
+                const extensionLabel = format === "txt" ? "TXT" : format === "md" ? "Markdown" : "PDF";
+
+                return (
+                  <DropdownMenuItem
+                    key={format}
+                    onClick={() => {
+                      void handleExport(format);
+                    }}
+                    disabled={exportingFormat !== null}
+                  >
+                    {!hasAccess ? <Lock size={13} aria-hidden="true" /> : null}
+                    <span>{exportingFormat === format ? "Exporting..." : extensionLabel}</span>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
       <ChatMessageList
         messages={messages}
         status={status}
@@ -184,6 +251,11 @@ export function ChatView({
       </div>
     </main>
   );
+}
+
+function isPaidExportErrorMessage(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return normalized.includes("builder") && normalized.includes("pro") && normalized.includes("export");
 }
 
 function extractTextContent(

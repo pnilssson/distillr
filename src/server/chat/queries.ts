@@ -401,6 +401,10 @@ function toSourcesRollup(value: unknown): ChatSourcesRollup | null {
     })
     .filter((item): item is ChatSourcesRollup["items"][number] => Boolean(item));
 
+  if (items.length === 0) {
+    return null;
+  }
+
   return {
     items,
   };

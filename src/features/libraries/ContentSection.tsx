@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Loader2, MoreHorizontal, XCircle } from "lucide-react";
+import { Download, ExternalLink, Loader2, Lock, MoreHorizontal, XCircle } from "lucide-react";
+import { toast } from "sonner";
 
 import Image from "next/image";
 
@@ -10,10 +11,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { downloadContentItemExport } from "@/features/exports/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { ExportFormat } from "@/lib/exports/types";
 import type { ContentType } from "@/lib/sources/types";
 import type { LibraryVideoProgressItem, LibraryVideosProgress } from "@/features/videos/types";
 
@@ -100,11 +104,38 @@ function StatusChip({ status, failureReason }: StatusChipProps) {
 
 type VideoRowProps = {
   video: LibraryVideoProgressItem;
+  libraryId: string;
+  allowedExportFormats: ExportFormat[];
+  onLockedExport: () => Promise<void>;
 };
 
-function VideoRow({ video }: VideoRowProps) {
+function VideoRow({ video, libraryId, allowedExportFormats, onLockedExport }: VideoRowProps) {
   const publishedDate = video.publishedAt ? timeAgo(video.publishedAt) : null;
   const contentUrl = getContentUrl(video.contentType, video.externalId);
+  const canExport = video.status === "ready";
+  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
+
+  async function handleExport(format: ExportFormat) {
+    const hasAccess = allowedExportFormats.includes(format);
+    setExportingFormat(format);
+
+    try {
+      await downloadContentItemExport({
+        libraryId,
+        contentItemId: video.id,
+        format,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not export right now.";
+      toast.error(message);
+
+      if (!hasAccess || isPaidExportErrorMessage(message)) {
+        await onLockedExport();
+      }
+    } finally {
+      setExportingFormat(null);
+    }
+  }
 
   return (
     <div className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/50">
@@ -153,6 +184,28 @@ function VideoRow({ video }: VideoRowProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
+            {canExport ? (
+              <>
+                {(["txt", "md", "pdf"] as ExportFormat[]).map((format) => {
+                  const hasAccess = allowedExportFormats.includes(format);
+                  const label = format === "txt" ? "Export TXT" : format === "md" ? "Export Markdown" : "Export PDF";
+
+                  return (
+                    <DropdownMenuItem
+                      key={format}
+                      onClick={() => {
+                        void handleExport(format);
+                      }}
+                      disabled={exportingFormat !== null}
+                    >
+                      {!hasAccess ? <Lock size={13} aria-hidden="true" /> : <Download size={13} aria-hidden="true" />}
+                      <span>{exportingFormat === format ? "Exporting..." : label}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+                <DropdownMenuSeparator />
+              </>
+            ) : null}
             <DropdownMenuItem asChild>
               <a href={contentUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink size={13} aria-hidden="true" />
@@ -167,11 +220,14 @@ function VideoRow({ video }: VideoRowProps) {
 }
 
 type Props = {
+  libraryId: string;
   videosData: LibraryVideosProgress | undefined;
   isLoading: boolean;
+  allowedExportFormats: ExportFormat[];
+  onLockedExport: () => Promise<void>;
 };
 
-export function ContentSection({ videosData, isLoading }: Props) {
+export function ContentSection({ libraryId, videosData, isLoading, allowedExportFormats, onLockedExport }: Props) {
   const [showAll, setShowAll] = useState(false);
 
   const videos = videosData?.videos ?? [];
@@ -241,7 +297,13 @@ export function ContentSection({ videosData, isLoading }: Props) {
             <>
               <div className="divide-y">
                 {visibleVideos.map((video) => (
-                  <VideoRow key={video.id} video={video} />
+                  <VideoRow
+                    key={video.id}
+                    video={video}
+                    libraryId={libraryId}
+                    allowedExportFormats={allowedExportFormats}
+                    onLockedExport={onLockedExport}
+                  />
                 ))}
               </div>
 
@@ -262,4 +324,9 @@ export function ContentSection({ videosData, isLoading }: Props) {
         </div>
     </section>
   );
+}
+
+function isPaidExportErrorMessage(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return normalized.includes("builder") && normalized.includes("pro") && normalized.includes("export");
 }

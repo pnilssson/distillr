@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddSourceDialog } from "@/features/sources/AddSourceDialog";
+import { createCheckoutSession } from "@/features/billing/api";
+import { useBillingState } from "@/features/billing/useBillingState";
 import { useSources } from "@/features/sources/useSources";
 import { useLibraryVideos } from "@/features/videos/useLibraryVideos";
 import { useChatSessions } from "@/features/chat/useChatSessions";
@@ -73,6 +75,8 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
   const videosQuery = useLibraryVideos(libraryId);
   const sessionsQuery = useChatSessions(libraryId);
   const createSessionMutation = useCreateChatSession(libraryId);
+  const billingQuery = useBillingState();
+  const allowedExportFormats = billingQuery.data?.allowedExportFormats ?? ["txt"];
 
   const sources = sourcesQuery.data ?? [];
   const sessions = sessionsQuery.data ?? [];
@@ -86,6 +90,16 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
       router.push(`/library/${libraryId}/chat/${session.id}`);
     } catch {
       toast.error("Could not create chat. Please try again.");
+    }
+  }
+
+  async function handleUpgradeForExport() {
+    try {
+      const target = billingQuery.data?.hasTopUpAccess ? "top_up_tier_1" : "builder";
+      const url = await createCheckoutSession(target, `/library/${libraryId}`, "export");
+      window.location.assign(url);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not start checkout right now.");
     }
   }
 
@@ -171,8 +185,11 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
 
             {/* Content */}
             <ContentSection
+              libraryId={libraryId}
               videosData={videosQuery.data}
               isLoading={videosQuery.isPending}
+              allowedExportFormats={allowedExportFormats}
+              onLockedExport={handleUpgradeForExport}
             />
           </div>
         )}

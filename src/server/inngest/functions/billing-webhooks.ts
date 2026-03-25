@@ -119,7 +119,7 @@ export const billingWebhookReceived = inngest.createFunction(
 
       if (userId) {
         const reprovisioned = await step.run("reprovision-free-if-needed", async () => {
-          return reprovisionFreeSubscriptionIfNeeded(userId);
+          return reprovisionFreeSubscriptionIfNeeded(userId, webhookId);
         });
         sideEffects += reprovisioned ? 1 : 0;
       }
@@ -325,7 +325,7 @@ function readString(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
-async function reprovisionFreeSubscriptionIfNeeded(userId: string): Promise<boolean> {
+async function reprovisionFreeSubscriptionIfNeeded(userId: string, webhookId: string): Promise<boolean> {
   const products = getDistillrProductIds();
   const freeProductId = products.free;
 
@@ -345,7 +345,7 @@ async function reprovisionFreeSubscriptionIfNeeded(userId: string): Promise<bool
   await createPolarFreeSubscription({
     externalCustomerId: userId,
     freeProductId,
-    idempotencyKey: `distillr-free-reprovision-${userId}-${Date.now()}`,
+    idempotencyKey: `distillr-free-reprovision-${userId}-${webhookId}`,
   });
 
   return true;

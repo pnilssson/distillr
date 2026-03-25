@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 
+import { getAppUrl } from "@/lib/site/url";
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
@@ -15,6 +17,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: "https://distillr.co/sitemap.xml",
+    sitemap: getAppUrl("/sitemap.xml"),
   };
 }

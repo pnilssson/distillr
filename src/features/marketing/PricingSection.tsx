@@ -100,7 +100,7 @@ export function PricingSection({ isAuthenticated }: PricingSectionProps) {
 
     try {
       const target = planName === "Pro" ? "pro" : "builder";
-      const url = await createCheckoutSession(target, "/dashboard");
+      const url = await createCheckoutSession(target, "/dashboard", "pricing");
       window.location.assign(url);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not start checkout right now.");

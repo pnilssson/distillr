@@ -26,7 +26,7 @@ export const env = createEnv({
     POLAR_PRODUCT_ID_FREE: z.string().uuid().optional(),
     POLAR_PRODUCT_ID_BUILDER: z.string().uuid().optional(),
     POLAR_PRODUCT_ID_PRO: z.string().uuid().optional(),
-    POLAR_PRODUCT_ID_TOP_UP_250: z.string().uuid().optional(),
+    POLAR_PRODUCT_ID_TOP_UP_100: z.string().uuid().optional(),
     POLAR_METER_ID_CHAT_CREDITS_USED: z.string().uuid().optional(),
     POLAR_METER_ID_VIDEOS_INGESTED_MONTHLY: z.string().uuid().optional(),
     POLAR_METER_ID_VIDEOS_INGESTED_LIFETIME: z.string().uuid().optional(),
@@ -63,7 +63,7 @@ export const env = createEnv({
     POLAR_PRODUCT_ID_FREE: process.env.POLAR_PRODUCT_ID_FREE,
     POLAR_PRODUCT_ID_BUILDER: process.env.POLAR_PRODUCT_ID_BUILDER,
     POLAR_PRODUCT_ID_PRO: process.env.POLAR_PRODUCT_ID_PRO,
-    POLAR_PRODUCT_ID_TOP_UP_250: process.env.POLAR_PRODUCT_ID_TOP_UP_250,
+    POLAR_PRODUCT_ID_TOP_UP_100: process.env.POLAR_PRODUCT_ID_TOP_UP_100,
     POLAR_METER_ID_CHAT_CREDITS_USED: process.env.POLAR_METER_ID_CHAT_CREDITS_USED,
     POLAR_METER_ID_VIDEOS_INGESTED_MONTHLY:
       process.env.POLAR_METER_ID_VIDEOS_INGESTED_MONTHLY,

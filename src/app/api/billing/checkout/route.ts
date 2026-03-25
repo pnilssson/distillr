@@ -41,7 +41,7 @@ export const POST = withApiAuth(async (request, { user }) => {
   const state = await getPolarCustomerState(user.id);
   const billing = state ? buildBillingSnapshot(state) : null;
 
-  if (target === "top_up_250" && !billing?.hasTopUpAccess) {
+  if (target === "top_up_100" && !billing?.hasTopUpAccess) {
     return NextResponse.json(
       { error: "Top-ups are available on paid plans." },
       { status: 403 },
@@ -77,9 +77,9 @@ export const POST = withApiAuth(async (request, { user }) => {
     });
   }
 
-  if (target === "top_up_250") {
+  if (target === "top_up_100") {
     await captureServerEvent(user.id, "top_up_clicked", {
-      target: "top_up_250",
+      target: "top_up_100",
       source: "checkout",
     });
   }
@@ -87,7 +87,7 @@ export const POST = withApiAuth(async (request, { user }) => {
   return NextResponse.json({ url: session.url });
 });
 
-function getProductIdForTarget(target: "builder" | "pro" | "top_up_250"): string | null {
+function getProductIdForTarget(target: "builder" | "pro" | "top_up_100"): string | null {
   const products = getDistillrProductIds();
 
   if (target === "builder") {
@@ -98,7 +98,7 @@ function getProductIdForTarget(target: "builder" | "pro" | "top_up_250"): string
     return products.pro;
   }
 
-  return products.topUp250;
+  return products.topUp100;
 }
 
 function sanitizeReturnPath(value: string | undefined): string {

@@ -22,12 +22,12 @@ export function getPolarBaseUrl(): string {
     : "https://api.polar.sh";
 }
 
-export function getDistillrProductIds(): Record<DistillrPlan | "topUp250", string | null> {
+export function getDistillrProductIds(): Record<DistillrPlan | "topUp100", string | null> {
   return {
     free: env.POLAR_PRODUCT_ID_FREE ?? null,
     builder: env.POLAR_PRODUCT_ID_BUILDER ?? null,
     pro: env.POLAR_PRODUCT_ID_PRO ?? null,
-    topUp250: env.POLAR_PRODUCT_ID_TOP_UP_250 ?? null,
+    topUp100: env.POLAR_PRODUCT_ID_TOP_UP_100 ?? null,
   };
 }
 

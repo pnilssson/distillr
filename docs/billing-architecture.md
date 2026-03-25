@@ -7,7 +7,7 @@ Distillr uses a Polar-first billing model. Polar is the source of truth for subs
 ## Scope
 
 - Plans: Free, Builder, Pro.
-- One-time top-up: `top_up_250`.
+- One-time top-up: `top_up_100`.
 - Usage dimensions:
   - chat credits consumed
   - videos ingested monthly
@@ -20,13 +20,13 @@ Plan limits:
 
 | Plan | Monthly chat credits | Monthly videos | Lifetime videos |
 | --- | --- | --- | --- |
-| Free | 50 | 15 | 100 |
-| Builder | 650 | 150 | 2000 |
-| Pro | 1800 | 500 | Unlimited |
+| Free | 25 | 15 | 100 |
+| Builder | 250 | 150 | 1000 |
+| Pro | 750 | 450 | Unlimited |
 
 Top-up:
 
-- `top_up_250` adds 250 chat credits for $5.
+- `top_up_100` adds 100 chat credits for $3.
 - Top-ups are available only to paid plans (`builder`, `pro`).
 
 ## Customer State and Provisioning

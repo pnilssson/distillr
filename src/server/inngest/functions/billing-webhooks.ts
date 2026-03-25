@@ -68,7 +68,7 @@ export const billingWebhookReceived = inngest.createFunction(
       let sideEffects = 0;
       const products = getDistillrProductIds();
 
-      if (products.topUp250 && productIds.includes(products.topUp250)) {
+      if (products.topUp100 && productIds.includes(products.topUp100)) {
         await step.run("emit-top-up-purchased", async () => {
           await captureServerEvent(userId, "top_up_purchased", {
             source: "polar_webhook",

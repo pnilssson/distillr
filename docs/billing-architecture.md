@@ -59,6 +59,14 @@ Top-up:
 - URL rule: do not hard-code app domains. Build redirect URLs from `NEXT_PUBLIC_APP_URL`.
 - Checkout return pattern includes `?billing=success` and triggers client billing-state invalidation.
 
+## Plan Upgrade and Downgrade Flow
+
+- Free-to-paid: checkout passes the Free subscription's `subscription_id` so Polar replaces it in place. This supports discount codes.
+- Paid-to-paid (e.g. Builder to Pro): checkout creates a new subscription; the webhook handler revokes lower-tier subscriptions after detecting a `plan_upgraded` event.
+- Subscription expiry: on `subscription.revoked` webhook, if the user has no remaining active Distillr subscriptions, a Free subscription is automatically re-provisioned.
+- The free-priced check uses `isFreePrice()` (derived from `monthlyPriceUsd === 0`) to stay plan-name-agnostic.
+- Polar "allow multiple subscriptions" must remain enabled for the paid-to-paid checkout path to work.
+
 ## Usage Ingestion Reliability
 
 - Hot paths emit internal events only:
@@ -89,6 +97,8 @@ Top-up:
   - handle `customer.state_changed`, `subscription.*`, `order.paid`
   - emit `top_up_purchased` for top-up orders
   - emit `plan_upgraded` only for real upgrade reasons (`purchase`, `subscription_create`, `subscription_update`), not renewal cycles
+  - revoke lower-tier subscriptions after a plan upgrade
+  - re-provision Free subscription on `subscription.revoked` when no active subscriptions remain
 
 ## Analytics Events
 

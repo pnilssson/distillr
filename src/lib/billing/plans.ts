@@ -43,3 +43,7 @@ export function getBillingPlanSpec(plan: BillingPlan): BillingPlanSpec {
 export function getBillingPlanLabel(plan: BillingPlan): string {
   return BILLING_PLANS[plan].label;
 }
+
+export function isFreePrice(plan: BillingPlan): boolean {
+  return BILLING_PLANS[plan].monthlyPriceUsd === 0;
+}

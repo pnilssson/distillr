@@ -41,8 +41,8 @@ export function ChatView({
   const [abortedMessageId, setAbortedMessageId] = useState<string | null>(null);
   const [focusTick, setFocusTick] = useState(0);
 
-  const checkoutTarget = billingQuery.data?.hasTopUpAccess ? "top_up_100" : "builder";
-  const upgradeLabel = checkoutTarget === "top_up_100" ? "Top up" : "Upgrade";
+  const checkoutTarget = billingQuery.data?.hasTopUpAccess ? "top_up_tier_1" : "builder";
+  const upgradeLabel = checkoutTarget === "top_up_tier_1" ? "Top up" : "Upgrade";
 
   const { messages, sendMessage, stop, regenerate, status, error, clearError } =
     useChat<UIMessage<ChatMessageMetadata>>({
@@ -114,7 +114,7 @@ export function ChatView({
         queryKey: ["billing", "state"],
         queryFn: fetchBillingState,
       });
-      const target = billingState.hasTopUpAccess ? "top_up_100" : "builder";
+      const target = billingState.hasTopUpAccess ? "top_up_tier_1" : "builder";
 
       const url = await createCheckoutSession(
         target,

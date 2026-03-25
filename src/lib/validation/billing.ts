@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createBillingCheckoutSchema = z.object({
-  target: z.enum(["builder", "pro", "top_up_100"]),
+  target: z.enum(["builder", "pro", "top_up_tier_1"]),
   returnPath: z.string().trim().min(1).optional(),
 });
 

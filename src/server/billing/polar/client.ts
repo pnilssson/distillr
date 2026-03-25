@@ -160,17 +160,24 @@ export async function createPolarCheckoutSession(input: {
   productId: string;
   successUrl: string;
   returnUrl: string;
+  subscriptionId?: string;
   idempotencyKey?: string;
 }): Promise<PolarCheckoutSession> {
+  const body: Record<string, unknown> = {
+    external_customer_id: input.externalCustomerId,
+    products: [input.productId],
+    success_url: input.successUrl,
+    return_url: input.returnUrl,
+  };
+
+  if (input.subscriptionId) {
+    body.subscription_id = input.subscriptionId;
+  }
+
   const session = await polarRequest<PolarCheckoutSession>(
     "POST",
     "/v1/checkouts/",
-    {
-      external_customer_id: input.externalCustomerId,
-      products: [input.productId],
-      success_url: input.successUrl,
-      return_url: input.returnUrl,
-    },
+    body,
     {
       idempotencyKey: input.idempotencyKey,
     },
@@ -213,6 +220,25 @@ export async function createPolarCustomerPortalSession(input: {
   return session;
 }
 
+export async function revokePolarSubscription(
+  subscriptionId: string,
+): Promise<PolarSubscription> {
+  const result = await polarRequest<PolarSubscription>(
+    "PATCH",
+    `/v1/subscriptions/${encodeURIComponent(subscriptionId)}`,
+    { revoke: true },
+  );
+
+  if (!result) {
+    throw createPolarIntegrationError({
+      code: "POLAR_SUBSCRIPTION_REVOKE_FAILED",
+      message: "Could not cancel subscription right now.",
+    });
+  }
+
+  return result;
+}
+
 export async function ingestPolarEvent(
   event: PolarIngestEvent,
   options: { idempotencyKey?: string } = {},
@@ -253,7 +279,7 @@ export async function ingestPolarEvents(
 }
 
 async function polarRequest<T>(
-  method: "GET" | "POST",
+  method: "GET" | "POST" | "PATCH",
   path: string,
   body?: Record<string, unknown>,
   options: PolarRequestOptions = {},

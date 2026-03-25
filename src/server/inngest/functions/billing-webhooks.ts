@@ -3,9 +3,14 @@ import "server-only";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import {
   getDistillrProductIds,
+  rankPlan,
   resolvePlanByProductId,
   type DistillrPlan,
 } from "@/server/billing/polar/config";
+import {
+  listPolarSubscriptions,
+  revokePolarSubscription,
+} from "@/server/billing/polar/client";
 import { inngest } from "@/server/inngest/client";
 
 type PolarWebhookPayload = {
@@ -68,7 +73,7 @@ export const billingWebhookReceived = inngest.createFunction(
       let sideEffects = 0;
       const products = getDistillrProductIds();
 
-      if (products.topUp100 && productIds.includes(products.topUp100)) {
+      if (products.topUpTier1 && productIds.includes(products.topUpTier1)) {
         await step.run("emit-top-up-purchased", async () => {
           await captureServerEvent(userId, "top_up_purchased", {
             source: "polar_webhook",
@@ -93,6 +98,11 @@ export const billingWebhookReceived = inngest.createFunction(
           });
         });
         sideEffects += 1;
+
+        const revoked = await step.run("revoke-lower-tier-subscriptions", async () => {
+          return revokeLowerTierSubscriptions(userId, upgradedPlan);
+        });
+        sideEffects += revoked;
       }
 
       return {
@@ -295,4 +305,29 @@ function readArray(value: unknown): unknown[] {
 
 function readString(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+async function revokeLowerTierSubscriptions(
+  userId: string,
+  upgradedPlan: DistillrPlan,
+): Promise<number> {
+  const subscriptions = await listPolarSubscriptions({
+    externalCustomerId: userId,
+    active: true,
+  });
+
+  const upgradedRank = rankPlan(upgradedPlan);
+  let revoked = 0;
+
+  for (const subscription of subscriptions) {
+    const plan = resolvePlanByProductId(subscription.product_id);
+    if (!plan) continue;
+
+    if (rankPlan(plan) < upgradedRank) {
+      await revokePolarSubscription(subscription.id);
+      revoked += 1;
+    }
+  }
+
+  return revoked;
 }

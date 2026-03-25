@@ -120,7 +120,7 @@ export function AppSidebar({ userEmail, userId }: AppSidebarProps) {
   }
 
   async function handleUpgradeOrTopUp() {
-    const target = canTopUp ? "top_up_100" : "builder";
+    const target = canTopUp ? "top_up_tier_1" : "builder";
     setBillingAction(canTopUp ? "topup" : "upgrade");
 
     try {

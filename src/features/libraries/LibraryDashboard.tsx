@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddSourceDialog } from "@/features/sources/AddSourceDialog";
-import { createCheckoutSession } from "@/features/billing/api";
 import { useBillingState } from "@/features/billing/useBillingState";
 import { useSources } from "@/features/sources/useSources";
 import { useLibraryVideos } from "@/features/videos/useLibraryVideos";
@@ -93,16 +92,6 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
     }
   }
 
-  async function handleUpgradeForExport() {
-    try {
-      const target = billingQuery.data?.hasTopUpAccess ? "top_up_tier_1" : "builder";
-      const url = await createCheckoutSession(target, `/library/${libraryId}`, "export");
-      window.location.assign(url);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not start checkout right now.");
-    }
-  }
-
   return (
     <main className="flex h-full flex-1 flex-col overflow-y-auto">
       <div className="mx-auto w-full max-w-6xl px-6 py-8">
@@ -173,6 +162,7 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
               isLoading={sessionsQuery.isPending}
               isNewChatPending={createSessionMutation.isPending}
               canChat={(videosQuery.data?.counts.ready ?? 0) > 0}
+              allowedExportFormats={allowedExportFormats}
               onNewChat={handleNewChat}
             />
 
@@ -189,7 +179,6 @@ export function LibraryDashboard({ libraryId, libraryName }: Props) {
               videosData={videosQuery.data}
               isLoading={videosQuery.isPending}
               allowedExportFormats={allowedExportFormats}
-              onLockedExport={handleUpgradeForExport}
             />
           </div>
         )}

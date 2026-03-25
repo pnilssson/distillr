@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, MoreHorizontal, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Download, Lock, MessageSquare, MoreHorizontal, Plus, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -21,11 +21,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { downloadChatSessionExport } from "@/features/exports/api";
 import { useDeleteChatSession } from "@/features/chat/useDeleteChatSession";
 import type { ChatSessionListItem } from "@/features/chat/types";
+import type { ExportFormat } from "@/lib/exports/types";
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -44,12 +47,31 @@ function timeAgo(dateStr: string): string {
 type ChatRowProps = {
   session: ChatSessionListItem;
   libraryId: string;
+  allowedExportFormats: ExportFormat[];
   onDelete: (session: { id: string; title: string }) => void;
 };
 
-function ChatRow({ session, libraryId, onDelete }: ChatRowProps) {
+function ChatRow({ session, libraryId, allowedExportFormats, onDelete }: ChatRowProps) {
   const lastActivity = session.lastMessageAt ?? session.updatedAt;
   const ago = timeAgo(lastActivity);
+  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
+
+  async function handleExport(format: ExportFormat) {
+    setExportingFormat(format);
+
+    try {
+      await downloadChatSessionExport({
+        libraryId,
+        sessionId: session.id,
+        format,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not export right now.";
+      toast.error(message);
+    } finally {
+      setExportingFormat(null);
+    }
+  }
 
   return (
     <div className="group flex items-center transition-colors hover:bg-muted/50">
@@ -87,6 +109,24 @@ function ChatRow({ session, libraryId, onDelete }: ChatRowProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
+            {(["txt", "md", "pdf"] as ExportFormat[]).map((format) => {
+              const hasAccess = allowedExportFormats.includes(format);
+              const label = format === "txt" ? "Export TXT" : format === "md" ? "Export Markdown" : "Export PDF";
+
+              return (
+                <DropdownMenuItem
+                  key={format}
+                  onClick={() => {
+                    void handleExport(format);
+                  }}
+                  disabled={exportingFormat !== null}
+                >
+                  {!hasAccess ? <Lock size={13} aria-hidden="true" /> : <Download size={13} aria-hidden="true" />}
+                  <span>{exportingFormat === format ? "Exporting..." : label}</span>
+                </DropdownMenuItem>
+              );
+            })}
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onDelete({ id: session.id, title: session.title })}
               className="text-destructive focus:text-destructive"
@@ -107,10 +147,19 @@ type Props = {
   isLoading: boolean;
   isNewChatPending: boolean;
   canChat: boolean;
+  allowedExportFormats: ExportFormat[];
   onNewChat: () => void;
 };
 
-export function ChatSection({ libraryId, sessions, isLoading, isNewChatPending, canChat, onNewChat }: Props) {
+export function ChatSection({
+  libraryId,
+  sessions,
+  isLoading,
+  isNewChatPending,
+  canChat,
+  allowedExportFormats,
+  onNewChat,
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [deletingSession, setDeletingSession] = useState<{ id: string; title: string } | null>(null);
@@ -197,6 +246,7 @@ export function ChatSection({ libraryId, sessions, isLoading, isNewChatPending, 
                   key={session.id}
                   session={session}
                   libraryId={libraryId}
+                  allowedExportFormats={allowedExportFormats}
                   onDelete={setDeletingSession}
                 />
               ))}

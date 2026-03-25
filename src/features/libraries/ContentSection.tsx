@@ -106,17 +106,15 @@ type VideoRowProps = {
   video: LibraryVideoProgressItem;
   libraryId: string;
   allowedExportFormats: ExportFormat[];
-  onLockedExport: () => Promise<void>;
 };
 
-function VideoRow({ video, libraryId, allowedExportFormats, onLockedExport }: VideoRowProps) {
+function VideoRow({ video, libraryId, allowedExportFormats }: VideoRowProps) {
   const publishedDate = video.publishedAt ? timeAgo(video.publishedAt) : null;
   const contentUrl = getContentUrl(video.contentType, video.externalId);
   const canExport = video.status === "ready";
   const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
 
   async function handleExport(format: ExportFormat) {
-    const hasAccess = allowedExportFormats.includes(format);
     setExportingFormat(format);
 
     try {
@@ -128,10 +126,6 @@ function VideoRow({ video, libraryId, allowedExportFormats, onLockedExport }: Vi
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not export right now.";
       toast.error(message);
-
-      if (!hasAccess || isPaidExportErrorMessage(message)) {
-        await onLockedExport();
-      }
     } finally {
       setExportingFormat(null);
     }
@@ -224,10 +218,9 @@ type Props = {
   videosData: LibraryVideosProgress | undefined;
   isLoading: boolean;
   allowedExportFormats: ExportFormat[];
-  onLockedExport: () => Promise<void>;
 };
 
-export function ContentSection({ libraryId, videosData, isLoading, allowedExportFormats, onLockedExport }: Props) {
+export function ContentSection({ libraryId, videosData, isLoading, allowedExportFormats }: Props) {
   const [showAll, setShowAll] = useState(false);
 
   const videos = videosData?.videos ?? [];
@@ -302,7 +295,6 @@ export function ContentSection({ libraryId, videosData, isLoading, allowedExport
                     video={video}
                     libraryId={libraryId}
                     allowedExportFormats={allowedExportFormats}
-                    onLockedExport={onLockedExport}
                   />
                 ))}
               </div>
@@ -324,9 +316,4 @@ export function ContentSection({ libraryId, videosData, isLoading, allowedExport
         </div>
     </section>
   );
-}
-
-function isPaidExportErrorMessage(message: string): boolean {
-  const normalized = message.toLowerCase();
-  return normalized.includes("builder") && normalized.includes("pro") && normalized.includes("export");
 }

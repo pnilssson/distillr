@@ -10,7 +10,7 @@ import { buildItemUrl } from "@/lib/sources/url";
 import { getChatSessionById, listChatMessages } from "@/server/chat/queries";
 import type { ChatSourcesRollup } from "@/server/chat/types";
 import { buildSmartChatExportDocument, buildSmartVideoExportDocument } from "@/server/exports/smart";
-import type { ExportDocument } from "@/server/exports/types";
+import type { BuiltExportDocument, ExportDocument } from "@/server/exports/types";
 
 type BuildChatSessionExportDocumentInput = {
   userId: string;
@@ -33,7 +33,7 @@ type TranscriptSegment = {
 
 export async function buildChatSessionExportDocument(
   input: BuildChatSessionExportDocumentInput,
-): Promise<ExportDocument | null> {
+): Promise<BuiltExportDocument | null> {
   const session = await getChatSessionById(input.userId, input.libraryId, input.sessionId);
   if (!session) {
     return null;
@@ -71,15 +71,18 @@ export async function buildChatSessionExportDocument(
   }
 
   return {
-    title: session.title,
-    metadataLines: ["Export type: Raw"],
-    sections,
+    document: {
+      title: session.title,
+      metadataLines: ["Export type: Raw"],
+      sections,
+    },
+    smartUsage: null,
   };
 }
 
 export async function buildContentItemExportDocument(
   input: BuildContentItemExportDocumentInput,
-): Promise<ExportDocument | null> {
+): Promise<BuiltExportDocument | null> {
   const [item] = await db
     .select({
       id: contentItems.id,
@@ -170,27 +173,30 @@ export async function buildContentItemExportDocument(
   }
 
   return {
-    title: item.title,
-    metadataLines: [
-      `Source: ${sourceUrl}`,
-      item.channelName ? `Channel: ${item.channelName}` : "",
-      `Published: ${item.publishedAt.toISOString().slice(0, 10)}`,
-      "Export type: Raw",
-    ].filter((line) => line.length > 0),
-    sections: [
-      {
-        heading: "Summary",
-        lines: item.summary?.trim() ? [item.summary.trim()] : ["Summary is not available."],
-      },
-      {
-        heading: "Key insights",
-        lines: insightLines.length > 0 ? insightLines.map((line) => `- ${line}`) : ["No key insights available."],
-      },
-      {
-        heading: "Transcript",
-        lines: transcriptLines,
-      },
-    ],
+    document: {
+      title: item.title,
+      metadataLines: [
+        `Source: ${sourceUrl}`,
+        item.channelName ? `Channel: ${item.channelName}` : "",
+        `Published: ${item.publishedAt.toISOString().slice(0, 10)}`,
+        "Export type: Raw",
+      ].filter((line) => line.length > 0),
+      sections: [
+        {
+          heading: "Summary",
+          lines: item.summary?.trim() ? [item.summary.trim()] : ["Summary is not available."],
+        },
+        {
+          heading: "Key insights",
+          lines: insightLines.length > 0 ? insightLines.map((line) => `- ${line}`) : ["No key insights available."],
+        },
+        {
+          heading: "Transcript",
+          lines: transcriptLines,
+        },
+      ],
+    },
+    smartUsage: null,
   };
 }
 

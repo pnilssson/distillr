@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 
 import { NextResponse } from "next/server";
 
-import { SMART_EXPORT_CREDIT_COST } from "@/lib/exports/types";
 import { exportQuerySchema } from "@/lib/validation/exports";
 import { checkAndDeductCredits, recordSmartExportCreditUsage } from "@/server/billing/credits";
 import { withApiAuth } from "@/server/core/auth/api";
@@ -70,7 +69,6 @@ export const GET = withApiAuth<ChatSessionExportRouteProps>(async (request, { pa
         userEmail: user.email ?? null,
         userName: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
         operation: "smart_export",
-        requiredCredits: SMART_EXPORT_CREDIT_COST,
       });
     } catch (error) {
       if (isAppError(error) && error.code === "INSUFFICIENT_CREDITS") {
@@ -89,27 +87,33 @@ export const GET = withApiAuth<ChatSessionExportRouteProps>(async (request, { pa
     }
   }
 
-  const document = await buildChatSessionExportDocument({
+  const builtExport = await buildChatSessionExportDocument({
     userId: user.id,
     libraryId,
     sessionId,
     variant,
   });
 
-  if (!document) {
+  if (!builtExport) {
     return NextResponse.json({ error: "Chat session not found." }, { status: 404 });
   }
 
+  const { document, smartUsage } = builtExport;
+
   const bytes = await renderExportDocument(format, document);
 
-  if (variant === "smart") {
+  if (variant === "smart" && smartUsage) {
     await recordSmartExportCreditUsage({
       userId: user.id,
       libraryId,
       resourceType: "chat_session",
       resourceId: sessionId,
       format,
-      creditsUsed: SMART_EXPORT_CREDIT_COST,
+      modelId: smartUsage.modelId,
+      inputTokens: smartUsage.inputTokens,
+      outputTokens: smartUsage.outputTokens,
+      totalTokens: smartUsage.totalTokens,
+      cachedInputTokens: smartUsage.cachedInputTokens,
       externalId: `distillr-smart-export-${randomUUID()}`,
     });
   }

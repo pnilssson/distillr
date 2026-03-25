@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 
 import { NextResponse } from "next/server";
 
-import { SMART_EXPORT_CREDIT_COST } from "@/lib/exports/types";
 import { exportQuerySchema } from "@/lib/validation/exports";
 import { checkAndDeductCredits, recordSmartExportCreditUsage } from "@/server/billing/credits";
 import { getBillingStateForUser } from "@/server/billing/queries";
@@ -70,7 +69,6 @@ export const GET = withApiAuth<ContentItemExportRouteProps>(async (request, { pa
         userEmail: user.email ?? null,
         userName: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
         operation: "smart_export",
-        requiredCredits: SMART_EXPORT_CREDIT_COST,
       });
     } catch (error) {
       if (isAppError(error) && error.code === "INSUFFICIENT_CREDITS") {
@@ -89,30 +87,36 @@ export const GET = withApiAuth<ContentItemExportRouteProps>(async (request, { pa
     }
   }
 
-  const document = await buildContentItemExportDocument({
+  const builtExport = await buildContentItemExportDocument({
     userId: user.id,
     libraryId,
     contentItemId,
     variant,
   });
 
-  if (!document) {
+  if (!builtExport) {
     return NextResponse.json(
       { error: "Content item not found or not ready for export." },
       { status: 404 },
     );
   }
 
+  const { document, smartUsage } = builtExport;
+
   const bytes = await renderExportDocument(format, document);
 
-  if (variant === "smart") {
+  if (variant === "smart" && smartUsage) {
     await recordSmartExportCreditUsage({
       userId: user.id,
       libraryId,
       resourceType: "content_item",
       resourceId: contentItemId,
       format,
-      creditsUsed: SMART_EXPORT_CREDIT_COST,
+      modelId: smartUsage.modelId,
+      inputTokens: smartUsage.inputTokens,
+      outputTokens: smartUsage.outputTokens,
+      totalTokens: smartUsage.totalTokens,
+      cachedInputTokens: smartUsage.cachedInputTokens,
       externalId: `distillr-smart-export-${randomUUID()}`,
     });
   }

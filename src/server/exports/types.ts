@@ -11,6 +11,19 @@ export type ExportDocument = {
   sections: ExportDocumentSection[];
 };
 
+export type SmartExportUsage = {
+  modelId: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  cachedInputTokens?: number;
+};
+
+export type BuiltExportDocument = {
+  document: ExportDocument;
+  smartUsage: SmartExportUsage | null;
+};
+
 export type RenderedExport = {
   format: ExportFormat;
   bytes: Uint8Array;

@@ -3,7 +3,7 @@ import "server-only";
 import { generateText, NoObjectGeneratedError, Output } from "ai";
 import { z } from "zod";
 
-import type { ExportDocument } from "@/server/exports/types";
+import type { BuiltExportDocument } from "@/server/exports/types";
 import { trackAIGeneration } from "@/server/core/analytics/ai-generation";
 import { getLanguageModel, getModel, type ModelAlias } from "@/server/core/ai/models";
 
@@ -50,7 +50,7 @@ const smartChatExportSchema = z.object({
 const MAX_TRANSCRIPT_CONTEXT_LINES = 180;
 const MAX_CHAT_CONTEXT_LINES = 180;
 
-export async function buildSmartVideoExportDocument(input: SmartVideoExportInput): Promise<ExportDocument> {
+export async function buildSmartVideoExportDocument(input: SmartVideoExportInput): Promise<BuiltExportDocument> {
   const startedAt = Date.now();
 
   const contextBlocks = [
@@ -117,46 +117,56 @@ export async function buildSmartVideoExportDocument(input: SmartVideoExportInput
   });
 
   const structured = smartVideoExportSchema.parse(result.output);
+  const modelId = getModel(SMART_EXPORT_MODEL_ALIAS).modelId;
 
   return {
-    title: input.title,
-    metadataLines: compact([
-      input.channelName ? `Channel: ${input.channelName}` : null,
-      input.publishedAt ? `Published: ${formatDate(input.publishedAt)}` : null,
-      `Source: ${input.sourceUrl}`,
-      "Export type: Smart",
-    ]),
-    sections: [
-      {
-        heading: "Overview",
-        lines: [structured.overview],
-      },
-      {
-        heading: "Key takeaways",
-        lines: structured.keyTakeaways.map((line: string) => `- ${line}`),
-      },
-      {
-        heading: "Timestamped highlights",
-        lines: structured.highlights.flatMap((highlight: { timestamp: string; title: string; summary: string }) => [
-          `- [${highlight.timestamp}] ${highlight.title}`,
-          `  ${highlight.summary}`,
-        ]),
-      },
-      {
-        heading: "Actionable next steps",
-        lines: structured.actionItems.length > 0
-          ? structured.actionItems.map((line: string) => `- ${line}`)
-          : ["- No explicit next steps were identified in the source material."],
-      },
-      {
-        heading: "Transcript appendix",
-        lines: input.transcriptLines.length > 0 ? input.transcriptLines : ["Transcript is not available for this item."],
-      },
-    ],
+    document: {
+      title: input.title,
+      metadataLines: compact([
+        input.channelName ? `Channel: ${input.channelName}` : null,
+        input.publishedAt ? `Published: ${formatDate(input.publishedAt)}` : null,
+        `Source: ${input.sourceUrl}`,
+        "Export type: Smart",
+      ]),
+      sections: [
+        {
+          heading: "Overview",
+          lines: [structured.overview],
+        },
+        {
+          heading: "Key takeaways",
+          lines: structured.keyTakeaways.map((line: string) => `- ${line}`),
+        },
+        {
+          heading: "Timestamped highlights",
+          lines: structured.highlights.flatMap((highlight: { timestamp: string; title: string; summary: string }) => [
+            `- [${highlight.timestamp}] ${highlight.title}`,
+            `  ${highlight.summary}`,
+          ]),
+        },
+        {
+          heading: "Actionable next steps",
+          lines: structured.actionItems.length > 0
+            ? structured.actionItems.map((line: string) => `- ${line}`)
+            : ["- No explicit next steps were identified in the source material."],
+        },
+        {
+          heading: "Transcript appendix",
+          lines: input.transcriptLines.length > 0 ? input.transcriptLines : ["Transcript is not available for this item."],
+        },
+      ],
+    },
+    smartUsage: {
+      modelId,
+      inputTokens: result.totalUsage.inputTokens ?? 0,
+      outputTokens: result.totalUsage.outputTokens ?? 0,
+      totalTokens: result.totalUsage.totalTokens ?? ((result.totalUsage.inputTokens ?? 0) + (result.totalUsage.outputTokens ?? 0)),
+      cachedInputTokens: 0,
+    },
   };
 }
 
-export async function buildSmartChatExportDocument(input: SmartChatExportInput): Promise<ExportDocument> {
+export async function buildSmartChatExportDocument(input: SmartChatExportInput): Promise<BuiltExportDocument> {
   const startedAt = Date.now();
 
   const contextBlocks = [
@@ -221,36 +231,46 @@ export async function buildSmartChatExportDocument(input: SmartChatExportInput):
   });
 
   const structured = smartChatExportSchema.parse(result.output);
+  const modelId = getModel(SMART_EXPORT_MODEL_ALIAS).modelId;
 
   return {
-    title: input.title,
-    metadataLines: ["Export type: Smart"],
-    sections: [
-      {
-        heading: "Overview",
-        lines: [structured.overview],
-      },
-      {
-        heading: "Key conclusions",
-        lines: structured.keyConclusions.map((line: string) => `- ${line}`),
-      },
-      {
-        heading: "Source-backed points",
-        lines: structured.sourceBackedPoints.length > 0
-          ? structured.sourceBackedPoints.map((line: string) => `- ${line}`)
-          : ["- No explicit source-backed points were captured in this session."],
-      },
-      {
-        heading: "Recommended actions",
-        lines: structured.recommendedActions.length > 0
-          ? structured.recommendedActions.map((line: string) => `- ${line}`)
-          : ["- No immediate action items were identified."],
-      },
-      {
-        heading: "Conversation appendix",
-        lines: input.conversationLines,
-      },
-    ],
+    document: {
+      title: input.title,
+      metadataLines: ["Export type: Smart"],
+      sections: [
+        {
+          heading: "Overview",
+          lines: [structured.overview],
+        },
+        {
+          heading: "Key conclusions",
+          lines: structured.keyConclusions.map((line: string) => `- ${line}`),
+        },
+        {
+          heading: "Source-backed points",
+          lines: structured.sourceBackedPoints.length > 0
+            ? structured.sourceBackedPoints.map((line: string) => `- ${line}`)
+            : ["- No explicit source-backed points were captured in this session."],
+        },
+        {
+          heading: "Recommended actions",
+          lines: structured.recommendedActions.length > 0
+            ? structured.recommendedActions.map((line: string) => `- ${line}`)
+            : ["- No immediate action items were identified."],
+        },
+        {
+          heading: "Conversation appendix",
+          lines: input.conversationLines,
+        },
+      ],
+    },
+    smartUsage: {
+      modelId,
+      inputTokens: result.totalUsage.inputTokens ?? 0,
+      outputTokens: result.totalUsage.outputTokens ?? 0,
+      totalTokens: result.totalUsage.totalTokens ?? ((result.totalUsage.inputTokens ?? 0) + (result.totalUsage.outputTokens ?? 0)),
+      cachedInputTokens: 0,
+    },
   };
 }
 

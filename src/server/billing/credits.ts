@@ -7,9 +7,10 @@ import {
   getPolarCustomerState,
 } from "@/server/billing/polar/customers";
 import { buildBillingSnapshot } from "@/server/billing/polar/state";
-import { SMART_EXPORT_CREDIT_COST } from "@/lib/exports/types";
 import { ingestPolarEvent } from "@/server/billing/polar/client";
 import { isPolarBillingEnabled } from "@/server/billing/polar/config";
+import { convertCostUsdToCredits } from "@/server/billing/polar/usage";
+import { calculateCostUsdByModelId } from "@/server/core/ai/models";
 import { env } from "@/server/core/env";
 
 type CheckAndDeductCreditsParams = {
@@ -56,7 +57,11 @@ export async function recordSmartExportCreditUsage(input: {
   resourceType: "chat_session" | "content_item";
   resourceId: string;
   format: "txt" | "md" | "pdf";
-  creditsUsed?: number;
+  modelId: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens?: number;
+  cachedInputTokens?: number;
   externalId: string;
 }): Promise<number> {
   if (!isPolarBillingEnabled()) {
@@ -73,7 +78,17 @@ export async function recordSmartExportCreditUsage(input: {
     });
   }
 
-  const creditsUsed = Math.max(1, Math.floor(input.creditsUsed ?? SMART_EXPORT_CREDIT_COST));
+  const totalTokens = input.totalTokens ?? input.inputTokens + input.outputTokens;
+  if (totalTokens <= 0) {
+    return 0;
+  }
+
+  const costUsd = calculateCostUsdByModelId(input.modelId, {
+    inputTokens: input.inputTokens,
+    outputTokens: input.outputTokens,
+    cachedInputTokens: input.cachedInputTokens,
+  });
+  const creditsUsed = convertCostUsdToCredits(costUsd);
 
   await ingestPolarEvent(
     {
@@ -82,6 +97,11 @@ export async function recordSmartExportCreditUsage(input: {
       externalId: input.externalId,
       metadata: {
         credits_used: creditsUsed,
+        cost_usd: costUsd,
+        input_tokens: input.inputTokens,
+        output_tokens: input.outputTokens,
+        total_tokens: totalTokens,
+        model_id: input.modelId,
         operation: "smart_export",
         library_id: input.libraryId,
         resource_type: input.resourceType,
@@ -103,7 +123,7 @@ export function createInsufficientCreditsError(
 ): AppError {
   const userMessage =
     operation === "smart_export"
-      ? `You do not have enough credits for smart export. You need at least ${requiredCredits} credits.`
+      ? `You do not have enough credits for smart export. You need at least ${requiredCredits} credit${requiredCredits === 1 ? "" : "s"}.`
       : "You do not have enough credits for this message.";
 
   return new AppError({
@@ -114,9 +134,6 @@ export function createInsufficientCreditsError(
 }
 
 function getDefaultRequiredCredits(operation: "chat_message" | "smart_export"): number {
-  if (operation === "smart_export") {
-    return SMART_EXPORT_CREDIT_COST;
-  }
-
+  void operation;
   return 1;
 }

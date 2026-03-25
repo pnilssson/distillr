@@ -69,6 +69,12 @@ Credits are the universal unit for chat. Users choose their AI model per request
 
 Export entitlements are plan-gated. Free supports TXT export only. Builder and Pro support TXT, Markdown, and PDF export.
 
+Exports support two variants: Raw and Smart.
+
+- Raw export is a direct transcript/chat export and does not consume credits.
+- Smart export creates a reader-ready brief and consumes credits.
+- Exports are share-safe by default and do not include internal IDs or database metadata.
+
 Each indexed video counts as one video toward monthly indexing and total stored limits, regardless of video length.
 
 Deleting a video does not restore monthly or lifetime quota. Ingestion is the cost event: transcript fetch, embedding, and processing are spent at ingest time regardless of later deletion.

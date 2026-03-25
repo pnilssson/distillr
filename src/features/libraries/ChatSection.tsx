@@ -21,13 +21,17 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { downloadChatSessionExport } from "@/features/exports/api";
-import { useDeleteChatSession } from "@/features/chat/useDeleteChatSession";
 import type { ChatSessionListItem } from "@/features/chat/types";
+import { useDeleteChatSession } from "@/features/chat/useDeleteChatSession";
 import type { ExportFormat } from "@/lib/exports/types";
 
 function timeAgo(dateStr: string): string {
@@ -54,22 +58,29 @@ type ChatRowProps = {
 function ChatRow({ session, libraryId, allowedExportFormats, onDelete }: ChatRowProps) {
   const lastActivity = session.lastMessageAt ?? session.updatedAt;
   const ago = timeAgo(lastActivity);
-  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
+  const [exportingKey, setExportingKey] = useState<string | null>(null);
 
-  async function handleExport(format: ExportFormat) {
-    setExportingFormat(format);
+  async function handleExport(variant: "raw" | "smart", format: ExportFormat) {
+    const key = `${variant}-${format}`;
+    setExportingKey(key);
+    const toastId = toast.loading(
+      variant === "smart" ? "Generating smart export..." : "Preparing export...",
+    );
 
     try {
       await downloadChatSessionExport({
         libraryId,
         sessionId: session.id,
+        variant,
         format,
       });
+
+      toast.success("Export downloaded.", { id: toastId });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not export right now.";
-      toast.error(message);
+      toast.error(message, { id: toastId });
     } finally {
-      setExportingFormat(null);
+      setExportingKey(null);
     }
   }
 
@@ -108,28 +119,62 @@ function ChatRow({ session, libraryId, allowedExportFormats, onDelete }: ChatRow
               <MoreHorizontal size={14} aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            {(["txt", "md", "pdf"] as ExportFormat[]).map((format) => {
-              const hasAccess = allowedExportFormats.includes(format);
-              const label = format === "txt" ? "Export TXT" : format === "md" ? "Export Markdown" : "Export PDF";
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Export</DropdownMenuLabel>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Download size={13} aria-hidden="true" />
+                Smart export
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-52">
+                {(["txt", "md", "pdf"] as ExportFormat[]).map((format) => {
+                  const hasAccess = allowedExportFormats.includes(format);
+                  const label = format === "txt" ? "TXT" : format === "md" ? "Markdown" : "PDF";
 
-              return (
-                <DropdownMenuItem
-                  key={format}
-                  onClick={() => {
-                    void handleExport(format);
-                  }}
-                  disabled={exportingFormat !== null}
-                >
-                  {!hasAccess ? <Lock size={13} aria-hidden="true" /> : <Download size={13} aria-hidden="true" />}
-                  <span>{exportingFormat === format ? "Exporting..." : label}</span>
-                </DropdownMenuItem>
-              );
-            })}
+                  return (
+                    <DropdownMenuItem
+                      key={`smart-${format}`}
+                      onClick={() => {
+                        void handleExport("smart", format);
+                      }}
+                      disabled={exportingKey !== null}
+                    >
+                      {!hasAccess ? <Lock size={13} aria-hidden="true" /> : <Download size={13} aria-hidden="true" />}
+                      <span>{exportingKey === `smart-${format}` ? "Exporting..." : label}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Download size={13} aria-hidden="true" />
+                Raw export
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-52">
+                {(["txt", "md", "pdf"] as ExportFormat[]).map((format) => {
+                  const hasAccess = allowedExportFormats.includes(format);
+                  const label = format === "txt" ? "TXT" : format === "md" ? "Markdown" : "PDF";
+
+                  return (
+                    <DropdownMenuItem
+                      key={`raw-${format}`}
+                      onClick={() => {
+                        void handleExport("raw", format);
+                      }}
+                      disabled={exportingKey !== null}
+                    >
+                      {!hasAccess ? <Lock size={13} aria-hidden="true" /> : <Download size={13} aria-hidden="true" />}
+                      <span>{exportingKey === `raw-${format}` ? "Exporting..." : label}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
             <DropdownMenuSeparator />
             <DropdownMenuItem
+              variant="destructive"
               onClick={() => onDelete({ id: session.id, title: session.title })}
-              className="text-destructive focus:text-destructive"
             >
               <Trash2 size={13} aria-hidden="true" />
               Delete chat

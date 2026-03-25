@@ -131,8 +131,9 @@ Finish reason mapping:
 - Server uses `consumeSseStream` so finish callbacks run on abort/disconnect.
 - Sidebar session list refreshes after stream finish to reflect title/recency updates.
 - Sources UI renders item-level links and optional anchor links, and may collapse long lists behind a reveal interaction.
-- Chat session exports are available at `GET /api/libraries/[libraryId]/chat/sessions/[sessionId]/export?format=txt|md|pdf`.
+- Chat session exports are available at `GET /api/libraries/[libraryId]/chat/sessions/[sessionId]/export?format=txt|md|pdf&variant=raw|smart`.
 - Export route ownership checks match chat message ownership checks and applies billing export entitlements.
+- Smart export consumes credits and returns a structured brief plus conversation appendix.
 
 ## Observability
 

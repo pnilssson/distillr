@@ -196,8 +196,8 @@ function SourceRow({ source, libraryId, onDeleteRequest }: SourceRowProps) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
+            variant="destructive"
             onClick={() => onDeleteRequest(source)}
-            className="text-destructive focus:text-destructive"
           >
             <Trash2 size={13} aria-hidden="true" />
             Delete

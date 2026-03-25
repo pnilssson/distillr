@@ -1,10 +1,15 @@
 import "server-only";
 
-import type { ExportFormat } from "@/lib/exports/types";
+import type { ExportFormat, ExportVariant } from "@/lib/exports/types";
 
-export function buildExportFilename(baseName: string, format: ExportFormat): string {
+export function buildExportFilename(
+  baseName: string,
+  format: ExportFormat,
+  variant: ExportVariant,
+): string {
   const safeBase = sanitizeFilenamePart(baseName) || "distillr-export";
-  return `${safeBase}.${format}`;
+  const suffix = variant === "smart" ? "smart-export" : "raw-export";
+  return `${safeBase}-${suffix}.${format}`;
 }
 
 function sanitizeFilenamePart(value: string): string {

@@ -1,9 +1,14 @@
+import { randomUUID } from "node:crypto";
+
 import { NextResponse } from "next/server";
 
+import { SMART_EXPORT_CREDIT_COST } from "@/lib/exports/types";
 import { exportQuerySchema } from "@/lib/validation/exports";
+import { checkAndDeductCredits, recordSmartExportCreditUsage } from "@/server/billing/credits";
 import { getBillingStateForUser } from "@/server/billing/queries";
 import { captureServerEvent } from "@/server/core/analytics/posthog";
 import { withApiAuth } from "@/server/core/auth/api";
+import { isAppError } from "@/server/core/errors/app-error";
 import { buildContentItemExportDocument } from "@/server/exports/document";
 import { canExportFormat } from "@/server/exports/entitlements";
 import { buildExportFilename } from "@/server/exports/filenames";
@@ -28,6 +33,7 @@ export const GET = withApiAuth<ContentItemExportRouteProps>(async (request, { pa
   const url = new URL(request.url);
   const parsedQuery = exportQuerySchema.safeParse({
     format: url.searchParams.get("format") ?? undefined,
+    variant: url.searchParams.get("variant") ?? undefined,
   });
 
   if (!parsedQuery.success) {
@@ -39,11 +45,13 @@ export const GET = withApiAuth<ContentItemExportRouteProps>(async (request, { pa
 
   const billingState = await getBillingStateForUser({ userId: user.id });
   const format = parsedQuery.data.format;
+  const variant = parsedQuery.data.variant;
 
   if (!canExportFormat(billingState, format)) {
     await captureServerEvent(user.id, "upgrade_prompt_shown", {
       source: "export",
       format,
+      variant,
       resource_type: "content_item",
       library_id: libraryId,
       content_item_id: contentItemId,
@@ -55,10 +63,37 @@ export const GET = withApiAuth<ContentItemExportRouteProps>(async (request, { pa
     );
   }
 
+  if (variant === "smart") {
+    try {
+      await checkAndDeductCredits({
+        userId: user.id,
+        userEmail: user.email ?? null,
+        userName: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
+        operation: "smart_export",
+        requiredCredits: SMART_EXPORT_CREDIT_COST,
+      });
+    } catch (error) {
+      if (isAppError(error) && error.code === "INSUFFICIENT_CREDITS") {
+        await captureServerEvent(user.id, "upgrade_prompt_shown", {
+          source: "export",
+          reason: "insufficient_credits",
+          variant,
+          format,
+          resource_type: "content_item",
+          library_id: libraryId,
+          content_item_id: contentItemId,
+        });
+      }
+
+      throw error;
+    }
+  }
+
   const document = await buildContentItemExportDocument({
     userId: user.id,
     libraryId,
     contentItemId,
+    variant,
   });
 
   if (!document) {
@@ -69,9 +104,22 @@ export const GET = withApiAuth<ContentItemExportRouteProps>(async (request, { pa
   }
 
   const bytes = await renderExportDocument(format, document);
+
+  if (variant === "smart") {
+    await recordSmartExportCreditUsage({
+      userId: user.id,
+      libraryId,
+      resourceType: "content_item",
+      resourceId: contentItemId,
+      format,
+      creditsUsed: SMART_EXPORT_CREDIT_COST,
+      externalId: `distillr-smart-export-${randomUUID()}`,
+    });
+  }
+
   const response = buildExportResponse({
     bytes,
-    filename: buildExportFilename(document.title, format),
+    filename: buildExportFilename(document.title, format, variant),
     format,
   });
 
@@ -81,6 +129,7 @@ export const GET = withApiAuth<ContentItemExportRouteProps>(async (request, { pa
     library_id: libraryId,
     content_item_id: contentItemId,
     plan: billingState.plan,
+    variant,
   });
 
   return response;

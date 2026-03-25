@@ -1,38 +1,40 @@
-import type { ExportFormat } from "@/lib/exports/types";
+import type { ExportFormat, ExportVariant } from "@/lib/exports/types";
 import { getApiErrorMessage, parseJsonResponse } from "@/lib/http/response";
 
 type DownloadChatSessionExportInput = {
   libraryId: string;
   sessionId: string;
   format: ExportFormat;
+  variant: ExportVariant;
 };
 
 type DownloadContentItemExportInput = {
   libraryId: string;
   contentItemId: string;
   format: ExportFormat;
+  variant: ExportVariant;
 };
 
 export async function downloadChatSessionExport(input: DownloadChatSessionExportInput): Promise<void> {
   const response = await fetch(
-    `/api/libraries/${input.libraryId}/chat/sessions/${input.sessionId}/export?format=${input.format}`,
+    `/api/libraries/${input.libraryId}/chat/sessions/${input.sessionId}/export?format=${input.format}&variant=${input.variant}`,
     {
       method: "GET",
     },
   );
 
-  await downloadFromResponse(response, `chat-export.${input.format}`);
+  await downloadFromResponse(response, `chat-${input.variant}-export.${input.format}`);
 }
 
 export async function downloadContentItemExport(input: DownloadContentItemExportInput): Promise<void> {
   const response = await fetch(
-    `/api/libraries/${input.libraryId}/content-items/${input.contentItemId}/export?format=${input.format}`,
+    `/api/libraries/${input.libraryId}/content-items/${input.contentItemId}/export?format=${input.format}&variant=${input.variant}`,
     {
       method: "GET",
     },
   );
 
-  await downloadFromResponse(response, `content-export.${input.format}`);
+  await downloadFromResponse(response, `content-${input.variant}-export.${input.format}`);
 }
 
 async function downloadFromResponse(response: Response, fallbackFilename: string): Promise<void> {

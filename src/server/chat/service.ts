@@ -81,9 +81,10 @@ export async function streamChatMessage(params: StreamChatMessageParams): Promis
       userId: params.userId,
       userEmail: params.userEmail,
       userName: params.userName,
+      operation: "chat_message",
       modelId: generationModel.modelId,
       modelAlias: generationModelAlias,
-      operation: "chat_message",
+      requiredCredits: 1,
     });
   } catch (error) {
     if (isAppError(error) && error.code === "INSUFFICIENT_CREDITS") {

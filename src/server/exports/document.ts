@@ -4,22 +4,26 @@ import { and, asc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { contentChunks, contentItems } from "@/db/schema";
+import type { ExportVariant } from "@/lib/exports/types";
 import { isContentType } from "@/lib/sources/types";
 import { buildItemUrl } from "@/lib/sources/url";
 import { getChatSessionById, listChatMessages } from "@/server/chat/queries";
 import type { ChatSourcesRollup } from "@/server/chat/types";
+import { buildSmartChatExportDocument, buildSmartVideoExportDocument } from "@/server/exports/smart";
 import type { ExportDocument } from "@/server/exports/types";
 
 type BuildChatSessionExportDocumentInput = {
   userId: string;
   libraryId: string;
   sessionId: string;
+  variant: ExportVariant;
 };
 
 type BuildContentItemExportDocumentInput = {
   userId: string;
   libraryId: string;
   contentItemId: string;
+  variant: ExportVariant;
 };
 
 type TranscriptSegment = {
@@ -36,37 +40,39 @@ export async function buildChatSessionExportDocument(
   }
 
   const messages = await listAllChatMessages(input.userId, input.libraryId, input.sessionId);
+  const conversationLines = messages.flatMap((message) => {
+    const roleLabel = message.role === "assistant" ? "Assistant" : "User";
+    return [`${roleLabel}: ${message.content.trim() || "(No content)"}`, ""];
+  });
+
+  const sourceLines = toAggregatedSourceLines(messages.map((message) => message.sources));
+
+  if (input.variant === "smart") {
+    return buildSmartChatExportDocument({
+      userId: input.userId,
+      title: session.title,
+      conversationLines,
+      sourceLines,
+    });
+  }
 
   const sections: ExportDocument["sections"] = [
     {
       heading: "Conversation",
-      lines: messages.flatMap((message) => {
-        const createdAt = message.createdAt.toISOString();
-        const roleLabel = message.role === "assistant" ? "Assistant" : "User";
-        const base = [`[${roleLabel}] ${createdAt}`, message.content.trim() || "(No content)"];
-
-        if (message.role !== "assistant" || !message.sources || message.sources.items.length === 0) {
-          return [...base, ""];
-        }
-
-        return [
-          ...base,
-          "Sources:",
-          ...toSourceLines(message.sources),
-          "",
-        ];
-      }),
+      lines: conversationLines.length > 0 ? conversationLines : ["No messages in this chat session."],
     },
   ];
 
+  if (sourceLines.length > 0) {
+    sections.push({
+      heading: "Cited sources",
+      lines: sourceLines,
+    });
+  }
+
   return {
     title: session.title,
-    metadataLines: [
-      `Session ID: ${session.id}`,
-      `Created: ${session.createdAt.toISOString()}`,
-      `Updated: ${session.updatedAt.toISOString()}`,
-      `Exported: ${new Date().toISOString()}`,
-    ],
+    metadataLines: ["Export type: Raw"],
     sections,
   };
 }
@@ -86,8 +92,6 @@ export async function buildContentItemExportDocument(
       summary: contentItems.summary,
       keyInsights: contentItems.keyInsights,
       transcriptRaw: contentItems.transcriptRaw,
-      createdAt: contentItems.createdAt,
-      updatedAt: contentItems.updatedAt,
     })
     .from(contentItems)
     .where(
@@ -150,17 +154,29 @@ export async function buildContentItemExportDocument(
         .filter((line) => line.length > 0)
     : [];
 
+  const sourceUrl = buildItemUrl(item.externalId, item.contentType);
+
+  if (input.variant === "smart") {
+    return buildSmartVideoExportDocument({
+      userId: input.userId,
+      title: item.title,
+      sourceUrl,
+      channelName: item.channelName,
+      publishedAt: item.publishedAt,
+      summary: item.summary,
+      keyInsights: insightLines,
+      transcriptLines,
+    });
+  }
+
   return {
     title: item.title,
     metadataLines: [
-      `Content ID: ${item.id}`,
-      `URL: ${buildItemUrl(item.externalId, item.contentType)}`,
-      `Channel: ${item.channelName}`,
-      `Published: ${item.publishedAt.toISOString()}`,
-      `Created: ${item.createdAt.toISOString()}`,
-      `Updated: ${item.updatedAt.toISOString()}`,
-      `Exported: ${new Date().toISOString()}`,
-    ],
+      `Source: ${sourceUrl}`,
+      item.channelName ? `Channel: ${item.channelName}` : "",
+      `Published: ${item.publishedAt.toISOString().slice(0, 10)}`,
+      "Export type: Raw",
+    ].filter((line) => line.length > 0),
     sections: [
       {
         heading: "Summary",
@@ -207,16 +223,31 @@ async function listAllChatMessages(userId: string, libraryId: string, sessionId:
   });
 }
 
-function toSourceLines(sources: ChatSourcesRollup): string[] {
-  return sources.items.flatMap((item) => {
-    const header = `- ${item.title}: ${item.url}`;
-    const anchors = item.anchors.map((anchor) => {
-      const label = anchor.label ?? anchor.anchorType;
-      return `  - ${label}: ${anchor.url}`;
-    });
+function toAggregatedSourceLines(sourceRollups: Array<ChatSourcesRollup | null>): string[] {
+  const seen = new Set<string>();
+  const lines: string[] = [];
 
-    return [header, ...anchors];
-  });
+  for (const rollup of sourceRollups) {
+    if (!rollup) {
+      continue;
+    }
+
+    for (const item of rollup.items) {
+      if (seen.has(item.itemId)) {
+        continue;
+      }
+
+      seen.add(item.itemId);
+      lines.push(`- ${item.title}: ${item.url}`);
+
+      for (const anchor of item.anchors) {
+        const label = anchor.label ?? anchor.anchorType;
+        lines.push(`  - ${label}: ${anchor.url}`);
+      }
+    }
+  }
+
+  return lines;
 }
 
 function parseTranscriptSegments(raw: string | null): TranscriptSegment[] | null {

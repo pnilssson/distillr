@@ -55,6 +55,8 @@ Top-up:
 ## Enforcement Points
 
 - Chat preflight: `checkAndDeductCredits()` blocks when `chatCreditsBalance < 1`.
+- Smart export preflight: `checkAndDeductCredits()` blocks when `chatCreditsBalance < 3`.
+- Smart export usage: successful smart exports ingest a fixed 3-credit usage event.
 - Snapshot normalization clamps negative balances to `0` before app enforcement.
 - Source planning: ingestion queue is clipped by monthly and lifetime remaining allowances.
 - Overflow videos are marked failed with provider-agnostic limit reasons.

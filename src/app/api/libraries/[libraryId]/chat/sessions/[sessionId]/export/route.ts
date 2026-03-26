@@ -90,6 +90,7 @@ export const GET = withApiAuth<ChatSessionExportRouteProps>(async (request, { pa
   const builtExport = await buildChatSessionExportDocument({
     userId: user.id,
     libraryId,
+    libraryName: library.name,
     sessionId,
     variant,
   });

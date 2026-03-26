@@ -21,6 +21,7 @@ type SmartVideoExportInput = {
 type SmartChatExportInput = {
   userId: string;
   title: string;
+  libraryName: string;
   conversationLines: string[];
   sourceLines: string[];
 };
@@ -33,17 +34,24 @@ const smartVideoExportSchema = z.object({
   highlights: z.array(
     z.object({
       timestamp: z.string().trim().min(1),
-      title: z.string().trim().min(1),
-      summary: z.string().trim().min(1),
+      claim: z.string().trim().min(1),
+      evidence: z.string().trim().min(1),
     }),
   ).min(3).max(8),
+  surprisingOrContrarian: z.array(z.string().trim().min(1)).max(5),
   actionItems: z.array(z.string().trim().min(1)).max(8),
 }).strict();
 
 const smartChatExportSchema = z.object({
   overview: z.string().trim().min(1),
   keyConclusions: z.array(z.string().trim().min(1)).min(3).max(8),
-  sourceBackedPoints: z.array(z.string().trim().min(1)).max(8),
+  sourceBackedFindings: z.array(
+    z.object({
+      finding: z.string().trim().min(1),
+      source: z.string().trim().min(1),
+    }),
+  ).max(8),
+  surprisingOrContrarian: z.array(z.string().trim().min(1)).max(5),
   recommendedActions: z.array(z.string().trim().min(1)).max(8),
 }).strict();
 
@@ -80,11 +88,18 @@ export async function buildSmartVideoExportDocument(input: SmartVideoExportInput
         schema: smartVideoExportSchema,
       }),
       system: [
-        "You are writing a smart export for Distillr users.",
-        "Return concise, high-signal sections based only on the supplied source material.",
-        "Do not invent facts, quotes, timestamps, or claims beyond the input.",
-        "Do not include internal system metadata or implementation details.",
-        "Keep each bullet actionable and specific.",
+        "You are writing a research brief for analysts and writers who use YouTube as a primary source.",
+        "Your audience publishes original analysis on Substack, Ghost, or similar platforms.",
+        "",
+        "Rules:",
+        "- Ground every takeaway in a specific claim, data point, or example from the transcript.",
+        "- For each highlight, state what the speaker claims and what evidence or reasoning they provide.",
+        "- Identify points that contradict conventional wisdom, challenge popular assumptions, or present an unexpected angle. If none exist, return an empty array.",
+        "- Write takeaways as specific, quotable statements — not generic topic labels.",
+        "- Bad: 'The speaker discusses marketing strategies.' Good: 'Short-form vertical video drove 3x engagement for B2B at Company X, per the speaker.'",
+        "- Do not invent facts, quotes, timestamps, or claims beyond the input.",
+        "- Do not include internal system metadata or implementation details.",
+        "- Keep the output concise and high-signal.",
       ].join("\n"),
       prompt: contextBlocks.join("\n\n"),
     });
@@ -126,6 +141,7 @@ export async function buildSmartVideoExportDocument(input: SmartVideoExportInput
         input.channelName ? `Channel: ${input.channelName}` : null,
         input.publishedAt ? `Published: ${formatDate(input.publishedAt)}` : null,
         `Source: ${input.sourceUrl}`,
+        `Exported: ${formatDate(new Date())}`,
         "Export type: Smart",
       ]),
       sections: [
@@ -138,17 +154,23 @@ export async function buildSmartVideoExportDocument(input: SmartVideoExportInput
           lines: structured.keyTakeaways.map((line: string) => `- ${line}`),
         },
         {
-          heading: "Timestamped highlights",
-          lines: structured.highlights.flatMap((highlight: { timestamp: string; title: string; summary: string }) => [
-            `- [${highlight.timestamp}] ${highlight.title}`,
-            `  ${highlight.summary}`,
+          heading: "Highlights with evidence",
+          lines: structured.highlights.flatMap((highlight: { timestamp: string; claim: string; evidence: string }) => [
+            `- [${highlight.timestamp}] ${highlight.claim}`,
+            `  ${highlight.evidence}`,
           ]),
         },
+        ...(structured.surprisingOrContrarian.length > 0
+          ? [{
+              heading: "Surprising or contrarian points",
+              lines: structured.surprisingOrContrarian.map((line: string) => `- ${line}`),
+            }]
+          : []),
         {
           heading: "Actionable next steps",
           lines: structured.actionItems.length > 0
             ? structured.actionItems.map((line: string) => `- ${line}`)
-            : ["- No explicit next steps were identified in the source material."],
+            : ["No explicit next steps were identified in the source material."],
         },
         {
           heading: "Transcript appendix",
@@ -172,12 +194,12 @@ export async function buildSmartChatExportDocument(input: SmartChatExportInput):
   const contextBlocks = [
     `Chat title: ${input.title}`,
     [
-      "Conversation excerpts:",
+      "Research conversation (this is the primary signal — the user's questions reveal what they care about, and the assistant's answers contain the synthesized conclusions):",
       ...limitLines(input.conversationLines, MAX_CHAT_CONTEXT_LINES),
     ].join("\n"),
     input.sourceLines.length > 0
-      ? ["Cited source lines:", ...input.sourceLines].join("\n")
-      : "Cited source lines: (none)",
+      ? ["Cited sources (use for attribution only, not as primary content):", ...input.sourceLines].join("\n")
+      : "Cited sources: (none)",
   ];
 
   let result: Awaited<ReturnType<typeof generateText>>;
@@ -192,13 +214,24 @@ export async function buildSmartChatExportDocument(input: SmartChatExportInput):
         schema: smartChatExportSchema,
       }),
       system: [
-        "You are writing a smart chat export for Distillr users.",
-        "Use only conversation and source lines provided in the prompt.",
-        "Do not invent claims, citations, or conclusions not present in the input.",
-        "Do not include internal IDs, database metadata, or implementation details.",
-        "Do not include follow-up questions.",
-        "Return practical recommended actions as statements, not questions.",
-        "Keep the output concise and practical.",
+        "You are distilling a user's research session into a brief they can use directly in their writing.",
+        "Your audience are analysts and writers who publish on Substack, Ghost, or similar platforms.",
+        "They used Distillr to ask specific research questions across their YouTube library. The chat is their research — your job is to distill it.",
+        "",
+        "Priority: the conversation IS the content. The user's questions reveal what matters to them. The assistant's answers contain the synthesized conclusions. Sources are for attribution, not the primary signal.",
+        "",
+        "Rules:",
+        "- The overview should frame the research angle the user was pursuing, not summarize the sources.",
+        "- Key conclusions should be the answers the user got to their questions — stated as specific, quotable findings.",
+        "- For each source-backed finding, state the conclusion first, then attribute it to the specific video or channel.",
+        "- Identify points that contradict conventional wisdom or present an unexpected angle. If none exist, return an empty array.",
+        "- Bad: 'The chat explored marketing strategies.' Good: 'Across three channels, the consensus is that B2B short-form outperforms long-form by 3x on engagement — contradicting the common advice to go long for B2B.'",
+        "- Recommended actions should reflect what the user should do next based on their specific research questions, not generic advice.",
+        "- Use only conversation and source lines provided in the prompt.",
+        "- Do not invent claims, citations, or conclusions not present in the input.",
+        "- Do not include internal IDs, database metadata, or implementation details.",
+        "- Do not include follow-up questions.",
+        "- Keep the output concise and high-signal.",
       ].join("\n"),
       prompt: contextBlocks.join("\n\n"),
     });
@@ -236,7 +269,11 @@ export async function buildSmartChatExportDocument(input: SmartChatExportInput):
   return {
     document: {
       title: input.title,
-      metadataLines: ["Export type: Smart"],
+      metadataLines: [
+        `Library: ${input.libraryName}`,
+        `Exported: ${formatDate(new Date())}`,
+        "Export type: Smart",
+      ],
       sections: [
         {
           heading: "Overview",
@@ -247,16 +284,25 @@ export async function buildSmartChatExportDocument(input: SmartChatExportInput):
           lines: structured.keyConclusions.map((line: string) => `- ${line}`),
         },
         {
-          heading: "Source-backed points",
-          lines: structured.sourceBackedPoints.length > 0
-            ? structured.sourceBackedPoints.map((line: string) => `- ${line}`)
-            : ["- No explicit source-backed points were captured in this session."],
+          heading: "Source-backed findings",
+          lines: structured.sourceBackedFindings.length > 0
+            ? structured.sourceBackedFindings.flatMap((item: { finding: string; source: string }) => [
+                `- ${item.finding}`,
+                `  Source: ${item.source}`,
+              ])
+            : ["No explicit source-backed findings were captured in this session."],
         },
+        ...(structured.surprisingOrContrarian.length > 0
+          ? [{
+              heading: "Surprising or contrarian points",
+              lines: structured.surprisingOrContrarian.map((line: string) => `- ${line}`),
+            }]
+          : []),
         {
           heading: "Recommended actions",
           lines: structured.recommendedActions.length > 0
             ? structured.recommendedActions.map((line: string) => `- ${line}`)
-            : ["- No immediate action items were identified."],
+            : ["No immediate action items were identified."],
         },
         {
           heading: "Conversation appendix",

@@ -15,6 +15,7 @@ import type { BuiltExportDocument, ExportDocument } from "@/server/exports/types
 type BuildChatSessionExportDocumentInput = {
   userId: string;
   libraryId: string;
+  libraryName: string;
   sessionId: string;
   variant: ExportVariant;
 };
@@ -51,6 +52,7 @@ export async function buildChatSessionExportDocument(
     return buildSmartChatExportDocument({
       userId: input.userId,
       title: session.title,
+      libraryName: input.libraryName,
       conversationLines,
       sourceLines,
     });

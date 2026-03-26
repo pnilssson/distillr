@@ -19,24 +19,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     fontSize: 11,
     lineHeight: 1.45,
+    fontFamily: "Helvetica",
   },
   title: {
     fontSize: 18,
     marginBottom: 10,
+    fontFamily: "Helvetica-Bold",
   },
   heading: {
     fontSize: 13,
     marginBottom: 6,
-    marginTop: 12,
+    marginTop: 14,
+    fontFamily: "Helvetica-Bold",
+  },
+  metadataLine: {
+    fontSize: 10,
+    color: "#555555",
+    marginBottom: 2,
   },
   paragraph: {
     marginBottom: 4,
   },
-  metadataLine: {
-    marginBottom: 4,
+  bulletRow: {
+    flexDirection: "row",
+    marginBottom: 3,
+    paddingLeft: 4,
+  },
+  bulletMarker: {
+    width: 12,
+    fontSize: 11,
+  },
+  bulletText: {
+    flex: 1,
+    fontSize: 11,
+  },
+  subText: {
+    fontSize: 10,
+    color: "#555555",
+    marginBottom: 3,
+    paddingLeft: 16,
   },
   section: {
     marginTop: 4,
+  },
+  separator: {
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#cccccc",
+    marginTop: 10,
+    marginBottom: 6,
   },
 });
 
@@ -59,7 +89,6 @@ function ExportPdfDocument({ document }: { document: ExportDocument }) {
 
         {document.metadataLines.length > 0 ? (
           <View>
-            <Text style={styles.heading}>Metadata</Text>
             {document.metadataLines.map((line, index) => (
               <Text key={`metadata-${index}`} style={styles.metadataLine}>
                 {line}
@@ -70,10 +99,9 @@ function ExportPdfDocument({ document }: { document: ExportDocument }) {
 
         {document.sections.map((section, sectionIndex) => (
           <View key={`section-${sectionIndex}`} style={styles.section}>
+            <View style={styles.separator} />
             <Text style={styles.heading}>{section.heading}</Text>
-            {section.lines.map((line, index) => (
-              <LineText key={`${section.heading}-${index}`} line={line} />
-            ))}
+            {renderSectionLines(section.lines, `section-${sectionIndex}`)}
           </View>
         ))}
       </Page>
@@ -81,20 +109,75 @@ function ExportPdfDocument({ document }: { document: ExportDocument }) {
   );
 }
 
-function LineText({ line }: { line: string }) {
-  const trimmed = line.trim();
+function renderSectionLines(lines: string[], keyPrefix: string) {
+  const elements: React.ReactNode[] = [];
 
-  if (trimmed.length === 0) {
-    return <Text style={styles.paragraph}> </Text>;
-  }
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
 
-  if (/^https?:\/\//.test(trimmed)) {
-    return (
-      <Link src={trimmed} style={styles.paragraph}>
-        {trimmed}
-      </Link>
+    if (trimmed.length === 0) {
+      elements.push(<Text key={`${keyPrefix}-${i}`} style={styles.paragraph}>{" "}</Text>);
+      continue;
+    }
+
+    // Sub-text line (indented, not a bullet) — render as smaller, muted text
+    if (/^\s{2,}/.test(line) && !line.trimStart().startsWith("- ")) {
+      elements.push(
+        <Text key={`${keyPrefix}-${i}`} style={styles.subText}>
+          {stripMarkdownInline(trimmed)}
+        </Text>,
+      );
+      continue;
+    }
+
+    // Bullet line: "- text" or "  - text"
+    if (/^\s*- /.test(line)) {
+      const bulletContent = line.replace(/^\s*- /, "");
+      elements.push(
+        <View key={`${keyPrefix}-${i}`} style={styles.bulletRow}>
+          <Text style={styles.bulletMarker}>{"\u2022"}</Text>
+          <Text style={styles.bulletText}>{stripMarkdownInline(bulletContent)}</Text>
+        </View>,
+      );
+      continue;
+    }
+
+    // URL line
+    if (/^https?:\/\//.test(trimmed)) {
+      elements.push(
+        <Link key={`${keyPrefix}-${i}`} src={trimmed} style={styles.paragraph}>
+          {trimmed}
+        </Link>,
+      );
+      continue;
+    }
+
+    // Regular text
+    elements.push(
+      <Text key={`${keyPrefix}-${i}`} style={styles.paragraph}>
+        {stripMarkdownInline(trimmed)}
+      </Text>,
     );
   }
 
-  return <Text style={styles.paragraph}>{line}</Text>;
+  return elements;
+}
+
+/**
+ * Strip common markdown inline syntax for plain-text PDF rendering.
+ * Handles: **bold**, *italic*, `code`, [text](url) → text (url)
+ */
+function stripMarkdownInline(text: string): string {
+  return text
+    // [text](url) → text (url)
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)")
+    // **bold** or __bold__
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/__(.+?)__/g, "$1")
+    // *italic* or _italic_
+    .replace(/\*(.+?)\*/g, "$1")
+    .replace(/_(.+?)_/g, "$1")
+    // `code`
+    .replace(/`(.+?)`/g, "$1");
 }

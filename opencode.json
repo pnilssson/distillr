@@ -3,16 +3,12 @@
   "mcp": {
     "shadcn": {
       "type": "local",
-      "command": [
-        "npx",
-        "shadcn@latest",
-        "mcp"
-      ],
+      "command": ["npx", "shadcn@latest", "mcp"],
       "enabled": true
     },
     "Sentry": {
       "type": "remote",
-      "url": "https://mcp.sentry.dev/mcp/par-nilsson/distillr",
+      "url": "https://mcp.sentry.dev/mcp/corely-sentry/distillr",
       "oauth": {}
     }
   }

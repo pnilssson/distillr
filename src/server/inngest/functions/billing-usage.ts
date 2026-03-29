@@ -307,7 +307,7 @@ export const billingUsageReconcile = inngest.createFunction(
           .select({
             userId: contentItems.userId,
             libraryId: contentItems.libraryId,
-            sourceId: sql<string>`min(${sourceContentItems.sourceId})`,
+            sourceId: sql<string>`min(${sourceContentItems.sourceId}::text)`,
             videoId: contentItems.id,
             updatedAt: contentItems.updatedAt,
           })

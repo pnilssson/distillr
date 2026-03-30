@@ -78,6 +78,9 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
+  verification: {
+    google: "zBQpTM5SSr22BDbm6TUYlolS53bP_UGL5i0kxhQ8ZZk",
+  },
   referrer: "origin-when-cross-origin",
   category: "productivity",
   creator: siteName,
